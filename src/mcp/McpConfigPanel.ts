@@ -1,0 +1,750 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+
+interface ToolConfig {
+    key: string;
+    name: string;
+    description: string;
+    instruction: string;
+    supportsVariableWorkspaceFolder: boolean;
+    recommendedMode: ConfigMode;
+    note?: string;
+}
+
+type ConfigMode = 'variable' | 'absolute';
+
+interface ToolMetadata {
+    key: string;
+    name: string;
+    description: string;
+    instruction: string;
+    note?: string;
+    supportsVariableWorkspaceFolder: boolean;
+    recommendedMode: ConfigMode;
+}
+
+interface WorkspaceOption {
+    id: string;
+    name: string;
+    path: string;
+}
+
+export class McpConfigPanel {
+    public static currentPanel: McpConfigPanel | undefined;
+    private readonly _panel: vscode.WebviewPanel;
+    private _disposables: vscode.Disposable[] = [];
+
+    private readonly _extensionUri: vscode.Uri;
+
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+        this._panel = panel;
+        this._extensionUri = extensionUri;
+
+        this._update();
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+    }
+
+    public static show(extensionUri: vscode.Uri) {
+        if (McpConfigPanel.currentPanel) {
+            McpConfigPanel.currentPanel._panel.reveal(vscode.ViewColumn.One);
+            return;
+        }
+
+        const panel = vscode.window.createWebviewPanel(
+            'quickPromptMcpConfig',
+            'QuickPrompt MCP Config',
+            vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                localResourceRoots: [extensionUri]
+            }
+        );
+
+        McpConfigPanel.currentPanel = new McpConfigPanel(panel, extensionUri);
+    }
+
+    public dispose() {
+        McpConfigPanel.currentPanel = undefined;
+        this._panel.dispose();
+        while (this._disposables.length) {
+            const x = this._disposables.pop();
+            if (x) {
+                x.dispose();
+            }
+        }
+    }
+
+    private _update() {
+        // Get the MCP Server entry-point path
+        const serverPath = path.join(this._extensionUri.fsPath, 'dist', 'mcp', 'index.js').replace(/\\/g, '/');
+
+        const workspaceContext = this._resolveWorkspaceContext();
+        const toolConfigs = this._buildToolConfigs();
+
+        this._panel.webview.html = this._getHtmlForWebview(toolConfigs, workspaceContext, serverPath, {
+            lang: vscode.env.language || 'en',
+            title: 'QuickPrompt MCP Config',
+            tipTitle: 'Setup Instructions:',
+            tipBody: 'Select your workspace and AI tool to generate the correct MCP configuration JSON. The MCP server exposes 21 tools for prompt management, version history, and privacy masking.',
+            configTitle: 'Configuration Generation',
+            skillTitle: 'Skill Files Framework',
+            skillBody: 'To generate a SKILL file with advanced fallback mechanisms for your AI agent, run: <strong>QuickPrompt: Generate Skill File</strong> from the VS Code Command Palette.',
+            concurrencyNote: 'Optimistic locking ensures concurrency safety—multiple AI clients can safely connect without corrupting prompts.json.',
+            workspaceTitle: '1. Select Workspace',
+            workspaceDescription: 'Choose the workspace directory to bind the MCP server to.',
+            workspaceSelectLabel: 'Active Workspace Folder:',
+            workspaceCount: `Found ${workspaceContext.workspaces.length} workspace(s)`,
+            workspaceEmpty: 'No workspace opened',
+            supportVariable: '💡 This tool supports dynamic ${workspaceFolder} variables.',
+            supportAbsolute: '⚠️ This tool requires absolute file paths.',
+            recommendedConfigTitle: 'Recommended Config',
+            selectedWorkspaceConfigTitle: 'Config for Selected Workspace',
+            variableConfigTitle: 'Dynamic Variable Config',
+            allWorkspacesConfigTitle: 'Config for All Workspaces',
+            copyRecommendedButton: 'Copy Recommended',
+            copySelectedButton: 'Copy Selected Workspace Config',
+            copyVariableButton: 'Copy Dynamic Config',
+            copyAllButton: 'Copy All Workspaces Config',
+            advancedOptionsTitle: '3. Configuration Mode',
+            chooseToolTitle: '2. Select AI Client',
+            copyConfigTitle: '4. Copy JSON Config',
+            workspacePathLabel: 'Resolved Path',
+            workspacePathEmpty: '/path/to/your/workspace',
+            noWorkspaceWarning: 'Warning: No workspace is currently opened. The generated config will contain dummy paths.',
+            copied: 'Copied!',
+        });
+
+        this._panel.webview.onDidReceiveMessage(
+            message => {
+                switch (message.command) {
+                    case 'copyToClipboard':
+                        vscode.env.clipboard.writeText(message.text);
+                        return;
+                }
+            },
+            null,
+            this._disposables
+        );
+    }
+
+    private _resolveWorkspaceContext(): { workspaces: WorkspaceOption[]; selectedWorkspaceId?: string } {
+        const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+        const activeEditorUri = vscode.window.activeTextEditor?.document.uri;
+        const activeWorkspaceFolder = activeEditorUri
+            ? vscode.workspace.getWorkspaceFolder(activeEditorUri)
+            : undefined;
+        const fallbackWorkspaceFolder = workspaceFolders.length > 0 ? workspaceFolders[0] : undefined;
+        const workspaceFolder = activeWorkspaceFolder ?? fallbackWorkspaceFolder;
+
+        return {
+            workspaces: workspaceFolders.map(folder => ({
+                id: folder.uri.toString(),
+                name: folder.name,
+                path: folder.uri.fsPath.replace(/\\/g, '/')
+            })),
+            selectedWorkspaceId: workspaceFolder?.uri.toString()
+        };
+    }
+
+    private _buildToolConfigs(): Record<string, ToolConfig> {
+        return this._getToolMetadata().reduce<Record<string, ToolConfig>>((acc, tool) => {
+            acc[tool.key] = {
+                key: tool.key,
+                name: tool.name,
+                description: tool.description,
+                instruction: tool.instruction,
+                supportsVariableWorkspaceFolder: tool.supportsVariableWorkspaceFolder,
+                recommendedMode: tool.recommendedMode,
+                note: tool.note
+            };
+            return acc;
+        }, {});
+    }
+
+    private _getToolMetadata(): ToolMetadata[] {
+        return [
+            {
+                key: 'cursor',
+                name: 'Cursor',
+                description: 'Add to Cursor Settings → MCP Servers or .cursor/mcp.json',
+                instruction: 'Copy the JSON below and paste it into your Cursor MCP configuration:',
+                supportsVariableWorkspaceFolder: true,
+                recommendedMode: 'variable'
+            },
+            {
+                key: 'copilot',
+                name: 'GitHub Copilot',
+                description: 'Add to .vscode/settings.json → "mcp" section, or VS Code user settings',
+                instruction: 'Copy the JSON below and add it to your VS Code MCP settings:',
+                supportsVariableWorkspaceFolder: false,
+                recommendedMode: 'absolute'
+            },
+            {
+                key: 'kiro',
+                name: 'Kiro IDE',
+                description: 'Add to your Kiro IDE MCP configuration',
+                instruction: 'Copy the JSON below and paste it into your Kiro MCP configuration:',
+                note: 'Kiro IDE uses standard MCP config format. Restart Kiro after adding the config.',
+                supportsVariableWorkspaceFolder: false,
+                recommendedMode: 'absolute'
+            },
+            {
+                key: 'claudeDesktop',
+                name: 'Claude Code',
+                description: 'Add to Claude Code → Settings → Developer → MCP Servers',
+                instruction: 'Copy the JSON below and add it to your claude_desktop_config.json:',
+                note: 'Config file location:\n• macOS: ~/Library/Application Support/Claude/claude_desktop_config.json\n• Windows: %APPDATA%\\Claude\\claude_desktop_config.json',
+                supportsVariableWorkspaceFolder: false,
+                recommendedMode: 'absolute'
+            },
+            {
+                key: 'antigravity',
+                name: 'Antigravity',
+                description: 'Add to your Antigravity (Gemini) MCP configuration',
+                instruction: 'Copy the JSON below and add it to your Antigravity MCP settings:',
+                supportsVariableWorkspaceFolder: true,
+                recommendedMode: 'variable'
+            },
+            {
+                key: 'cline',
+                name: 'Cline',
+                description: 'Add to Cline MCP configuration settings',
+                instruction: 'Copy the JSON below and add it to your Cline configuration:',
+                supportsVariableWorkspaceFolder: false,
+                recommendedMode: 'absolute'
+            }
+        ];
+    }
+
+    private _getHtmlForWebview(toolConfigs: Record<string, ToolConfig>, workspaceContext: {
+        workspaces: WorkspaceOption[];
+        selectedWorkspaceId?: string;
+    }, serverPath: string, i18n: any) {
+        const tools = Object.values(toolConfigs);
+        const ideTabsHtml = tools.map((tool, index) => `
+            <button class="ide-tab${index === 0 ? ' active' : ''}" data-tool-key="${tool.key}" type="button">${tool.name}</button>
+        `).join('');
+
+        const workspaceOptionsHtml = workspaceContext.workspaces.length > 0
+            ? workspaceContext.workspaces.map(workspace => {
+                const selected = workspace.id === workspaceContext.selectedWorkspaceId ? 'selected' : '';
+                return `<option value="${workspace.id}" ${selected}>${workspace.name}</option>`;
+            }).join('')
+            : `<option value="__none__">${i18n.workspaceEmpty}</option>`;
+
+        const webviewData = JSON.stringify({
+            serverPath,
+            tools,
+            workspaces: workspaceContext.workspaces,
+            selectedWorkspaceId: workspaceContext.selectedWorkspaceId,
+            labels: {
+                recommended: i18n.recommendedConfigTitle,
+                selected: i18n.selectedWorkspaceConfigTitle,
+                variable: i18n.variableConfigTitle,
+                all: i18n.allWorkspacesConfigTitle
+            },
+            copyButtons: {
+                recommended: i18n.copyRecommendedButton,
+                selected: i18n.copySelectedButton,
+                variable: i18n.copyVariableButton,
+                all: i18n.copyAllButton
+            },
+            workspacePath: {
+                label: i18n.workspacePathLabel,
+                empty: i18n.workspacePathEmpty
+            }
+        }).replace(/</g, '\\u003c');
+
+        return `<!DOCTYPE html>
+<html lang="${i18n.lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${i18n.title}</title>
+    <style>
+        body {
+            font-family: var(--vscode-font-family);
+            color: var(--vscode-editor-foreground);
+            background-color: var(--vscode-editor-background);
+            padding: 16px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 920px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: var(--vscode-editor-foreground);
+        }
+        h2 {
+            margin-top: 32px;
+            color: var(--vscode-textPreformat-foreground);
+            border-bottom: 1px solid var(--vscode-panel-border);
+            padding-bottom: 8px;
+        }
+        h3 {
+            border-bottom: none;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+        p {
+            margin: 4px 0;
+        }
+        .code-block {
+            background-color: var(--vscode-textCodeBlock-background);
+            padding: 16px;
+            border-radius: 6px;
+            position: relative;
+            margin: 16px 0;
+            overflow-x: auto;
+            border: 1px solid var(--vscode-panel-border);
+        }
+        .code-actions {
+            margin-top: 12px;
+        }
+        pre {
+            margin: 0;
+            white-space: pre;
+            font-size: 13px;
+        }
+        .copy-btn {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 7px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .copy-btn:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+        .copy-btn:focus-visible,
+        .workspace-select:focus-visible,
+        .ide-tab:focus-visible,
+        .option-tab:focus-visible {
+            outline: 2px solid var(--vscode-focusBorder);
+            outline-offset: 2px;
+        }
+        .copy-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+        .config-title {
+            margin: 0 0 8px;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+        .instructions {
+            background-color: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin: 14px 0 22px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+        .workspace-section,
+        .step-card {
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin-top: 0;
+            margin-bottom: 16px;
+            background: var(--vscode-editor-background);
+        }
+        .workspace-select {
+            width: 100%;
+            margin-top: 8px;
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            padding: 8px;
+        }
+        .workspace-meta {
+            margin-top: 6px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+        .workspace-path {
+            margin-top: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--vscode-panel-border);
+            background: var(--vscode-textCodeBlock-background);
+            font-family: var(--vscode-editor-font-family, monospace);
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .config-shell {
+            margin-bottom: 24px;
+            padding: 18px;
+            border: 1px solid var(--vscode-focusBorder);
+            border-radius: 8px;
+            background-color: var(--vscode-editorWidget-background);
+        }
+        .step-title {
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: var(--vscode-descriptionForeground);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-weight: 600;
+        }
+        .ide-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .ide-tab,
+        .option-tab {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 999px;
+            font-size: 12px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        .ide-tab.active,
+        .option-tab.active {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border-color: var(--vscode-button-background);
+        }
+        .tool-description,
+        .tool-support {
+            color: var(--vscode-descriptionForeground);
+            margin: 4px 0;
+            font-size: 13px;
+        }
+        .tool-instruction {
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        .tool-note {
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+            margin: 8px 0;
+            white-space: pre-wrap;
+            padding: 8px;
+            background-color: var(--vscode-textBlockQuote-background);
+            border-radius: 4px;
+        }
+        .skill-section {
+            background-color: var(--vscode-sideBar-background);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px dashed var(--vscode-panel-border);
+            margin-top: 40px;
+        }
+        .option-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .warning-box {
+            margin-top: 2px;
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--vscode-inputValidation-warningBorder);
+            background: var(--vscode-inputValidation-warningBackground);
+            color: var(--vscode-inputValidation-warningForeground);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${i18n.title}</h1>
+        
+        <div class="instructions">
+            <p><strong>${i18n.tipTitle}</strong> ${i18n.tipBody}</p>
+            <p>${i18n.concurrencyNote}</p>
+        </div>
+
+        <h2>${i18n.configTitle}</h2>
+        <div class="config-shell">
+            <div class="workspace-section step-card">
+                <p class="step-title">${i18n.workspaceTitle}</p>
+                <p>${i18n.workspaceDescription}</p>
+                <label for="workspace-select">${i18n.workspaceSelectLabel}</label>
+                <select id="workspace-select" class="workspace-select">${workspaceOptionsHtml}</select>
+                <p class="workspace-meta">${i18n.workspaceCount}</p>
+                <p id="workspace-path" class="workspace-path"></p>
+            </div>
+
+            <div class="step-card">
+                <p class="step-title">${i18n.chooseToolTitle}</p>
+                <div id="ide-tabs" class="ide-tabs">${ideTabsHtml}</div>
+                <h3 id="tool-name"></h3>
+                <p id="tool-description" class="tool-description"></p>
+                <p id="tool-instruction" class="tool-instruction"></p>
+                <p id="tool-support" class="tool-support"></p>
+                <p id="tool-note" class="tool-note" style="display:none;"></p>
+            </div>
+
+            <div class="step-card">
+                <p class="step-title">${i18n.advancedOptionsTitle}</p>
+                <div id="option-tabs" class="option-tabs"></div>
+            </div>
+
+            <div class="step-card">
+                <p class="step-title">${i18n.copyConfigTitle}</p>
+                <div class="code-block">
+                    <p id="config-title" class="config-title"></p>
+                    <pre><code id="active-config"></code></pre>
+                    <div class="code-actions">
+                        <button id="copy-active" class="copy-btn action-btn" type="button"></button>
+                    </div>
+                </div>
+                <div id="no-workspace-warning" class="warning-box" style="display:none;">${i18n.noWorkspaceWarning}</div>
+            </div>
+        </div>
+
+        <div class="skill-section">
+            <h2>${i18n.skillTitle}</h2>
+            <p>${i18n.skillBody}</p>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const model = ${webviewData};
+        const EMPTY_WORKSPACE = '/path/to/your/workspace';
+        const hasWorkspace = model.workspaces.length > 0;
+        const state = {
+            activeToolKey: model.tools[0]?.key || '',
+            activeOption: 'recommended'
+        };
+
+        function getTool(toolKey) {
+            return model.tools.find(tool => tool.key === toolKey);
+        }
+
+        function getSelectedWorkspace() {
+            const select = document.getElementById('workspace-select');
+            const selected = model.workspaces.find(workspace => workspace.id === select.value);
+            return selected || model.workspaces[0] || { id: '__none__', name: 'workspace', path: EMPTY_WORKSPACE };
+        }
+
+        function sanitizeServerName(name) {
+            const normalized = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            return normalized || 'workspace';
+        }
+
+        function createServerEntry(workspaceRoot) {
+            return {
+                command: 'node',
+                args: [model.serverPath, '--workspace-root', workspaceRoot]
+            };
+        }
+
+        function buildJson(mcpServers) {
+            return JSON.stringify({ mcpServers }, null, 2);
+        }
+
+        function buildAbsoluteConfig(toolKey, workspacePath) {
+            // we use 'quickprompt' as the tool key for the server definition inside mcp json
+            return buildJson({
+                quickprompt: createServerEntry(workspacePath)
+            });
+        }
+
+        function buildVariableConfig() {
+            return buildJson({
+                quickprompt: createServerEntry('\$\\{workspaceFolder\\}')
+            });
+        }
+
+        function buildRecommendedConfig(tool, workspacePath) {
+            if (tool.recommendedMode === 'variable' && tool.supportsVariableWorkspaceFolder) {
+                return buildVariableConfig();
+            }
+            return buildAbsoluteConfig(tool.key, workspacePath);
+        }
+
+        function buildAllWorkspacesConfig() {
+            const usedNames = {};
+            const mcpServers = {};
+            for (const workspace of model.workspaces) {
+                const baseName = 'quickprompt-' + sanitizeServerName(workspace.name);
+                let serverName = baseName;
+                let index = 2;
+                while (usedNames[serverName]) {
+                    serverName = baseName + '-' + index;
+                    index += 1;
+                }
+                usedNames[serverName] = true;
+                mcpServers[serverName] = createServerEntry(workspace.path);
+            }
+            return buildJson(mcpServers);
+        }
+
+        function setCode(id, value) {
+            const node = document.getElementById(id);
+            if (node) {
+                node.textContent = value;
+            }
+        }
+
+        function getOptionList(tool) {
+            const options = ['recommended', 'selected'];
+            if (tool.supportsVariableWorkspaceFolder) {
+                options.push('variable');
+            } else if (model.workspaces.length > 1) {
+                options.push('all');
+            }
+            return options;
+        }
+
+        function requiresWorkspace(tool, option) {
+            if (option === 'selected' || option === 'all') {
+                return true;
+            }
+            return option === 'recommended' && tool.recommendedMode === 'absolute';
+        }
+
+        function getOptionConfig(tool, option, workspacePath) {
+            if (option === 'recommended') {
+                return buildRecommendedConfig(tool, workspacePath);
+            }
+            if (option === 'selected') {
+                return buildAbsoluteConfig(tool.key, workspacePath);
+            }
+            if (option === 'variable') {
+                return buildVariableConfig();
+            }
+            if (option === 'all') {
+                return buildAllWorkspacesConfig();
+            }
+            return '';
+        }
+
+        function renderIdeTabs() {
+            for (const tab of document.querySelectorAll('.ide-tab')) {
+                tab.classList.toggle('active', tab.dataset.toolKey === state.activeToolKey);
+            }
+        }
+
+        function renderOptionTabs(tool) {
+            const options = getOptionList(tool);
+            if (!options.includes(state.activeOption)) {
+                state.activeOption = 'recommended';
+            }
+            const host = document.getElementById('option-tabs');
+            host.innerHTML = options.map(option => {
+                const activeClass = option === state.activeOption ? ' active' : '';
+                return '<button class="option-tab' + activeClass + '" data-option="' + option + '" type="button">' + model.labels[option] + '</button>';
+            }).join('');
+        }
+
+        function renderToolMeta(tool) {
+            setCode('tool-name', tool.name);
+            setCode('tool-description', tool.description);
+            setCode('tool-instruction', tool.instruction);
+            setCode('tool-support', tool.supportsVariableWorkspaceFolder ? "${i18n.supportVariable}" : "${i18n.supportAbsolute}");
+            const note = document.getElementById('tool-note');
+            if (tool.note) {
+                note.style.display = 'block';
+                note.textContent = tool.note;
+            } else {
+                note.style.display = 'none';
+                note.textContent = '';
+            }
+        }
+
+        function renderWorkspacePath() {
+            const selectedWorkspace = getSelectedWorkspace();
+            const pathNode = document.getElementById('workspace-path');
+            if (!pathNode) {
+                return;
+            }
+            if (!hasWorkspace) {
+                pathNode.textContent = model.workspacePath.empty;
+                return;
+            }
+            pathNode.textContent = model.workspacePath.label + ': ' + selectedWorkspace.path;
+        }
+
+        function renderActiveConfig() {
+            const tool = getTool(state.activeToolKey);
+            if (!tool) {
+                return;
+            }
+            const selectedWorkspace = getSelectedWorkspace();
+            const config = getOptionConfig(tool, state.activeOption, selectedWorkspace.path);
+            setCode('config-title', model.labels[state.activeOption]);
+            setCode('active-config', config);
+            const copyBtn = document.getElementById('copy-active');
+            copyBtn.textContent = model.copyButtons[state.activeOption];
+            copyBtn.disabled = requiresWorkspace(tool, state.activeOption) && !hasWorkspace;
+            document.getElementById('no-workspace-warning').style.display = copyBtn.disabled ? 'block' : 'none';
+        }
+
+        function renderAll() {
+            const tool = getTool(state.activeToolKey);
+            if (!tool) {
+                return;
+            }
+            renderIdeTabs();
+            renderToolMeta(tool);
+            renderOptionTabs(tool);
+            renderWorkspacePath();
+            renderActiveConfig();
+        }
+
+        function copyText(text, btn) {
+            if (btn.disabled) {
+                return;
+            }
+            vscode.postMessage({
+                command: 'copyToClipboard',
+                text
+            });
+            const originalText = btn.innerText;
+            btn.innerText = "${i18n.copied}";
+            setTimeout(() => {
+                btn.innerText = originalText;
+            }, 1200);
+        }
+
+        function copyActive(btn) {
+            const tool = getTool(state.activeToolKey);
+            if (!tool) {
+                return;
+            }
+            const selectedWorkspace = getSelectedWorkspace();
+            copyText(getOptionConfig(tool, state.activeOption, selectedWorkspace.path), btn);
+        }
+
+        document.getElementById('ide-tabs').addEventListener('click', event => {
+            const target = event.target;
+            if (!target || !target.classList.contains('ide-tab')) {
+                return;
+            }
+            state.activeToolKey = target.dataset.toolKey;
+            state.activeOption = 'recommended';
+            renderAll();
+        });
+
+        document.getElementById('option-tabs').addEventListener('click', event => {
+            const target = event.target;
+            if (!target || !target.classList.contains('option-tab')) {
+                return;
+            }
+            state.activeOption = target.dataset.option;
+            renderAll();
+        });
+
+        document.getElementById('copy-active').addEventListener('click', event => copyActive(event.target));
+        document.getElementById('workspace-select').addEventListener('change', renderAll);
+        renderAll();
+    </script>
+</body>
+</html>`;
+    }
+}

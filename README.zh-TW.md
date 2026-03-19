@@ -17,49 +17,54 @@
 
 ---
 
-## 🔥 v0.2.0 重大更新：版本歷史系統
+![功能亮點](docs/assets/feature_highlights_v0003.png)
 
-**不再遺失任何一次 Prompt 的迭代。** 全新的版本歷史系統會自動為您追蹤每一次變更。
+---
 
-![版本歷史示範](docs/assets/version_history_demo.png)
+## 🔌 v0.3.0 重大更新：AI Agent 深度整合 (MCP)
 
-### 核心功能
+**全方位的 Model Context Protocol (MCP) 支援正式登場。** 徹底擺脫手動複製貼上——讓您的 AI 助手（Cursor, Copilot, Claude 等）透過原生工具直接管理您的提示詞。
 
-- **🕒 線性歷史**：每次儲存自動建立新版本。
-- **📌 里程碑**：標記穩定版本或重要草稿。
-- **↩️ 軟還原**：安全地預覽並還原舊版本，不會立即覆蓋現有檔案。
+### 🛡️ 四層安全行動決策樹 (Safety Decision Tree)
 
-### ⚖️ 差異檢視 (Diff View)
+每一個產生的 Skill 都內建了防呆與安全邏輯，確保 AI 在執行時穩定可靠：
 
-一鍵比較歷史版本與當前狀態的差異。在還原之前，透過視覺化比對確認每一個修改細節。
+1. **Layer 0: 連線閘門 (Connection Gate)** — 自動透過 `list_prompts` 測試連線。若 MCP 斷線，Agent 會立即觸發 HALT 煞車並詢問用戶是否降級處理。
+2. **Layer 1: 標準 MCP 工具** — 提供 21+ 個優化過的工具，涵蓋 Prompt 的增刪改查、版本歷史與隱私遮罩。
+3. **Layer 2: 安全驗證** — 在執行敏感操作前進行二次邏輯檢查，確保資料一致性。
+4. **Layer 3: CLI 硬核後備 (Hard Fallback)** — 當 MCP server 無法使用時，Agent 可切換呼叫內建的 `qp.bundle.js` 腳本直接操作資料庫。
 
-![差異檢視示範](docs/assets/diff_view_demo.png)
+### ⚙️ 多客戶端一鍵設定
+
+針對主流 AI 工具提供一鍵產出設定。執行指令：`Quick Prompt: Show MCP Config` 即可開啟互動式面板。
+
+| Cursor / Antigravity | GitHub Copilot / Cline | Kiro IDE / Claude Code |
+| :------------------- | :--------------------- | :--------------------- |
+| 支援 `${workspaceFolder}` 動態變數 | 絕對路徑綁定 | 直接產出 JSON 配置區塊 |
 
 ---
 
 ## ✨ 核心特色
+
+### 🔌 AI Agent 強大武裝 (New!)
+
+- **🔌 21 個 MCP 工具**：為 AI Agent 提供完整的 Prompt 管理工具箱。
+- **🛡️ 行動決策樹**：確保 Agent 只在連線安全且邏輯通順時執行變更。
+- **📦 CLI 後備腳本**：斷線時的終極保險，內置於 generated skill 資料夾內。
+- **⚙️ 互動式設定面板**：輕鬆完成各類 AI 工具的環境配置。
 
 ### 📚 提示詞管理 (Prompt Management)
 
 - **🤖 AI 智慧標題**：使用本地 AI 模型 (Qwen1.5-0.5B) 自動生成語義化標題。
 - **🎯 極速搜尋**：按 `Alt+P` 搜尋 Prompt，按 Enter 直接複製。
 - **🚀 快速新增**：選取文字按 `Alt+Shift+S` 立即新增。
-- **🎨 視覺化介面**：側邊欄以圖示標示熱門程度（🔥/⭐/📝）。
 - **✏️ 原生編輯**：像編輯一般檔案一樣編輯 Prompt，完整支援 VSCode 功能。
 
-### 🕒 版本控制 (Version Control) - New
+### 🕒 版本控制 (Version Control)
 
-- **全面追蹤**：記錄每一次變更。
-- **智慧保留**：自動清理過渡性的編輯紀錄，同時保留重要里程碑。
-- **差異比對**：視覺化檢視修改內容。
-
-### 📋 剪貼簿歷史 (Clipboard History)
-
-- **自動追蹤**：自動記錄 VSCode 內外的複製內容。
-- **智慧分析**：記錄使用次數與時間，找出您的黃金 Prompt。
-- **專案隔離**：每個工作區擁有獨立的 Prompt 集合。
-
-![功能亮點](docs/assets/feature_highlights_v0003.png)
+- **🕒 線性歷史**：每次儲存自動建立新版本。
+- **📌 里程碑**：標記穩定版本或重要草稿。
+- **⚖️ 差異比對**：視覺化檢視修改內容。
 
 ## 📸 功能截圖 (AI 生成)
 

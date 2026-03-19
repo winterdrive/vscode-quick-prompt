@@ -16,49 +16,54 @@
 
 ---
 
-## 🔥 New in v0.2.0: Version History System
+![Feature Highlights](docs/assets/feature_highlights_v0003.png)
 
-**Never lose a prompt iteration again.** The new Version History System automatically tracks every change you make.
+---
 
-![Version History Demo](docs/assets/version_history_demo.png)
+## 🔌 New in v0.3.0: AI Agent Integration (MCP)
 
-### Core Features
+**Full Model Context Protocol (MCP) support is now here.** Stop copy-pasting—let your AI assistant (Cursor, Copilot, Claude, etc.) manage your prompts directly with native tools.
 
-- **🕒 Linear History**: Automatic tracking of every save.
-- **📌 Milestones**: Tag stable versions or important drafts.
-- **↩️ Soft Checkout**: Restore old versions safely without overwriting immediately.
+### 🛡️ 4-Layer Safety Decision Tree
 
-### ⚖️ Visual Diff View
+Every generated skill includes a built-in safety logic to ensure stable operation:
 
-One-click comparison between history and current state. Use the Diff View to verify changes before restoring.
+1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
+2. **Layer 1: Standard MCP Tools** — Use 21+ optimized tools for CRUD and versioning.
+3. **Layer 2: Safety Verification** — Internal sanity checks across different prompt contexts.
+4. **Layer 3: Hard Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
 
-![Diff View Demo](docs/assets/diff_view_demo.png)
+### ⚙️ Multi-Client Setup
+
+One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Config` to access the interactive panel.
+
+| Cursor / Antigravity | GitHub Copilot / Cline | Kiro IDE / Claude Code |
+| :------------------- | :--------------------- | :--------------------- |
+| Supports `${workspaceFolder}` variables | Absolute path binding | Direct JSON configuration |
 
 ---
 
 ## ✨ Key Features
+
+### 🔌 AI Agent Power (New!)
+
+- **🔌 21 MCP Tools**: Complete prompt management suite for AI agents.
+- **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
+- **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
+- **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
 
 ### 📚 Prompt Management
 
 - **🤖 AI-Powered Titles**: Automatic semantic title generation using local AI (Qwen1.5-0.5B).
 - **🎯 Lightning Fast Search**: Press `Alt+P` to search prompts, hit Enter to copy.
 - **🚀 Quick Add**: Right-click selected text → "Quick Add Prompt" (or press `Alt+Shift+S`).
-- **🎨 Visual Interface**: Sidebar displays popularity with icons (🔥/⭐/📝).
 - **✏️ Native Editing**: Edit prompts like regular files with full VSCode support.
 
-### 🕒 Version Control (New!)
+### 🕒 Version Control
 
-- **Track Everything**: Every change is recorded.
-- **Smart Retention**: Keeps history clean by pruning intermediate edits while preserving milestones.
-- **Diff Comparison**: Visually check what changed.
-
-### 📋 Clipboard History
-
-- **Auto Capture**: Never lose copied text. Tracks VSCode and external apps.
-- **Smart Tracking**: Usage counts and last used times help identify golden prompts.
-- **Project Isolation**: Workspace-specific prompt collections.
-
-![Feature Highlights](docs/assets/feature_highlights_v0003.png)
+- **🕒 Linear History**: Automatic tracking of every save.
+- **📌 Milestones**: Tag stable versions or important drafts.
+- **⚖️ Visual Diff**: One-click comparison between history and current state.
 
 ## 📸 Screenshots (AI Generated)
 

@@ -25,14 +25,16 @@ cd QuickPrompt
 npm install
 ```
 
-#### 2. Compile TypeScript
+#### 2. Compile TypeScript & Bundles
 
 ```bash
-# One-time compilation
-npx tsc
-
-# Or use npm script
+# Full build (CLI, MCP Server, and VSCode Extension)
 npm run vscode:prepublish
+
+# Individual builds
+npm run build:qp    # Build CLI Fallback Bundle
+npm run build:mcp   # Build MCP Server Bundle
+npx tsc -p ./       # Compile VSCode Extension core
 ```
 
 #### 3. Start Development Mode
@@ -92,12 +94,20 @@ QuickPrompt/
 ├── src/                   # TypeScript source code
 │   ├── ai/                # AI engine module
 │   │   └── aiEngine.ts   # Local AI inference with Transformers.js
+│   ├── mcp/               # Model Context Protocol module
+│   │   ├── SkillGenerator.ts # Generates AI Agent skill files (.mdc, etc.)
+│   │   └── McpConfigPanel.ts # Webview for MCP configuration
 │   ├── extension.ts       # Extension entry (activate/deactivate)
 │   ├── promptProvider.ts  # TreeDataProvider implementation
 │   ├── promptFileSystem.ts # Virtual file system for editing prompts
 │   ├── commands.ts        # Command handlers
 │   ├── clipboardManager.ts # Clipboard history tracking
 │   └── i18n.ts           # Internationalization utility
+├── mcp-server/            # MCP Server source code
+│   ├── src/
+│   │   ├── index.ts      # MCP Server entry point
+│   │   └── tools/        # Tool implementations (prompts, history, etc.)
+├── qp-entry.ts            # CLI Fallback entry point (bundled to dist/qp.bundle.js)
 ├── package.json           # Extension manifest
 ├── package.nls.json       # English localization (package.json)
 ├── package.nls.zh-tw.json # Traditional Chinese localization
@@ -110,15 +120,19 @@ QuickPrompt/
 
 ### Module Responsibilities
 
-| Module File             | Description                                      | Main Class/Interface |
-| ----------------------- | ------------------------------------------------ | -------------------- |
-| `extension.ts`          | Extension lifecycle management, command registration | `activate()`, `deactivate()` |
-| `promptProvider.ts`     | Implements `TreeDataProvider`, manages prompt data | `PromptProvider`, `PromptItem` |
-| `promptFileSystem.ts`   | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider` |
-| `ai/aiEngine.ts`        | Local AI inference using Transformers.js and Qwen1.5-0.5B | `AIEngine` |
-| `commands.ts`           | Command handlers for prompt and clipboard operations | Various handler functions |
-| `clipboardManager.ts`   | Automatic clipboard history tracking | `ClipboardManager` |
-| `i18n.ts`               | Internationalization utility, loads language files | `I18n` |
+| Module File                | Description                                         | Main Class/Interface        |
+| -------------------------- | --------------------------------------------------- | --------------------------- |
+| `extension.ts`             | Extension lifecycle management, command registration | `activate()`, `deactivate()` |
+| `src/mcp/SkillGenerator.ts`| Generates AI Agent skills with 4-layer action tree  | `SkillGenerator`            |
+| `src/mcp/McpConfigPanel.ts`| Webview for easy agent-specific MCP configuration    | `McpConfigPanel`            |
+| `mcp-server/index.ts`      | MCP Server exposing 21 tools for LLM interaction    | `McpServer`                 |
+| `qp-entry.ts`              | CLI entry for direct DB access (fallback mechanism)  | `QuickPromptCLI`            |
+| `promptProvider.ts`        | Implements `TreeDataProvider`, manages prompt data  | `PromptProvider`, `PromptItem` |
+| `promptFileSystem.ts`      | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider`  |
+| `ai/aiEngine.ts`           | Local AI inference using Transformers.js and Qwen1.5-0.5B | `AIEngine`                  |
+| `commands.ts`              | Command handlers for prompt and clipboard operations | Various handler functions   |
+| `clipboardManager.ts`      | Automatic clipboard history tracking                | `ClipboardManager`          |
+| `i18n.ts`                  | Internationalization utility, loads language files  | `I18n`                      |
 
 ### Core Data Flow
 

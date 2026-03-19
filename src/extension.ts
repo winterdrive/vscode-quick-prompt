@@ -9,6 +9,9 @@ import { registerPromptCommands, registerClipboardCommands, registerVersionComma
 import { AIEngine } from './ai/aiEngine';
 import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
+import { McpConfigPanel } from './mcp/McpConfigPanel';
+import { SkillGenerator } from './mcp/SkillGenerator';
+
 export async function activate(context: vscode.ExtensionContext) {
     // Initialize i18n
     await I18n.initialize(context);
@@ -46,6 +49,16 @@ export async function activate(context: vscode.ExtensionContext) {
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
     registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService);
     registerVersionCommands(context, promptProvider, versionHistoryService);
+
+    // Register MCP commands
+    context.subscriptions.push(
+        vscode.commands.registerCommand('quickPrompt.showMcpConfig', () => {
+            McpConfigPanel.show(context.extensionUri);
+        }),
+        vscode.commands.registerCommand('quickPrompt.generateSkill', () => {
+            SkillGenerator.generateSkill(context);
+        }),
+    );
 
     // Setup cleanup
     setupCleanup(context, clipboardManager, aiEngine);

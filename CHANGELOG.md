@@ -4,6 +4,24 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.0] - 2026-03-19
+
+### 🔌 AI Agent Integration (MCP) - Major Update
+
+This release brings full **Model Context Protocol (MCP)** support, allowing AI agents (like Cursor, Claude, Antigravity) to manage your prompts directly.
+
+- **MCP Server Integration**: A bundled MCP server allows AI agents to perform 21 tools across prompt CRUD, version history, and privacy masking.
+- **Action Decision Tree**: Implements a 4-layer safety logic (Layer 0-3) in generated skills to ensure agents only take actions when the connection is secure.
+- **Skill Generator**: Easily generate tailored skill files for Cursor (.mdc), Copilot, Claude, Antigravity, Kiro, and Cline.
+- **CLI Fallback Bundle**: Includes a self-contained `qp.bundle.js` as a "Hard Fallback" mechanism if the MCP server is disconnected.
+- **Enhanced MCP Config Panel**: A new interactive Webview UI for easy setup with support for multi-root workspaces and dynamic folder variables.
+
+### 🛡️ Optimization & Bug Fixes
+
+- **Performance**: Improved VersionManager caching for faster history loading.
+- **Reliability**: Improved path resolution for Windows systems in MCP environments.
+- **Consistency**: Unified UI text and icons for MCP and Skill generation commands.
+
 ## [0.2.0] - 2026-01-21
 
 ### ✨ New Features
