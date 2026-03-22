@@ -31,10 +31,10 @@ import { toMcpResult, createError } from './utils/ResponseFactory.js';
 import { ErrorType } from './types.js';
 import { PromptManager } from '../../src/core/PromptManager.js';
 import { VersionManager } from '../../src/core/VersionManager.js';
-// import { PrivacyManager } from '../../src/core/PrivacyManager.js';
+import { PrivacyManager } from '../../src/core/PrivacyManager.js';
 import { PromptTools } from './tools/promptTools.js';
 import { VersionTools } from './tools/versionTools.js';
-// import { PrivacyTools } from './tools/privacyTools.js';
+import { PrivacyTools } from './tools/privacyTools.js';
 
 const SERVER_NAME = 'quickprompt';
 const SERVER_VERSION = '0.1.0';
@@ -160,71 +160,71 @@ const TOOL_DEFS = {
   },
 
   // ── Privacy ──────────────────────────────────────────────────────────────────
-//   mask_text: {
-//     description: 'Apply privacy masking to text, replacing sensitive information (emails, phone numbers, IPs, API keys, etc.) with safe tokens.',
-//     schema: {
-//       text: z.string().describe('The text to mask.'),
-//     },
-//   },
-//   unmask_text: {
-//     description: 'Reverse privacy masking, restoring original text from masked tokens.',
-//     schema: {
-//       maskedText: z.string().describe('The masked text to unmask.'),
-//     },
-//   },
-//   list_dictionary: {
-//     description: 'List all custom privacy dictionary entries.',
-//     schema: {},
-//   },
-//   add_dictionary_entry: {
-//     description: 'Add a new custom word/phrase to the privacy masking dictionary.',
-//     schema: {
-//       pattern: z.string().describe('The word, phrase, or regex pattern to mask.'),
-//       label: z.string().describe('The replacement label shown in masked text (e.g., "[NAME]").'),
-//       isRegex: z.boolean().optional().describe('Whether the pattern is a regular expression (default: false).'),
-//       enabled: z.boolean().optional().describe('Whether the entry is enabled (default: true).'),
-//       note: z.string().optional().describe('Optional note for organization.'),
-//     },
-//   },
-//   edit_dictionary_entry: {
-//     description: 'Edit an existing dictionary entry.',
-//     schema: {
-//       id: z.string().describe('The entry ID to edit.'),
-//       pattern: z.string().optional().describe('New word, phrase, or regex pattern.'),
-//       label: z.string().optional().describe('New replacement label.'),
-//       isRegex: z.boolean().optional().describe('Whether the pattern is a regular expression.'),
-//       enabled: z.boolean().optional().describe('Whether the entry is enabled.'),
-//       note: z.string().optional().describe('Optional note.'),
-//     },
-//   },
-//   delete_dictionary_entry: {
-//     description: 'Delete a dictionary entry by ID.',
-//     schema: {
-//       id: z.string().describe('The entry ID to delete.'),
-//     },
-//   },
-//   toggle_dictionary_entry: {
-//     description: 'Enable or disable a dictionary entry without deleting it.',
-//     schema: {
-//       id: z.string().describe('The entry ID to toggle.'),
-//     },
-//   },
+  mask_text: {
+    description: 'Apply privacy masking to text, replacing sensitive information (emails, phone numbers, IPs, API keys, etc.) with safe tokens.',
+    schema: {
+      text: z.string().describe('The text to mask.'),
+    },
+  },
+  unmask_text: {
+    description: 'Reverse privacy masking, restoring original text from masked tokens.',
+    schema: {
+      maskedText: z.string().describe('The masked text to unmask.'),
+    },
+  },
+  list_dictionary: {
+    description: 'List all custom privacy dictionary entries.',
+    schema: {},
+  },
+  add_dictionary_entry: {
+    description: 'Add a new custom word/phrase to the privacy masking dictionary.',
+    schema: {
+      pattern: z.string().describe('The word, phrase, or regex pattern to mask.'),
+      label: z.string().describe('The replacement label shown in masked text (e.g., "[NAME]").'),
+      isRegex: z.boolean().optional().describe('Whether the pattern is a regular expression (default: false).'),
+      enabled: z.boolean().optional().describe('Whether the entry is enabled (default: true).'),
+      note: z.string().optional().describe('Optional note for organization.'),
+    },
+  },
+  edit_dictionary_entry: {
+    description: 'Edit an existing dictionary entry.',
+    schema: {
+      id: z.string().describe('The entry ID to edit.'),
+      pattern: z.string().optional().describe('New word, phrase, or regex pattern.'),
+      label: z.string().optional().describe('New replacement label.'),
+      isRegex: z.boolean().optional().describe('Whether the pattern is a regular expression.'),
+      enabled: z.boolean().optional().describe('Whether the entry is enabled.'),
+      note: z.string().optional().describe('Optional note.'),
+    },
+  },
+  delete_dictionary_entry: {
+    description: 'Delete a dictionary entry by ID.',
+    schema: {
+      id: z.string().describe('The entry ID to delete.'),
+    },
+  },
+  toggle_dictionary_entry: {
+    description: 'Enable or disable a dictionary entry without deleting it.',
+    schema: {
+      id: z.string().describe('The entry ID to toggle.'),
+    },
+  },
 };
 
 // ── Prompt templates ────────────────────────────────────────────────────────────
 
 const PROMPT_DEFS = [
-//   {
-//     name: 'quickprompt:privacy-mask',
-//     description: 'Guide the AI to mask sensitive data in text before using it in a prompt.',
-//     arguments: [
-//       {
-//         name: 'text',
-//         description: 'The text containing sensitive information to mask.',
-//         required: true,
-//       },
-//     ],
-//   },
+  {
+    name: 'quickprompt:privacy-mask',
+    description: 'Guide the AI to mask sensitive data in text before using it in a prompt.',
+    arguments: [
+      {
+        name: 'text',
+        description: 'The text containing sensitive information to mask.',
+        required: true,
+      },
+    ],
+  },
   {
     name: 'quickprompt:organize-prompts',
     description: 'Guide the AI to review and organize prompts — clean up duplicates, improve titles, and pin frequently used ones.',
@@ -309,17 +309,17 @@ Array of: \`{ id, pattern, isRegex, label, enabled, note, createdAt, updatedAt }
 4. **Privacy first** — when handling user content, always offer to mask sensitive data before sharing.
 5. **Backup on corruption** — if prompts.json is corrupted, the system auto-recovers from backup.
 
-// ---
-// 
-// ## 3. Privacy Masking Patterns
-// 
-// The following sensitive data types are automatically detected and masked:
-// - Email addresses, phone numbers, IP addresses (v4 & v6)
-// - Credit card numbers, Social Security Numbers
-// - API keys and tokens (Bearer, AWS, GitHub, Slack, Stripe, etc.)
-// - URLs with credentials, JWT tokens
-// - Private keys (PEM format), passwords in connection strings
-// - Custom dictionary words (user-defined, highest priority)
+---
+
+## 3. Privacy Masking Patterns
+
+The following sensitive data types are automatically detected and masked:
+- Email addresses, phone numbers, IP addresses (v4 & v6)
+- Credit card numbers, Social Security Numbers
+- API keys and tokens (Bearer, AWS, GitHub, Slack, Stripe, etc.)
+- URLs with credentials, JWT tokens
+- Private keys (PEM format), passwords in connection strings
+- Custom dictionary words (user-defined, highest priority)
 
 ---
 
@@ -338,11 +338,11 @@ Array of: \`{ id, pattern, isRegex, label, enabled, note, createdAt, updatedAt }
 3. \`apply_version\` — restore a previous version
 4. \`delete_version\` — remove unneeded versions
 
-// ### Privacy Protection
-// 1. \`mask_text\` — mask sensitive data in text
-// 2. \`unmask_text\` — reverse masking (restore original)
-// 3. \`add_dictionary_entry\` — add custom words to mask
-// 4. \`list_dictionary\` — review masking dictionary
+### Privacy Protection
+1. \`mask_text\` — mask sensitive data in text
+2. \`unmask_text\` — reverse masking (restore original)
+3. \`add_dictionary_entry\` — add custom words to mask
+4. \`list_dictionary\` — review masking dictionary
 `;
 
 // ── QuickPromptMCPServer ───────────────────────────────────────────────────────
@@ -355,12 +355,12 @@ export class QuickPromptMCPServer {
   // Core managers
   private promptManager?: PromptManager;
   private versionManager?: VersionManager;
-  // private privacyManager?: PrivacyManager;
+  private privacyManager?: PrivacyManager;
 
   // Tool handlers
   private promptTools?: PromptTools;
   private versionTools?: VersionTools;
-  // private privacyTools?: PrivacyTools;
+  private privacyTools?: PrivacyTools;
 
   constructor(workspaceRoot?: string) {
     this.server = new Server(
@@ -404,12 +404,12 @@ export class QuickPromptMCPServer {
     // Initialize core managers
     this.promptManager = new PromptManager(this.workspaceRoot);
     this.versionManager = new VersionManager(this.workspaceRoot);
-    // this.privacyManager = new PrivacyManager(this.workspaceRoot);
+    this.privacyManager = new PrivacyManager(this.workspaceRoot);
 
     // Initialize tool handlers
     this.promptTools = new PromptTools(this.promptManager, this.versionManager);
     this.versionTools = new VersionTools(this.versionManager, this.promptManager);
-    // this.privacyTools = new PrivacyTools(this.privacyManager);
+    this.privacyTools = new PrivacyTools(this.privacyManager);
 
     this.log('info', `Workspace root updated: ${this.workspaceRoot}`);
   }
@@ -535,21 +535,21 @@ export class QuickPromptMCPServer {
         case 'remove_milestone':
           return this.wrap(() => this.versionTools!.removeMilestone(this.parseArgs(TOOL_DEFS.remove_milestone.schema, args)));
 
-//         // ── Privacy ────────────────────────────────────────────────────────
-//         case 'mask_text':
-//           return this.wrap(() => this.privacyTools!.maskText(this.parseArgs(TOOL_DEFS.mask_text.schema, args)));
-//         case 'unmask_text':
-//           return this.wrap(() => this.privacyTools!.unmaskText(this.parseArgs(TOOL_DEFS.unmask_text.schema, args)));
-//         case 'list_dictionary':
-//           return this.wrap(() => this.privacyTools!.listDictionary());
-//         case 'add_dictionary_entry':
-//           return this.wrap(() => this.privacyTools!.addDictionaryEntry(this.parseArgs(TOOL_DEFS.add_dictionary_entry.schema, args)));
-//         case 'edit_dictionary_entry':
-//           return this.wrap(() => this.privacyTools!.editDictionaryEntry(this.parseArgs(TOOL_DEFS.edit_dictionary_entry.schema, args)));
-//         case 'delete_dictionary_entry':
-//           return this.wrap(() => this.privacyTools!.deleteDictionaryEntry(this.parseArgs(TOOL_DEFS.delete_dictionary_entry.schema, args)));
-//         case 'toggle_dictionary_entry':
-//           return this.wrap(() => this.privacyTools!.toggleDictionaryEntry(this.parseArgs(TOOL_DEFS.toggle_dictionary_entry.schema, args)));
+        // ── Privacy ────────────────────────────────────────────────────────
+        case 'mask_text':
+          return this.wrap(() => this.privacyTools!.maskText(this.parseArgs(TOOL_DEFS.mask_text.schema, args)));
+        case 'unmask_text':
+          return this.wrap(() => this.privacyTools!.unmaskText(this.parseArgs(TOOL_DEFS.unmask_text.schema, args)));
+        case 'list_dictionary':
+          return this.wrap(() => this.privacyTools!.listDictionary());
+        case 'add_dictionary_entry':
+          return this.wrap(() => this.privacyTools!.addDictionaryEntry(this.parseArgs(TOOL_DEFS.add_dictionary_entry.schema, args)));
+        case 'edit_dictionary_entry':
+          return this.wrap(() => this.privacyTools!.editDictionaryEntry(this.parseArgs(TOOL_DEFS.edit_dictionary_entry.schema, args)));
+        case 'delete_dictionary_entry':
+          return this.wrap(() => this.privacyTools!.deleteDictionaryEntry(this.parseArgs(TOOL_DEFS.delete_dictionary_entry.schema, args)));
+        case 'toggle_dictionary_entry':
+          return this.wrap(() => this.privacyTools!.toggleDictionaryEntry(this.parseArgs(TOOL_DEFS.toggle_dictionary_entry.schema, args)));
 
         default:
           return {
@@ -567,30 +567,30 @@ export class QuickPromptMCPServer {
     this.server.setRequestHandler(GetPromptRequestSchema, async (req) => {
       const { name, arguments: args } = req.params;
       switch (name) {
-//         case 'quickprompt:privacy-mask': {
-//           const text = args?.text ?? '<paste your text here>';
-//           return {
-//             description: PROMPT_DEFS[0].description,
-//             messages: [
-//               {
-//                 role: 'user',
-//                 content: {
-//                   type: 'text',
-//                   text: [
-//                     'Please mask any sensitive data in the following text using QuickPrompt privacy tools.',
-//                     '',
-//                     'Steps:',
-//                     '1. Call `mask_text` with the provided text.',
-//                     '2. Show the masked result and summarize what was masked.',
-//                     '3. Offer to add any new patterns to the privacy dictionary.',
-//                     '',
-//                     `Text to mask:\n${text}`,
-//                   ].join('\n'),
-//                 },
-//               },
-//             ],
-//           };
-//         }
+        case 'quickprompt:privacy-mask': {
+          const text = args?.text ?? '<paste your text here>';
+          return {
+            description: PROMPT_DEFS[0].description,
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: [
+                    'Please mask any sensitive data in the following text using QuickPrompt privacy tools.',
+                    '',
+                    'Steps:',
+                    '1. Call `mask_text` with the provided text.',
+                    '2. Show the masked result and summarize what was masked.',
+                    '3. Offer to add any new patterns to the privacy dictionary.',
+                    '',
+                    `Text to mask:\n${text}`,
+                  ].join('\n'),
+                },
+              },
+            ],
+          };
+        }
         case 'quickprompt:organize-prompts': {
           return {
             description: PROMPT_DEFS[1].description,

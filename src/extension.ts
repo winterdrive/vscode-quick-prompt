@@ -6,6 +6,8 @@ import { ClipboardManager } from './clipboardManager';
 import { PromptHoverProvider } from './promptHoverProvider';
 import { I18n } from './i18n';
 import { registerPromptCommands, registerClipboardCommands, registerVersionCommands } from './commands';
+import { registerPrivacyCommands } from './commands/privacyCommands';
+import { MaskingEngine } from './privacy/maskingEngine';
 import { AIEngine } from './ai/aiEngine';
 import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
@@ -22,6 +24,10 @@ export async function activate(context: vscode.ExtensionContext) {
     aiEngine.initialize(context).catch(err => {
         console.error('[Extension] AI Engine initialization failed:', err);
     });
+
+    // Initialize Privacy Protection (v0.3.0)
+    const maskingEngine = MaskingEngine.getInstance(context);
+    console.log('[Extension] Privacy protection initialized');
 
     // Initialize version history service
     const versionHistoryService = new VersionHistoryService(context);
@@ -49,6 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
     registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService);
     registerVersionCommands(context, promptProvider, versionHistoryService);
+    registerPrivacyCommands(context, maskingEngine);
 
     // Register MCP commands
     context.subscriptions.push(

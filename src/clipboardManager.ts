@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { CLIPBOARD_CONSTANTS } from './utils/constants';
+import { MaskingEngine } from './privacy/maskingEngine';
 
 export interface ClipboardHistoryItem {
     id: string;              // 唯一識別碼
@@ -207,21 +208,54 @@ export class ClipboardManager {
         const config = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
         const maxItems = config.get<number>('maxItems', 20);
 
+        // === v0.3.0: 隱私保護功能 ===
+        let processedContent = content;
+        let originalContent = content;
+        let maskingApplied = false;
+        
+        // 檢查是否啟用自動遮罩
+        const privacyConfig = vscode.workspace.getConfiguration('quickPrompt.privacy');
+        const privacyEnabled = privacyConfig.get<boolean>('enabled', true);
+        const autoMask = privacyConfig.get<boolean>('autoMask', true);
+        
+        if (privacyEnabled && autoMask) {
+            try {
+                const maskingEngine = MaskingEngine.getInstance();
+                const result = await maskingEngine.maskText(content, {
+                    enablePatterns: true,
+                    enableNER: false,  // Phase 1: 只啟用 Pattern
+                    enableDictionary: false,
+                    storeSecurely: true
+                });
+                
+                if (result.tokens.length > 0) {
+                    processedContent = result.maskedText;
+                    maskingApplied = true;
+                    
+                    console.log(`[ClipboardManager] Auto-masked ${result.tokens.length} sensitive items`);
+                }
+            } catch (error) {
+                console.error('[ClipboardManager] Privacy masking failed:', error);
+                // 錯誤時使用原始內容（安全優先）
+                processedContent = content;
+            }
+        }
+
         // 建立新項目
         const newItem: ClipboardHistoryItem = {
             id: this.generateId(),
-            content: content,
-            preview: this.generatePreview(content),
+            content: processedContent,  // 儲存處理後的內容
+            preview: this.generatePreview(processedContent),
             timestamp: Date.now(),
             source: source,
-            length: content.length
+            length: processedContent.length
         };
 
         // 新增到歷史開頭
         this.history.unshift(newItem);
 
-        // 更新最後剪貼簿內容
-        this.lastClipboard = content;
+        // 更新最後剪貼簿內容（使用原始內容避免重複）
+        this.lastClipboard = originalContent;
 
         // 限制最大筆數
         if (this.history.length > maxItems) {
@@ -231,6 +265,11 @@ export class ClipboardManager {
         // 儲存並通知
         this.saveHistory();
         this._onHistoryChanged.fire();
+        
+        // 如果套用了遮罩，更新剪貼簿為遮罩後的內容
+        if (maskingApplied) {
+            await vscode.env.clipboard.writeText(processedContent);
+        }
     }
 
     /**
