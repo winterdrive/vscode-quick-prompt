@@ -14,7 +14,39 @@ import { VersionHistoryService } from './services/VersionHistoryService';
 import { McpConfigPanel } from './mcp/McpConfigPanel';
 import { SkillGenerator } from './mcp/SkillGenerator';
 
+/**
+ * Deploys the MCP server to a stable path under globalStorageUri, independent of the extension version.
+ * Runs automatically on every activation to ensure the user-configured MCP path always points to the latest version.
+ * @returns The stable path string (with `/` separators), or undefined if deployment fails.
+ */
+async function deployMcpServer(context: vscode.ExtensionContext): Promise<string | undefined> {
+    const sourceFile = vscode.Uri.joinPath(context.extensionUri, 'dist', 'mcp', 'index.js');
+    const targetDir = vscode.Uri.joinPath(context.globalStorageUri, 'mcp');
+    const targetFile = vscode.Uri.joinPath(targetDir, 'index.js');
+
+    try {
+        // Ensure the target directory exists
+        await vscode.workspace.fs.createDirectory(targetDir);
+
+        // Read the MCP server source file
+        const sourceContent = await vscode.workspace.fs.readFile(sourceFile);
+
+        // Write to the stable path, overwriting any previous version
+        await vscode.workspace.fs.writeFile(targetFile, sourceContent);
+
+        console.log(`[QuickPrompt] MCP server deployed to stable path: ${targetFile.fsPath}`);
+        return targetFile.fsPath.replace(/\\/g, '/');
+    } catch (error) {
+        // Deployment failure should not affect the extension's main functionality
+        console.warn('[QuickPrompt] Failed to deploy MCP server to stable path:', error);
+        return undefined;
+    }
+}
+
 export async function activate(context: vscode.ExtensionContext) {
+    // Deploy MCP server to a version-independent stable path
+    const stableMcpPath = await deployMcpServer(context);
+
     // Initialize i18n
     await I18n.initialize(context);
 
@@ -60,7 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register MCP commands
     context.subscriptions.push(
         vscode.commands.registerCommand('quickPrompt.showMcpConfig', () => {
-            McpConfigPanel.show(context.extensionUri);
+            McpConfigPanel.show(context.extensionUri, stableMcpPath);
         }),
         vscode.commands.registerCommand('quickPrompt.generateSkill', () => {
             SkillGenerator.generateSkill(context);
