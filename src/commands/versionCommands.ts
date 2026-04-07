@@ -286,10 +286,13 @@ export async function handleDeleteVersion(
  * Copy version content to clipboard
  */
 export async function handleCopyVersionContent(
-    item: VersionItem
+    item: VersionItem,
+    promptProvider: PromptProvider
 ): Promise<void> {
     try {
-        await vscode.env.clipboard.writeText(item.version.content);
+        let outputText = item.version.content;
+
+        await vscode.env.clipboard.writeText(outputText);
         const label = item.version.milestone?.label || new Date(item.version.timestamp).toLocaleString();
         vscode.window.showInformationMessage(I18n.getMessage('message.versionContentCopied', label));
     } catch (error: any) {

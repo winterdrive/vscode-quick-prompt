@@ -30,7 +30,7 @@
 每一個產生的 Skill 都內建了防呆與安全邏輯，確保 AI 在執行時穩定可靠：
 
 1. **Layer 0: 連線閘門 (Connection Gate)** — 自動透過 `list_prompts` 測試連線。若 MCP 斷線，Agent 會立即觸發 HALT 煞車並詢問用戶是否降級處理。
-2. **Layer 1: 標準 MCP 工具** — 提供 21+ 個優化過的工具，涵蓋 Prompt 的增刪改查、版本歷史與隱私遮罩。
+2. **Layer 1: 標準 MCP 工具** — 提供 14 個優化過的工具，涵蓋 Prompt 的增刪改查與版本歷史。
 3. **Layer 2: 安全驗證** — 在執行敏感操作前進行二次邏輯檢查，確保資料一致性。
 4. **Layer 3: CLI 硬核後備 (Hard Fallback)** — 當 MCP server 無法使用時，Agent 可切換呼叫內建的 `qp.bundle.js` 腳本直接操作資料庫。
 
@@ -65,6 +65,12 @@
 - **🕒 線性歷史**：每次儲存自動建立新版本。
 - **📌 里程碑**：標記穩定版本或重要草稿。
 - **⚖️ 差異比對**：視覺化檢視修改內容。
+
+### 🔒 隱私保護 (Privacy Protection)
+
+- **🔒 遮罩 Prompt**：右鍵點擊任一 Prompt → `Mask Prompt`，敏感資料立即替換為 Token（`[EMAIL-1]`、`[API-KEY-1]`…）。
+- **🔓 解除遮罩**：右鍵 → `Unmask Prompt` 即時還原原始內容。
+- **🔑 OS 加密儲存**：還原對照表存入 VS Code SecretStorage（OS Keychain），以系統加密形式持久保存，不以明文寫入任何檔案。
 
 ## 📸 功能截圖 (AI 生成)
 
@@ -149,6 +155,41 @@
 2. **比較**：點擊任何歷史版本開啟 **Diff View**。
 3. **還原**：右鍵點擊版本並選擇 **套用版本** 來還原。
 4. **里程碑**：將重要版本標記為里程碑（如 "v1.0 正式版"）。
+
+## 🔒 隱私保護 – 使用指南
+
+在內容送往任何 AI 模型前，先遮罩敏感資料。
+
+### 操作流程
+
+1. 新增含敏感資料的 Prompt — 側邊欄顯示**黃色盾牌**警示
+2. 右鍵點擊 → **`Mask Prompt`**
+3. 敏感值被替換為 `[EMAIL-1]`、`[API-KEY-1]` 等 Token；Prompt 顯示**綠色盾牌**
+4. 複製或插入 Prompt — Agent 只會收到 Token，永遠看不到原始值
+5. 右鍵 → **`Unmask Prompt`** 即時還原
+
+> **安全模型**：還原對照表（Token → 原始值）存入 VS Code **SecretStorage**（macOS Keychain / Windows Credential Manager），永遠不寫入 `prompts.json` 或任何磁碟檔案。Unmask 僅限本機，切換電腦後無法還原已遮罩的 Prompt。
+
+### 預設偵測規則
+
+- Email 地址 → `[EMAIL-1]`
+- 電話號碼 → `[PHONE-1]`
+- API 金鑰（AWS、GitHub、OpenAI 等）→ `[API-KEY-1]`
+- IP 位址 → `[IP-ADDRESS-1]`
+- 私鑰 / 憑證 → `[PRIVATE-KEY-1]`
+- 信用卡號 → `[CREDIT-CARD-1]` *(預設關閉)*
+
+### 隱私相關設定
+
+- `quickPrompt.privacy.enabled`：啟用/停用所有隱私功能（預設：`true`）
+- `quickPrompt.privacy.patterns.email`：遮罩 Email（預設：`true`）
+- `quickPrompt.privacy.patterns.phone`：遮罩電話（預設：`true`）
+- `quickPrompt.privacy.patterns.apiKeys`：遮罩 API 金鑰（預設：`true`）
+- `quickPrompt.privacy.patterns.ipAddress`：遮罩 IP 位址（預設：`true`）
+- `quickPrompt.privacy.patterns.privateKey`：遮罩私鑰（預設：`true`）
+- `quickPrompt.privacy.patterns.creditCard`：遮罩信用卡號（預設：`false`）
+
+---
 
 ## ⚙️ 設定
 

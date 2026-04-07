@@ -6,6 +6,12 @@
 
 // ── Prompt ────────────────────────────────────────────────────────────────────
 
+export interface PrivacyMeta {
+    maskedAt: number;   // timestamp
+    types: string[];    // ["EMAIL", "ID_CARD"]
+    // tokenMap is stored in VS Code SecretStorage (OS-encrypted), never on disk
+}
+
 export interface Prompt {
     id: string;
     title: string;
@@ -20,6 +26,8 @@ export interface Prompt {
         totalVersions: number;
         latestVersionId?: string;
     };
+    ignorePrivacyWarning?: boolean;
+    privacyMeta?: PrivacyMeta;
 }
 
 // ── Version History ───────────────────────────────────────────────────────────

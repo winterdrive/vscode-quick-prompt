@@ -29,7 +29,7 @@
 Every generated skill includes a built-in safety logic to ensure stable operation:
 
 1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
-2. **Layer 1: Standard MCP Tools** — Use 21+ optimized tools for CRUD and versioning.
+2. **Layer 1: Standard MCP Tools** — Use 14 optimized tools for CRUD and versioning.
 3. **Layer 2: Safety Verification** — Internal sanity checks across different prompt contexts.
 4. **Layer 3: Hard Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
 
@@ -47,7 +47,7 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ### 🔌 AI Agent Power (New!)
 
-- **🔌 21 MCP Tools**: Complete prompt management suite for AI agents.
+- **🔌 14 MCP Tools**: Complete prompt management suite for AI agents.
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
 - **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
@@ -64,6 +64,12 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 - **🕒 Linear History**: Automatic tracking of every save.
 - **📌 Milestones**: Tag stable versions or important drafts.
 - **⚖️ Visual Diff**: One-click comparison between history and current state.
+
+### 🔒 Privacy Protection
+
+- **🔒 Mask Prompt**: Right-click any prompt → `Mask Prompt`. Sensitive data is replaced with tokens (`[EMAIL-1]`, `[API-KEY-1]`…) in the stored content.
+- **🔓 Unmask**: Right-click a masked prompt → `Unmask Prompt` to restore the original values instantly.
+- **🔑 OS-Encrypted Storage**: The reverse mapping is stored in VS Code SecretStorage (OS Keychain) — persisted in encrypted form by the OS, never written to any plaintext file.
 
 ## 📸 Screenshots (AI Generated)
 
@@ -160,6 +166,41 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 2. **Compare**: Click on any historical version to open the **Diff View**.
 3. **Restore**: Right-click a version and select **Apply Version** to bring it back.
 4. **Milestones**: Tag important versions (like "V1.0 Stable") to keep them safe forever.
+
+## 🔒 Privacy Protection – Usage Guide
+
+Mask sensitive data before it reaches any AI model.
+
+### How It Works
+
+1. Add a prompt containing sensitive data — it shows a **yellow shield** warning
+2. Right-click → **`Mask Prompt`**
+3. Sensitive values are replaced with tokens like `[EMAIL-1]`, `[API-KEY-1]`; the prompt now shows a **green shield**
+4. Copy or insert the prompt — the agent receives only tokens, never the originals
+5. Right-click → **`Unmask Prompt`** to restore original values at any time
+
+> **Security model**: The reverse mapping (token → original value) is stored in VS Code **SecretStorage** (OS Keychain / Windows Credential Manager). It is never written to `prompts.json` or any file on disk. Unmask is machine-local — switching to a different machine means a masked prompt cannot be unmasked.
+
+### Detected Patterns (default on)
+
+- Email addresses → `[EMAIL-1]`
+- Phone numbers → `[PHONE-1]`
+- API keys (AWS, GitHub, OpenAI, etc.) → `[API-KEY-1]`
+- IP addresses → `[IP-ADDRESS-1]`
+- Private keys / certificates → `[PRIVATE-KEY-1]`
+- Credit card numbers → `[CREDIT-CARD-1]` *(default: off)*
+
+### Privacy Settings
+
+- `quickPrompt.privacy.enabled`: Enable/disable all privacy features (default: `true`)
+- `quickPrompt.privacy.patterns.email`: Mask emails (default: `true`)
+- `quickPrompt.privacy.patterns.phone`: Mask phone numbers (default: `true`)
+- `quickPrompt.privacy.patterns.apiKeys`: Mask API keys (default: `true`)
+- `quickPrompt.privacy.patterns.ipAddress`: Mask IP addresses (default: `true`)
+- `quickPrompt.privacy.patterns.privateKey`: Mask private keys (default: `true`)
+- `quickPrompt.privacy.patterns.creditCard`: Mask credit card numbers (default: `false`)
+
+---
 
 ## 📋 Clipboard History
 

@@ -9,7 +9,7 @@ export class ClipboardTreeItem extends vscode.TreeItem {
         super(item.preview, vscode.TreeItemCollapsibleState.None);
 
         const relativeTime = getRelativeTime(item.timestamp);
-        // 使用視覺寬度截斷，確保多語系字元呈現一致寬度 (20 = 約 10 個中文字或 20 個英文字)
+        // 使用視覺寬度截斷，確保多語系字元呈現一致寬度
         this.label = `${item.preview}`;
         this.description = `${relativeTime}`;
         this.tooltip = `${item.content}\n\n${I18n.getMessage('clipboard.source.' + item.source)}\n${I18n.getMessage('clipboard.chars', item.length.toString())}\n${new Date(item.timestamp).toLocaleString()}`;

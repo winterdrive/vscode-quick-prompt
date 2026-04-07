@@ -3,6 +3,8 @@ import { I18n } from './i18n';
 import { ClipboardManager } from './clipboardManager';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { VersionItem } from './treeItems/VersionItem';
+import { PatternEngine } from './privacy/masking/patternEngine';
+import { SecretStorageManager } from './privacy/masking/secretStorage';
 import {
     getPromptIcon,
     sortPrompts,
@@ -14,22 +16,9 @@ import {
     getRelativeTime
 } from './utils';
 
-export interface Prompt {
-    id: string;
-    title: string;
-    content: string;
-    use_count: number;        // 使用次數
-    last_used: string;        // 最後使用時間
-    created_at: string;       // 建立時間
-    pinned?: boolean;         // 是否釘選
-    order?: number;           // 手動排序順序
-    titleSource?: 'user' | 'ai';  // 標題來源
-    // 新增：元數據快取，避免讀取歷史檔案
-    meta?: {
-        totalVersions: number;
-        latestVersionId?: string;
-    };
-}
+// Prompt 與 PrivacyMeta 的唯一來源，從 core/types 統一 re-export
+export type { Prompt, PrivacyMeta } from './core/types';
+import type { Prompt } from './core/types';
 
 // TreeItem 類型 (支援 PromptItem 和 VersionItem)
 export type PromptTreeItem = PromptItem | VersionItem;
@@ -46,8 +35,10 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     private promptsFilePath: string;
     private clipboardManager?: ClipboardManager;
     private versionHistoryService: VersionHistoryService;
+    private secretStorage: SecretStorageManager;
 
     constructor(private context: vscode.ExtensionContext, versionHistoryService?: VersionHistoryService) {
+        this.secretStorage = new SecretStorageManager(context.secrets);
         // 初始化版本歷史服務 (使用傳入的實例，若無則建立新實例 - 但建議由外部傳入以保持單例)
         this.versionHistoryService = versionHistoryService || new VersionHistoryService(context);
         // 注入 PromptProvider 以便 VersionHistoryService 更新 Metadata
@@ -128,7 +119,9 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                     pinned: p.pinned ?? false,
                     titleSource: p.titleSource,
                     order: p.order,
-                    meta: p.meta
+                    meta: p.meta,
+                    ignorePrivacyWarning: p.ignorePrivacyWarning ?? false,
+                    privacyMeta: p.privacyMeta
                 };
             }));
 
@@ -285,6 +278,8 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         if (index !== -1) {
             this.prompts.splice(index, 1);
             await this.savePrompts();
+            await this.versionHistoryService.deleteHistory(item.prompt.id);
+            await this.secretStorage.delete(item.prompt.id);
             await this.refresh();
             vscode.window.setStatusBarMessage(I18n.getMessage('message.promptDeleted', item.prompt.title), 2000);
         }
@@ -316,12 +311,74 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         }
     }
 
+    async maskPromptContent(id: string, maskedContent: string, tokenMap: Record<string, string>): Promise<void> {
+        const prompt = this.prompts.find(p => p.id === id);
+        if (!prompt) { return; }
+
+        const types = [...new Set(
+            Object.keys(tokenMap)
+                .map(label => label.match(/\[([A-Z_]+)-\d+\]/)?.[1])
+                .filter((t): t is string => !!t)
+        )];
+
+        // Store tokenMap in OS-encrypted SecretStorage — never written to disk
+        await this.secretStorage.store(id, tokenMap);
+
+        prompt.content = maskedContent;
+        prompt.privacyMeta = { maskedAt: Date.now(), types };
+        await this.savePrompts();
+        await this.refresh();
+    }
+
+    async unmaskPromptContent(id: string): Promise<boolean> {
+        const prompt = this.prompts.find(p => p.id === id);
+        if (!prompt?.privacyMeta) { return false; }
+
+        const tokenMap = await this.secretStorage.retrieve(id);
+        if (!tokenMap) { return false; }
+
+        let content = prompt.content;
+        for (const [label, original] of Object.entries(tokenMap)) {
+            content = content.split(label).join(original);
+        }
+
+        prompt.content = content;
+        delete prompt.privacyMeta;
+        await this.secretStorage.delete(id);
+        await this.savePrompts();
+        await this.refresh();
+        return true;
+    }
+
     async updatePromptTitle(id: string, title: string): Promise<void> {
         const prompt = this.prompts.find(p => p.id === id);
         if (prompt) {
             prompt.title = title;
             await this.savePrompts();
             await this.refresh();
+        }
+    }
+
+
+    // 將 Prompt 加入安全白名單 (不再顯示警告)
+    async ignorePromptWarning(id: string): Promise<void> {
+        const prompt = this.prompts.find(p => p.id === id);
+        if (prompt) {
+            prompt.ignorePrivacyWarning = true;
+            await this.savePrompts();
+            await this.refresh();
+            vscode.window.setStatusBarMessage(`✅ 防護警示已忽略`, 2000);
+        }
+    }
+
+    // 重新啟用安全警告
+    async restorePromptWarning(id: string): Promise<void> {
+        const prompt = this.prompts.find(p => p.id === id);
+        if (prompt) {
+            prompt.ignorePrivacyWarning = false;
+            await this.savePrompts();
+            await this.refresh();
+            vscode.window.setStatusBarMessage(`✅ 隱私防護警示已重新啟用`, 2000);
         }
     }
 
@@ -396,10 +453,35 @@ export class PromptItem extends vscode.TreeItem {
 
         this.tooltip = `${prompt.content}\n\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
 
-        // 根據使用次數設定圖示
+        // 根據使用次數設定圖示 (預設)
         this.iconPath = getPromptIcon(prompt);
         this.contextValue = 'promptItem';
 
+        // 隱私與遮罩狀態判定
+        const hasReversibleMask = !!prompt.privacyMeta;
+        const hasLegacyMaskToken = !hasReversibleMask && PatternEngine.hasMaskedTokens(prompt.content);
+        const hasRawSensitiveData = !hasReversibleMask && !hasLegacyMaskToken && PatternEngine.detect(prompt.content);
 
+        if (hasReversibleMask) {
+            // 狀態 1: 已遮罩 (綠色盾牌)
+            const maskedTypes = prompt.privacyMeta?.types.join(', ') ?? '';
+            const typesLine = maskedTypes ? `\nTypes: ${maskedTypes}` : '';
+            this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("testing.iconPassed"));
+            this.tooltip = `${prompt.content}\n\n🛡️ Sensitive Data Masked${typesLine}\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.contextValue = 'promptItem_protected';
+        } else if (hasLegacyMaskToken) {
+            // 狀態 2: 舊資料已遮罩但缺少對照表 (不可還原)
+            this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
+            this.tooltip = `${prompt.content}\n\n⚠ Masked tokens found, but mapping is missing (cannot unmask)\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.contextValue = 'promptItem_masked_unrestorable';
+        } else if (prompt.ignorePrivacyWarning && hasRawSensitiveData) {
+            // 狀態 3: 使用者選擇忽略警報 (白名單)
+            this.contextValue = 'promptItem_ignored';
+        } else if (hasRawSensitiveData) {
+            // 狀態 4: 含裸露敏感資料，尚未遮罩 (黃色盾牌)
+            this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
+            this.tooltip = `${prompt.content}\n\n⚠ Contains sensitive data (Maskable)\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.contextValue = 'promptItem_maskable';
+        }
     }
 }

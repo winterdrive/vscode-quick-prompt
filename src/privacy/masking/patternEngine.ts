@@ -1,9 +1,10 @@
 /**
  * Pattern-based Masking Engine
- * Quick Prompt v0.3.0 - Privacy Protection
+ * Quick Prompt v0.4.0 - Privacy Protection v2
  */
 
-import { MaskType, PatternDefinition, MaskToken } from '../types';
+import { MaskType, PatternDefinition, PrivacyConfig } from '../types';
+import { MASK_TYPE_SETTING_KEY } from '../patternRegistry';
 
 /**
  * 預定義的正則表達式模式
@@ -155,151 +156,41 @@ export const PREDEFINED_PATTERNS: PatternDefinition[] = [
 ];
 
 /**
- * Pattern Masking Engine
- * 使用正則表達式進行隱私遮罩
+ * Pattern Engine — 靜態工具方法
+ * 實際遮罩邏輯已移至 PatternRegistry
  */
 export class PatternEngine {
-    private patterns: Map<string, PatternDefinition> = new Map();
-    private tokenCounter: Map<MaskType, number> = new Map();
-
-    constructor() {
-        this.initializePatterns();
-    }
-
     /**
-     * 初始化預定義模式
+     * 靜態偵測：檢查文字是否含有任何敏感資訊（不遮罩、不產生 token）
+     * 供 PromptItem 等模組快速判斷是否需要標記敏感警示
+     * config 可選：若傳入則依 settings 開關過濾；不傳則以 hardcode 預設值為準
      */
-    private initializePatterns(): void {
-        PREDEFINED_PATTERNS.forEach(pattern => {
-            this.patterns.set(pattern.name, pattern);
-        });
-    }
-
-    /**
-     * 啟用/停用指定模式
-     */
-    public setPatternEnabled(name: string, enabled: boolean): void {
-        const pattern = this.patterns.get(name);
-        if (pattern) {
-            pattern.enabled = enabled;
-        }
-    }
-
-    /**
-     * 取得所有模式
-     */
-    public getPatterns(): PatternDefinition[] {
-        return Array.from(this.patterns.values());
-    }
-
-    /**
-     * 執行遮罩
-     */
-    public mask(text: string, enabledPatterns?: string[]): { maskedText: string; tokens: MaskToken[] } {
-        const startTime = Date.now();
-        const tokens: MaskToken[] = [];
-        let maskedText = text;
-        
-        // 重置計數器
-        this.tokenCounter.clear();
-
-        // 取得要使用的模式（按優先級排序）
-        const patternsToUse = this.getEnabledPatterns(enabledPatterns);
-        
-        // 為避免重複遮罩，記錄已處理的位置
-        const maskedRanges: Array<{ start: number; end: number }> = [];
-
-        // 按優先級遞增順序處理（優先級低的先處理）
-        patternsToUse.sort((a, b) => b.priority - a.priority);
-
-        for (const pattern of patternsToUse) {
-            const matches = Array.from(maskedText.matchAll(pattern.regex));
-            
-            for (const match of matches) {
-                if (!match.index) continue;
-                
-                const start = match.index;
-                const end = start + match[0].length;
-                
-                // 檢查是否已被遮罩
-                if (this.isOverlapping(start, end, maskedRanges)) {
-                    continue;
-                }
-                
-                // 生成遮罩 token
-                const token = this.createToken(match[0], pattern.type, pattern.label);
-                tokens.push(token);
-                
-                // 替換文字
-                maskedText = maskedText.substring(0, start) + token.maskedValue + maskedText.substring(end);
-                
-                // 記錄已遮罩範圍
-                maskedRanges.push({ start, end });
-                
-                // 調整後續的匹配位置
-                const lengthDiff = token.maskedValue.length - match[0].length;
-                maskedRanges.forEach(range => {
-                    if (range.start > start) {
-                        range.start += lengthDiff;
-                        range.end += lengthDiff;
-                    }
-                });
+    public static detect(text: string, config?: PrivacyConfig): boolean {
+        // 先移除已被遮罩的 Token (例如 [EMAIL-1], [AWS-KEY-5]) 避免重複報警
+        const cleanText = text.replace(/\[[A-Z0-9_-]+-\d+\]/g, '');
+        for (const pattern of PREDEFINED_PATTERNS) {
+            // 若有傳入 config，以 settings 開關決定是否偵測該 type
+            if (config) {
+                const settingKey = MASK_TYPE_SETTING_KEY[pattern.type];
+                const enabled = settingKey !== undefined ? config.patterns[settingKey] : pattern.enabled;
+                if (!enabled) { continue; }
+            } else if (!pattern.enabled) {
+                continue;
+            }
+            // 重新建立 regex 以重置 lastIndex，避免 stateful global regex 誤判
+            const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
+            if (regex.test(cleanText)) {
+                return true;
             }
         }
-
-        return { maskedText, tokens };
+        return false;
     }
 
     /**
-     * 取得啟用的模式
+     * 靜態偵測：檢查文字中是否包含已遮罩的 Token 標記
      */
-    private getEnabledPatterns(enabledPatterns?: string[]): PatternDefinition[] {
-        const patterns = Array.from(this.patterns.values());
-        
-        if (enabledPatterns) {
-            return patterns.filter(p => enabledPatterns.includes(p.name) && p.enabled);
-        }
-        
-        return patterns.filter(p => p.enabled);
-    }
-
-    /**
-     * 檢查範圍是否重疊
-     */
-    private isOverlapping(start: number, end: number, ranges: Array<{ start: number; end: number }>): boolean {
-        return ranges.some(range => {
-            return (start >= range.start && start < range.end) ||
-                   (end > range.start && end <= range.end) ||
-                   (start <= range.start && end >= range.end);
-        });
-    }
-
-    /**
-     * 建立遮罩 Token
-     */
-    private createToken(originalValue: string, type: MaskType, labelTemplate: string): MaskToken {
-        // 取得並遞增計數器
-        const counter = (this.tokenCounter.get(type) || 0) + 1;
-        this.tokenCounter.set(type, counter);
-        
-        // 生成遮罩標籤
-        const maskedValue = labelTemplate.replace('{n}', counter.toString());
-        
-        return {
-            id: this.generateTokenId(),
-            originalValue,
-            maskedValue,
-            type,
-            createdAt: Date.now(),
-            reversible: true
-        };
-    }
-
-    /**
-     * 生成唯一 Token ID
-     */
-    private generateTokenId(): string {
-        return `token_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    public static hasMaskedTokens(text: string): boolean {
+        return /\[[A-Z0-9_-]+-\d+\]/.test(text);
     }
 
     /**

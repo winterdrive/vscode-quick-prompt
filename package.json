@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -117,6 +117,11 @@
                     "default": true,
                     "description": "Enable phone number masking"
                 },
+                "quickPrompt.privacy.patterns.idCard": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable Taiwan ID card number masking"
+                },
                 "quickPrompt.privacy.patterns.apiKeys": {
                     "type": "boolean",
                     "default": true,
@@ -137,60 +142,10 @@
                     "default": true,
                     "description": "Enable private key masking"
                 },
-                "quickPrompt.privacy.ner.modelSize": {
-                    "type": "string",
-                    "enum": [
-                        "small",
-                        "medium",
-                        "large"
-                    ],
-                    "default": "medium",
-                    "description": "NER model size (small: 110MB, medium: 85MB quantized, large: 160MB quantized)"
-                },
-                "quickPrompt.privacy.ner.quantized": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Use quantized models to reduce memory usage (recommended)"
-                },
-                "quickPrompt.privacy.ner.languages": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": [
-                            "en",
-                            "zh",
-                            "ja",
-                            "ko",
-                            "multi"
-                        ]
-                    },
-                    "default": [
-                        "en",
-                        "zh"
-                    ],
-                    "description": "Supported languages for NER"
-                },
-                "quickPrompt.privacy.ner.confidenceThreshold": {
-                    "type": "number",
-                    "default": 0.85,
-                    "minimum": 0.5,
-                    "maximum": 1,
-                    "description": "Minimum confidence score for NER detection (0.5-1.0)"
-                },
-                "quickPrompt.privacy.ner.useWorker": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Use WebWorker for NER processing to avoid blocking UI"
-                },
-                "quickPrompt.privacy.dictionaryPath": {
-                    "type": "string",
-                    "default": ".vscode/privacy-dictionary.json",
-                    "description": "Path to custom privacy dictionary file"
-                },
                 "quickPrompt.privacy.ui.showNotification": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Show notification when sensitive information is masked"
+                    "default": false,
+                    "description": "Show popup notification when sensitive information is masked (status bar message is always shown)"
                 },
                 "quickPrompt.privacy.ui.maskLabel": {
                     "type": "string",
@@ -200,26 +155,7 @@
                 "quickPrompt.privacy.ui.highlightColor": {
                     "type": "string",
                     "default": "#ff6b6b",
-                    "description": "Color for highlighting masked items"
-                },
-                "quickPrompt.privacy.cache.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable caching for masking results"
-                },
-                "quickPrompt.privacy.cache.maxSize": {
-                    "type": "number",
-                    "default": 100,
-                    "minimum": 10,
-                    "maximum": 1000,
-                    "description": "Maximum number of cached masking results"
-                },
-                "quickPrompt.privacy.cache.ttl": {
-                    "type": "number",
-                    "default": 300000,
-                    "minimum": 60000,
-                    "maximum": 3600000,
-                    "description": "Cache time-to-live in milliseconds (default: 5 minutes)"
+                    "description": "Color for highlighting masked items in preview"
                 }
             }
         },
@@ -360,56 +296,6 @@
                 "icon": "$(close)"
             },
             {
-                "command": "quickPrompt.maskClipboard",
-                "title": "Quick Prompt: Mask Clipboard",
-                "icon": "$(lock)"
-            },
-            {
-                "command": "quickPrompt.unmaskClipboard",
-                "title": "Quick Prompt: Unmask Clipboard",
-                "icon": "$(unlock)"
-            },
-            {
-                "command": "quickPrompt.previewMasking",
-                "title": "Quick Prompt: Preview Privacy Masking",
-                "icon": "$(eye)"
-            },
-            {
-                "command": "quickPrompt.addToPrivacyDictionary",
-                "title": "Quick Prompt: Add to Privacy Dictionary",
-                "icon": "$(add)"
-            },
-            {
-                "command": "quickPrompt.managePrivacyDictionary",
-                "title": "Quick Prompt: Manage Privacy Dictionary",
-                "icon": "$(list-unordered)"
-            },
-            {
-                "command": "quickPrompt.clearMaskMappings",
-                "title": "Quick Prompt: Clear All Mask Mappings",
-                "icon": "$(clear-all)"
-            },
-            {
-                "command": "quickPrompt.showMaskingReport",
-                "title": "Quick Prompt: Show Masking Report",
-                "icon": "$(graph)"
-            },
-            {
-                "command": "quickPrompt.cleanupExpiredMasks",
-                "title": "Quick Prompt: Cleanup Expired Masks",
-                "icon": "$(trash)"
-            },
-            {
-                "command": "quickPrompt.nerModelStatus",
-                "title": "Quick Prompt: NER Model Status",
-                "icon": "$(info)"
-            },
-            {
-                "command": "quickPrompt.nerClearCache",
-                "title": "Quick Prompt: Clear NER Cache",
-                "icon": "$(clear-all)"
-            },
-            {
                 "command": "promptSniper.deleteVersion",
                 "title": "%command.deleteVersion.title%",
                 "icon": "$(trash)"
@@ -421,15 +307,35 @@
             },
             {
                 "command": "quickPrompt.showMcpConfig",
-                "title": "Quick Prompt: Show MCP Config",
+                "title": "Show MCP Config",
                 "category": "Quick Prompt",
                 "icon": "$(server-environment)"
             },
             {
                 "command": "quickPrompt.generateSkill",
-                "title": "Quick Prompt: Generate Skill File",
+                "title": "Generate Skill File",
                 "category": "Quick Prompt",
                 "icon": "$(file-code)"
+            },
+            {
+                "command": "promptSniper.maskPrompt",
+                "title": "Mask Prompt",
+                "icon": "$(shield)"
+            },
+            {
+                "command": "promptSniper.unmaskPrompt",
+                "title": "Unmask Prompt",
+                "icon": "$(unlock)"
+            },
+            {
+                "command": "promptSniper.ignorePromptWarning",
+                "title": "Ignore Privacy Warning",
+                "icon": "$(close)"
+            },
+            {
+                "command": "promptSniper.restorePromptWarning",
+                "title": "Restore Privacy Warning",
+                "icon": "$(eye)"
             }
         ],
         "keybindings": [
@@ -475,32 +381,32 @@
             "view/item/context": [
                 {
                     "command": "promptSniper.insert",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "inline@1"
                 },
                 {
                     "command": "promptSniper.togglePin",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "inline@2"
                 },
                 {
                     "command": "promptSniper.editPrompt",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "inline@3"
                 },
                 {
                     "command": "promptSniper.deletePrompt",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "inline@4"
                 },
                 {
                     "command": "promptSniper.moveUp",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "navigation@1"
                 },
                 {
                     "command": "promptSniper.moveDown",
-                    "when": "view == promptSniperView && viewItem == promptItem",
+                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "navigation@2"
                 },
                 {
@@ -572,13 +478,33 @@
                     "command": "promptSniper.deleteVersion",
                     "when": "view == promptSniperView && viewItem =~ /versionItem:(history|milestone)/",
                     "group": "9_danger@1"
+                },
+                {
+                    "command": "promptSniper.maskPrompt",
+                    "when": "view == promptSniperView && viewItem == promptItem_maskable",
+                    "group": "3_privacy@1"
+                },
+                {
+                    "command": "promptSniper.ignorePromptWarning",
+                    "when": "view == promptSniperView && viewItem == promptItem_maskable",
+                    "group": "3_privacy@2"
+                },
+                {
+                    "command": "promptSniper.restorePromptWarning",
+                    "when": "view == promptSniperView && viewItem == promptItem_ignored",
+                    "group": "3_privacy@2"
+                },
+                {
+                    "command": "promptSniper.unmaskPrompt",
+                    "when": "view == promptSniperView && viewItem == promptItem_protected",
+                    "group": "3_privacy@1"
                 }
             ],
             "editor/context": [
                 {
                     "command": "promptSniper.silentAdd",
                     "when": "editorHasSelection",
-                    "group": "9_cutcopypaste"
+                    "group": "promptSniper@1"
                 }
             ]
         }
@@ -597,7 +523,6 @@
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
-        "@xenova/transformers": "^2.17.2",
         "zod": "^3.23.8"
     }
 }

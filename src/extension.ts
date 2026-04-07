@@ -6,7 +6,6 @@ import { ClipboardManager } from './clipboardManager';
 import { PromptHoverProvider } from './promptHoverProvider';
 import { I18n } from './i18n';
 import { registerPromptCommands, registerClipboardCommands, registerVersionCommands } from './commands';
-import { registerPrivacyCommands } from './commands/privacyCommands';
 import { MaskingEngine } from './privacy/maskingEngine';
 import { AIEngine } from './ai/aiEngine';
 import { TitleGenerationService } from './services/titleGenerationService';
@@ -85,9 +84,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register all commands (pass aiEngine and title services)
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
-    registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService);
+    registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService, maskingEngine);
     registerVersionCommands(context, promptProvider, versionHistoryService);
-    registerPrivacyCommands(context, maskingEngine);
 
     // Register MCP commands
     context.subscriptions.push(

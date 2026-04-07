@@ -4,6 +4,35 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.2] - 2026-04-07
+
+### 🔒 Privacy v2 – Secure Storage Redesign
+
+A fundamental redesign of the privacy masking architecture. The token mapping (the data needed to reverse a mask) is now stored in VS Code's **SecretStorage** — OS-level encrypted storage (macOS Keychain, Windows Credential Manager, Linux libsecret) — instead of `prompts.json`. Sensitive data no longer touches the file system in any form.
+
+**Breaking changes:**
+
+- `privacy-dictionary.json` and the custom dictionary feature have been removed. Pattern toggles are still available in Settings.
+- MCP tools `mask_text`, `unmask_text`, `list_dictionary`, `add_dictionary_entry`, `edit_dictionary_entry`, `delete_dictionary_entry`, and `toggle_dictionary_entry` have been **removed**. The MCP server now exposes 14 tools (prompt CRUD + version history only). Privacy masking is a VS Code-side operation and must not be exposed to external agents by design.
+- The "Preview Privacy Masking" WebView panel has been removed.
+- The Unmask right-click action no longer shows a confirmation dialog.
+
+**What changed:**
+
+- `prompts.json` entries that are masked now store only `maskedAt` and `types` in `privacyMeta` — the `tokenMap` field is gone from disk entirely.
+- Deleting a prompt now also cleans up its SecretStorage entry (in addition to the history file fix from v0.3.1).
+- **Limitation**: Unmask is machine-local. If you open the same workspace on a different machine, a masked prompt cannot be unmasked (the OS keychain does not roam).
+
+---
+
+## [0.3.1] - 2026-04-06
+
+### 🛡️ Privacy Protection - Bug Fix
+
+- **Clipboard masking scope corrected**: Sensitive data masking now applies only at the prompt insertion layer, not at clipboard capture time. Previously, content copied to the clipboard was silently overwritten with a masked version, making the original irretrievable. The clipboard history now always stores the original content, and masking is applied on-demand when inserting into a prompt.
+
+---
+
 ## [0.3.0] - 2026-03-19
 
 ### 🔌 AI Agent Integration (MCP) - Major Update
@@ -15,6 +44,29 @@ This release brings full **Model Context Protocol (MCP)** support, allowing AI a
 - **Skill Generator**: Easily generate tailored skill files for Cursor (.mdc), Copilot, Claude, Antigravity, Kiro, and Cline.
 - **CLI Fallback Bundle**: Includes a self-contained `qp.bundle.js` as a "Hard Fallback" mechanism if the MCP server is disconnected.
 - **Enhanced MCP Config Panel**: A new interactive Webview UI for easy setup with support for multi-root workspaces and dynamic folder variables.
+
+### 🔒 Privacy Protection (New!)
+
+Protect sensitive information before it leaves your machine — mask data in clipboard or editor text before feeding it to any AI model.
+
+- **Mask Clipboard** (`Quick Prompt: Mask Clipboard`): Detects and replaces sensitive data in the clipboard with reversible tokens (e.g., `[EMAIL-1]`, `[API-KEY-1]`).
+- **Unmask Clipboard** (`Quick Prompt: Unmask Clipboard`): Restores the original values from secure session storage.
+- **Preview Masking** (`Quick Prompt: Preview Masking`): Interactive WebView showing exactly what would be masked in the selected text before you commit.
+- **Custom Dictionary** (`Quick Prompt: Manage Privacy Dictionary`): Add your own exact-match or regex patterns. Select text and run `Quick Prompt: Add to Privacy Dictionary` to register it instantly.
+- **Masking Report** (`Quick Prompt: Show Masking Report`): Statistics on total masks, cache hit rate, and NER model state.
+
+**Pattern Coverage (enabled by default):**
+
+| Pattern | Setting Key |
+| ------- | ----------- |
+| Email addresses | `quickPrompt.privacy.patterns.email` |
+| Phone numbers | `quickPrompt.privacy.patterns.phone` |
+| API keys (AWS, GitHub, OpenAI…) | `quickPrompt.privacy.patterns.apiKeys` |
+| IP addresses | `quickPrompt.privacy.patterns.ipAddress` |
+| Private keys / certificates | `quickPrompt.privacy.patterns.privateKey` |
+| Credit card numbers | `quickPrompt.privacy.patterns.creditCard` (default: off) |
+
+**NER Support (Optional):** Enable AI-powered named entity detection for names, organizations, and locations via `quickPrompt.privacy.ner.*` settings (requires model download).
 
 ### 🛡️ Optimization & Bug Fixes
 

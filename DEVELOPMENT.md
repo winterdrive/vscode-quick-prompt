@@ -97,11 +97,22 @@ QuickPrompt/
 │   ├── mcp/               # Model Context Protocol module
 │   │   ├── SkillGenerator.ts # Generates AI Agent skill files (.mdc, etc.)
 │   │   └── McpConfigPanel.ts # Webview for MCP configuration
+│   ├── privacy/           # Privacy protection module
+│   │   ├── maskingEngine.ts  # Core masking orchestrator (pattern-based)
+│   │   ├── patternRegistry.ts # Unified pattern registry with priority-based matching
+│   │   ├── types.ts          # Shared privacy types (MaskingResult, MaskToken, etc.)
+│   │   └── masking/
+│   │       ├── patternEngine.ts  # Regex-based sensitive data detection (18 patterns)
+│   │       └── secretStorage.ts  # OS-encrypted tokenMap store (VS Code SecretStorage)
+│   ├── commands/
+│   │   └── versionCommands.ts # Version history command handlers
+│   ├── core/
+│   │   └── PrivacyManager.ts  # High-level privacy facade used by MCP server (core only)
 │   ├── extension.ts       # Extension entry (activate/deactivate)
 │   ├── promptProvider.ts  # TreeDataProvider implementation
 │   ├── promptFileSystem.ts # Virtual file system for editing prompts
 │   ├── commands.ts        # Command handlers
-│   ├── clipboardManager.ts # Clipboard history tracking
+│   ├── clipboardManager.ts # Clipboard history tracking (stores original content; masking is applied at prompt insertion layer)
 │   └── i18n.ts           # Internationalization utility
 ├── mcp-server/            # MCP Server source code
 │   ├── src/
@@ -120,19 +131,23 @@ QuickPrompt/
 
 ### Module Responsibilities
 
-| Module File                | Description                                         | Main Class/Interface        |
-| -------------------------- | --------------------------------------------------- | --------------------------- |
-| `extension.ts`             | Extension lifecycle management, command registration | `activate()`, `deactivate()` |
-| `src/mcp/SkillGenerator.ts`| Generates AI Agent skills with 4-layer action tree  | `SkillGenerator`            |
-| `src/mcp/McpConfigPanel.ts`| Webview for easy agent-specific MCP configuration    | `McpConfigPanel`            |
-| `mcp-server/index.ts`      | MCP Server exposing 21 tools for LLM interaction    | `McpServer`                 |
-| `qp-entry.ts`              | CLI entry for direct DB access (fallback mechanism)  | `QuickPromptCLI`            |
-| `promptProvider.ts`        | Implements `TreeDataProvider`, manages prompt data  | `PromptProvider`, `PromptItem` |
-| `promptFileSystem.ts`      | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider`  |
-| `ai/aiEngine.ts`           | Local AI inference using Transformers.js and Qwen1.5-0.5B | `AIEngine`                  |
-| `commands.ts`              | Command handlers for prompt and clipboard operations | Various handler functions   |
-| `clipboardManager.ts`      | Automatic clipboard history tracking                | `ClipboardManager`          |
-| `i18n.ts`                  | Internationalization utility, loads language files  | `I18n`                      |
+| Module File | Description | Main Class/Interface |
+| --- | --- | --- |
+| `extension.ts` | Extension lifecycle management, command registration | `activate()`, `deactivate()` |
+| `src/mcp/SkillGenerator.ts` | Generates AI Agent skills with 4-layer action tree | `SkillGenerator` |
+| `src/mcp/McpConfigPanel.ts` | Webview for easy agent-specific MCP configuration | `McpConfigPanel` |
+| `mcp-server/index.ts` | MCP Server exposing 14 tools for LLM interaction (prompt CRUD + version history) | `McpServer` |
+| `qp-entry.ts` | CLI entry for direct DB access (fallback mechanism) | `QuickPromptCLI` |
+| `promptProvider.ts` | Implements `TreeDataProvider`, manages prompt data | `PromptProvider`, `PromptItem` |
+| `promptFileSystem.ts` | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider` |
+| `ai/aiEngine.ts` | Local AI inference using Transformers.js and Qwen1.5-0.5B | `AIEngine` |
+| `commands.ts` | Command handlers for prompt and clipboard operations | Various handler functions |
+| `privacy/maskingEngine.ts` | Orchestrates pattern-based masking via PatternRegistry | `MaskingEngine` |
+| `privacy/masking/patternEngine.ts` | Regex-based detection for emails, API keys, IPs, phone numbers, etc. (18 patterns) | `PatternEngine` |
+| `privacy/masking/secretStorage.ts` | Per-prompt OS-encrypted tokenMap store via VS Code SecretStorage | `SecretStorageManager` |
+| `core/PrivacyManager.ts` | Synchronous privacy facade used by MCP server (no vscode dependency) | `PrivacyManager` |
+| `clipboardManager.ts` | Clipboard history tracking; stores original content without masking | `ClipboardManager` |
+| `i18n.ts` | Internationalization utility, loads language files | `I18n` |
 
 ### Core Data Flow
 
@@ -214,13 +229,18 @@ npm install --save-dev @types/vscode@^1.75.0
 interface Prompt {
     id: string;           // Unique ID (e.g., "001", "002")
     title: string;        // Prompt title
-    content: string;      // Prompt content
+    content: string;      // Prompt content (tokens if masked, e.g. "[EMAIL-1]")
     use_count: number;    // Usage count
     last_used: string;    // Last used date (ISO format)
     created_at: string;   // Creation date (ISO format)
     pinned?: boolean;     // Whether pinned
     order?: number;       // Manual sort order
     titleSource?: 'user' | 'ai';  // Title origin (user-entered or AI-generated)
+    privacyMeta?: {
+        maskedAt: number; // Timestamp of masking
+        types: string[];  // Detected types e.g. ["EMAIL", "API_KEY"]
+        // tokenMap is stored in VS Code SecretStorage — never on disk
+    };
 }
 ```
 

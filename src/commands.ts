@@ -10,7 +10,8 @@ import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { VersionItem } from './treeItems/VersionItem';
 import * as versionCommands from './commands/versionCommands';
-
+import { MaskingEngine } from './privacy/maskingEngine';
+import { PatternEngine } from './privacy/masking/patternEngine';
 /**
  * Register all prompt-related commands
  */
@@ -75,6 +76,66 @@ export function registerPromptCommands(
         })
     );
 
+    // 實體遮罩 (Mask)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.maskPrompt', async (item: PromptItem) => {
+            if (!item?.prompt?.id) { return; }
+            const engine = MaskingEngine.getInstance(context);
+            const result = await engine.maskText(item.prompt.content, {
+                enablePatterns: true,
+                silent: true
+            });
+            if (result.tokens.length === 0) {
+                vscode.window.setStatusBarMessage(`防護引擎未運作：未找到可遮罩的項目，或功能已關閉`, 3000);
+                return;
+            }
+            // 建立 tokenMap：{ "[EMAIL-1]": "user@real.com" }
+            const tokenMap: Record<string, string> = {};
+            for (const token of result.tokens) {
+                tokenMap[token.maskedValue] = token.originalValue;
+            }
+            await promptProvider.maskPromptContent(item.prompt.id, result.maskedText, tokenMap);
+            vscode.window.setStatusBarMessage(`🔒 已實體遮罩 ${result.tokens.length} 處機密資訊`, 3000);
+        })
+    );
+
+    // 實體還原 (Unmask)
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.unmaskPrompt', async (item: PromptItem) => {
+            if (!item?.prompt?.id) { return; }
+            if (!item.prompt.privacyMeta) {
+                const hasLegacyMask = PatternEngine.hasMaskedTokens(item.prompt.content);
+                vscode.window.setStatusBarMessage(
+                    hasLegacyMask
+                        ? `此項目僅有遮罩標記，缺少對照表，無法還原`
+                        : `找不到遮罩對照表，無法還原`,
+                    3000
+                );
+                return;
+            }
+            const success = await promptProvider.unmaskPromptContent(item.prompt.id);
+            vscode.window.setStatusBarMessage(success ? `🔓 內容已成功還原為原始明碼` : `還原失敗`, 3000);
+        })
+    );
+
+    // 忽略 Prompt 隱私警告
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.ignorePromptWarning', async (item: PromptItem) => {
+            if (item?.prompt?.id) {
+                await promptProvider.ignorePromptWarning(item.prompt.id);
+            }
+        })
+    );
+
+    // 重新啟用 Prompt 隱私警告
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.restorePromptWarning', async (item: PromptItem) => {
+            if (item?.prompt?.id) {
+                await promptProvider.restorePromptWarning(item.prompt.id);
+            }
+        })
+    );
+
     // 釘選/取消釘選 Prompt
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.togglePin', async (item: PromptItem) => {
@@ -121,7 +182,8 @@ export function registerClipboardCommands(
     clipboardManager: ClipboardManager,
     fileSystemProvider: PromptFileSystemProvider,
     aiEngine: AIEngine,
-    titleGenService: TitleGenerationService
+    titleGenService: TitleGenerationService,
+    maskingEngine?: MaskingEngine
 ): void {
     // 複製剪貼簿歷史項目
     context.subscriptions.push(
@@ -219,7 +281,7 @@ export function registerVersionCommands(
     // Copy version content
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.copyVersionContent', async (item: VersionItem) => {
-            await versionCommands.handleCopyVersionContent(item);
+            await versionCommands.handleCopyVersionContent(item, promptProvider);
         })
     );
 }

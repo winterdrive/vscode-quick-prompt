@@ -160,22 +160,6 @@ export interface PatternDefinition {
 }
 
 /**
- * NER 設定
- */
-export interface NERConfig {
-    /** 模型大小 */
-    modelSize: 'small' | 'medium' | 'large';
-    /** 是否使用量化模型 */
-    quantized: boolean;
-    /** 支援的語言 */
-    languages: ('en' | 'zh' | 'ja' | 'ko' | 'multi')[];
-    /** 信心分數門檻 */
-    confidenceThreshold: number;
-    /** 是否使用 WebWorker */
-    useWorker: boolean;
-}
-
-/**
  * 隱私保護設定
  */
 export interface PrivacyConfig {
@@ -183,35 +167,23 @@ export interface PrivacyConfig {
     enabled: boolean;
     /** 是否自動遮罩 */
     autoMask: boolean;
-    
+
     /** Pattern Masking 設定 */
     patterns: {
         email: boolean;
         phone: boolean;
+        idCard: boolean;
         apiKeys: boolean;
         creditCard: boolean;
         ipAddress: boolean;
         privateKey: boolean;
     };
-    
-    /** NER 設定 */
-    ner: NERConfig;
-    
-    /** 自訂字典路徑 */
-    dictionaryPath: string;
-    
+
     /** UI 設定 */
     ui: {
         showNotification: boolean;
         maskLabel: string;
         highlightColor: string;
-    };
-    
-    /** 快取設定 */
-    cache: {
-        enabled: boolean;
-        maxSize: number;
-        ttl: number;
     };
 }
 
