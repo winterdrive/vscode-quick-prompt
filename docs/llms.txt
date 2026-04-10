@@ -1,7 +1,7 @@
 # Quick Prompt
-> Quick Prompt is a VS Code extension for managing and reusing prompts for AI assistants (ChatGPT, Copilot, Claude, Gemini) with AI-powered title generation, smart tracking, and workspace isolation.
+> Quick Prompt is a VS Code extension — your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, and track clipboard history without switching windows or breaking flow.
 
-Streamline your AI-assisted coding workflow by integrating a prompt library with clipboard tracking directly in VS Code.
+It combines a persistent snippet library with clipboard history tracking, so the thoughts you have while AI is working are ready to hand off the moment it finishes.
 
 ## Documentation
 - [README](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/README.md): Key features, installation, and basic operations.

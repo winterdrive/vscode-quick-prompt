@@ -1,6 +1,6 @@
 {
-    "extension.displayName": "Quick Prompt - AI 提示詞管理與剪貼簿歷史",
-    "extension.description": "快速管理和使用 Prompt 的 VSCode 擴充功能。組織、搜尋、重用您的 ChatGPT、Copilot、Claude 提示詞。快速複製、智慧追蹤、工作區隔離、剪貼簿歷史。",
+    "extension.displayName": "Quick Prompt - AI 工作時，同步捕捉想法與排隊任務",
+    "extension.description": "AI 時代的 IDE 內建便條紙。Agent 執行任務時，隨手記下下一步想法、暫存可重用片段、追蹤剪貼簿歷史——無需切換視窗，不中斷你的思維流。",
     "view.container.title": "Quick Prompt",
     "view.prompts.name": "Prompts",
     "view.clipboard.name": "剪貼簿歷史",

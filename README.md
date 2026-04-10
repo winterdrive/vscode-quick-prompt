@@ -1,4 +1,4 @@
-# Quick Prompt – AI Prompt Manager & Clipboard History for VS Code
+# Quick Prompt – Capture Ideas & Queue Tasks While AI Works
 
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
@@ -12,7 +12,9 @@
 
 ## 🚀 What is Quick Prompt?
 
-**Quick Prompt is a VS Code extension that helps developers manage, organize, and instantly access AI prompts and clipboard history.** It combines a **prompt library** with **clipboard tracking**, allowing you to build a personalized database of high-quality prompts for ChatGPT, Copilot, and Claude without switching context.
+**When your AI agent is running, your mind doesn't stop.** Quick Prompt is your **in-IDE scratch pad** — capture next tasks, queue ideas, store reusable snippets — without switching to Notepad++ or breaking your flow.
+
+It combines a **persistent snippet library** with **clipboard history tracking**, so the thoughts you have *while AI is working* are ready to hand off the moment it finishes.
 
 ---
 
@@ -217,7 +219,6 @@ The extension automatically captures clipboard content from:
 - ✅ Deduplication (no repeated entries)
 - ✅ Minimum length filter (default: 10 characters)
 - ✅ Excludes pure numbers
-- ✅ Auto-clean old items (default: 7 days)
 
 ### Managing History
 
@@ -241,7 +242,6 @@ Open VSCode Settings and search for "Quick Prompt":
 - `quickPrompt.clipboardHistory.enablePolling`: Enable background polling (default: `true`)
 - `quickPrompt.clipboardHistory.pollingInterval`: Polling interval in ms (default: `5000`)
 - `quickPrompt.clipboardHistory.minLength`: Minimum content length (default: `10`)
-- `quickPrompt.clipboardHistory.autoCleanDays`: Auto-clean after N days (default: `7`)
 
 #### AI Features
 
@@ -262,31 +262,34 @@ Open VSCode Settings and search for "Quick Prompt":
 
 ## 💡 Best Practices
 
-1. **Save on the Fly**: See a useful prompt? Select and press `Alt+Shift+S`
-2. **Use Clipboard History**: Don't worry about losing copied prompts - they're auto-saved
-3. **Pin Important Ones**: Convert frequently used clipboard items to permanent prompts
-4. **Organize Manually**: Use right-click to arrange prompts in your preferred order
-5. **Version Control**: Add `.vscode/prompts.json` to Git to share with your team
+1. **Queue while waiting**: When AI starts a long task, immediately open Quick Prompt and jot down what comes next — don't lose that thought
+2. **Capture on the fly**: See something worth keeping? Select it and press `Alt+Shift+S` — title is auto-generated
+3. **Let clipboard history be your safety net**: Copy freely; the last 20 items you copied are always retrievable (configurable via `maxItems`)
+4. **Pin your most-reached-for snippets**: Turn clipboard one-offs into permanent entries with one click
+5. **Commit to Git**: Add `.vscode/prompts.json` so the whole team shares the same reusable library
 
 ## 🎯 Use Cases
 
-### For AI Development
+### While AI is Running (Primary Use Case)
 
-- Save frequently used ChatGPT/Copilot/Claude prompts
-- Quick access to debugging prompts
-- Organize code review templates
+- AI is executing task N → you're already thinking about task N+1, N+2
+- Quick-capture your next steps without switching to Notepad++ or breaking focus
+- When the agent finishes, your queue is ready — paste and go
 
-### For Content Creation
+### Reusable Snippets & Templates
 
-- Store writing prompts and templates
-- Quick access to formatting instructions
-- Manage translation prompts
+- Store frequently used code patterns, review checklists, or boilerplate instructions
+- `Alt+P` to search, `Enter` to copy — faster than any file or note app
 
-### For Team Collaboration
+### Privacy-Sensitive Workflows
 
-- Share best prompts via Git
-- Standardize team communication with AI
-- Build a prompt library together
+- Working with client data, API keys, or NDA-covered content?
+- Mask sensitive values before they reach any AI model — unmask locally anytime
+
+### Team Collaboration
+
+- Commit `.vscode/prompts.json` to Git to share reusable snippets with your team
+- Build a shared task-queue vocabulary across the codebase
 
 ---
 
@@ -296,10 +299,10 @@ Open VSCode Settings and search for "Quick Prompt":
 
 **Enhance your AI workflow.**
 
-**Quick Prompt** helps you manage *what* to tell the AI. Pair it with **VirtualTabs** to manage *where* the AI looks.
+**Quick Prompt** keeps your thoughts organized inside the IDE. Pair it with **VirtualTabs** to keep your workspace organized too.
 
-- **Manage Context**: Group related files across directories regardless of location.
-- **AI-Ready**: Create precise file sets to paste into your LLM context.
+- **Quick Prompt**: capture what you're thinking *while* AI works
+- **VirtualTabs**: organize which files belong to which task — across any directory
 
 Get VirtualTabs on [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs)
 
@@ -317,6 +320,6 @@ MIT License
 
 ---
 
-**Enjoy efficient prompt management!** 🚀
+**Stop losing thoughts to window-switching.** 🚀
 
-*Made with ❤️ for AI developers*
+*Made with ❤️ for developers who think faster than their agents run*

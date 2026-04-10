@@ -1,4 +1,4 @@
-# Quick Prompt – VS Code AI 提示詞管理與剪貼簿歷史工具
+# Quick Prompt – AI 工作時，同步捕捉想法與排隊任務
 
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
@@ -12,8 +12,9 @@
 
 ## 🚀 什麼是 Quick Prompt？
 
-**Quick Prompt 是一個協助開發者管理、組織並即時存取 AI 提示詞與剪貼簿歷史的 VS Code 擴充功能。** 它結合了 **提示詞資料庫**
-與 **剪貼簿追蹤**，讓您無需切換視窗，即可為 ChatGPT、Copilot 和 Claude 建立高品質的個人化提示詞庫。
+**AI Agent 在執行任務的時候，你的腦子不會停下來。** Quick Prompt 是你的 **IDE 內建便條紙** ——隨手記下下一步任務、暫存可重用片段、追蹤剪貼簿歷史——不用切換到 Notepad++，不打斷你的思維流。
+
+它結合了**持久化片段庫**與**剪貼簿歷史追蹤**，讓你*在 AI 工作時*產生的想法，在它完成的那一刻就能立即派上用場。
 
 ---
 
@@ -218,21 +219,22 @@
 
 ## 💡 最佳實踐
 
-1. **隨手存**：看到好用的 Prompt，直接選取並按 `Alt+Shift+S` 存起來
-2. **無壓複製**：不用擔心遺失複製過的內容，剪貼簿歷史都會幫您留著
-3. **建立里程碑**：為您的 "黃金 Prompt" 建立版本里程碑，隨時可回溯
-4. **共享協作**：將 `.vscode/prompts.json` 加入 Git，與團隊分享
+1. **等待時排隊**：AI 開始跑長任務時，立刻打開 Quick Prompt，把接下來的想法記下來——別讓靈感溜走
+2. **隨手捕捉**：看到值得留存的內容？選取後按 `Alt+Shift+S`，標題自動生成
+3. **讓剪貼簿歷史當安全網**：放心複製，最近 20 筆複製記錄隨時可撈回（可透過 `maxItems` 調整上限）
+4. **釘選常用片段**：把一次性剪貼簿項目一鍵升格為永久條目
+5. **加入 Git**：提交 `.vscode/prompts.json`，讓整個團隊共享同一份可重用片段庫
 
 ## 🤝 推薦搭配
 
 ### 🗂️ VirtualTabs
 
-**提升您的 AI 工作流程。**
+**降低 AI 協作的認知負荷。**
 
-**Quick Prompt** 幫助您管理*要告訴 AI 什麼*。搭配 **VirtualTabs** 來管理 *AI 要看哪些檔案*。
+**Quick Prompt** 讓你的思緒在 IDE 內保持整齊。搭配 **VirtualTabs** 讓工作區也同樣整齊。
 
-- **管理上下文**：將不同目錄的相關檔案分組，不受位置限制。
-- **AI 就緒**：建立精確的檔案集合，輕鬆貼入 LLM 上下文。
+- **Quick Prompt**：*AI 工作時*，捕捉你腦中正在想的事
+- **VirtualTabs**：跨任何目錄，整理哪些檔案屬於哪個任務
 
 在 [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs) 取得 VirtualTabs
 
@@ -250,6 +252,6 @@ MIT License
 
 ---
 
-**享受高效的 Prompt 管理體驗！** 🚀
+**別再讓切換視窗吃掉你的靈感。** 🚀
 
-*Made with ❤️ for AI developers*
+*Made with ❤️ for developers who think faster than their agents run*

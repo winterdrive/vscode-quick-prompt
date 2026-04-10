@@ -4,6 +4,23 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.3] - 2026-04-10
+
+### 🔄 Product Repositioning — From "Prompt Manager" to "In-IDE Scratch Pad"
+
+No functional changes. This release updates all documentation and marketplace metadata to reflect the tool's true primary use case.
+
+**What changed:**
+
+- **Display name** updated: `Quick Prompt - AI Prompt Manager & Clipboard History` → `Quick Prompt - Capture Ideas & Queue Tasks While AI Works`
+- **Marketplace description** rewritten to lead with the cognitive offload use case: capturing next tasks while your agent runs, without switching to Notepad++ or breaking flow
+- **README** (EN + zh-TW + zh-CN): rewritten `What is Quick Prompt?`, `Use Cases`, `Best Practices`, and `Recommended Companion` sections to reflect real-world usage
+- **Cross-promotion** with VirtualTabs updated from "AI instructions manager" framing to "in-IDE cognitive buffer" framing
+
+**Why:** The original "prompt template library" framing positioned the tool as a 2024-era static prompt manager — increasingly irrelevant as AI IDEs absorb context injection at the infrastructure level. The real, durable value is the **asynchronous cognitive handoff**: human thinks ahead, AI executes behind, Quick Prompt holds the queue.
+
+---
+
 ## [0.3.2] - 2026-04-07
 
 ### 🔒 Privacy v2 – Secure Storage Redesign

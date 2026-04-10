@@ -1,6 +1,6 @@
 {
-    "extension.displayName": "Quick Prompt - AI Prompt Manager & Clipboard History",
-    "extension.description": "Organize, search, and reuse your prompts for ChatGPT, Copilot, Claude. Quick copy, smart tracking, workspace isolation, clipboard history.",
+    "extension.displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
+    "extension.description": "Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, track clipboard history — without switching windows or breaking flow.",
     "view.container.title": "Quick Prompt",
     "view.prompts.name": "Prompts",
     "view.clipboard.name": "Clipboard History",

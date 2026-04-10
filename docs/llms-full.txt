@@ -5,7 +5,7 @@
 # README
 [Quick Prompt README](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/README.md)
 
-# Quick Prompt – AI Prompt Manager & Clipboard History for VS Code
+# Quick Prompt – Capture Ideas & Queue Tasks While AI Works
 
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
@@ -13,51 +13,72 @@
 
 [繁體中文](./README.zh-TW.md) | [English](./README.md)
 
-![Quick Prompt - VS Code AI Prompt Manager & Clipboard History Interface](docs/assets/vscode-quick-prompt-extension-banner.png)
+![Quick Prompt - VS Code AI Prompt Manager & Clipboard History Interface](docs/assets/hero_banner.png)
 
 ---
 
 ## 🚀 What is Quick Prompt?
 
-**Quick Prompt is a VS Code extension that helps developers manage, organize, and instantly access AI prompts and
-clipboard history.** It combines a **prompt library** with **clipboard tracking**, allowing you to build a personalized
-database of high-quality prompts for ChatGPT, Copilot, and Claude without switching context.
+**When your AI agent is running, your mind doesn't stop.** Quick Prompt is your **in-IDE scratch pad** — capture next tasks, queue ideas, store reusable snippets — without switching to Notepad++ or breaking your flow.
+
+It combines a **persistent snippet library** with **clipboard history tracking**, so the thoughts you have *while AI is working* are ready to hand off the moment it finishes.
 
 ---
 
-### ⚡ Why use Quick Prompt?
+![Feature Highlights](docs/assets/feature_highlights_v0003.png)
 
-| Feature          | Native Clipboard | Quick Prompt Extension                    |
-|:-----------------|:-----------------|:------------------------------------------|
-| **History**      | Limited/None     | **Automatic History Tracking**            |
-| **Organization** | None             | **Custom Prompt Library** (Saved to JSON) |
-| **Access**       | Ctrl+V only      | **Searchable Interface** (Alt+P)          |
+---
+
+## 🔌 New in v0.3.0: AI Agent Integration (MCP)
+
+**Full Model Context Protocol (MCP) support is now here.** Stop copy-pasting—let your AI assistant (Cursor, Copilot, Claude, etc.) manage your prompts directly with native tools.
+
+### 🛡️ 4-Layer Safety Decision Tree
+
+Every generated skill includes a built-in safety logic to ensure stable operation:
+
+1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
+2. **Layer 1: Standard MCP Tools** — Use 14 optimized tools for CRUD and versioning.
+3. **Layer 2: Safety Verification** — Internal sanity checks across different prompt contexts.
+4. **Layer 3: Hard Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
+
+### ⚙️ Multi-Client Setup
+
+One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Config` to access the interactive panel.
+
+| Cursor / Antigravity | GitHub Copilot / Cline | Kiro IDE / Claude Code |
+| :------------------- | :--------------------- | :--------------------- |
+| Supports `${workspaceFolder}` variables | Absolute path binding | Direct JSON configuration |
 
 ---
 
 ## ✨ Key Features
 
-- **🎯 Lightning Fast Search**: Press `Alt+P` to search prompts and clipboard history, hit Enter to copy
-- **📋 Auto Clipboard History**: Automatically tracks your clipboard - never lose a good prompt again
-- **📊 Smart Tracking**: Tracks usage count and last used time to identify your golden prompts
-- **🚀 Quick Add**: Right-click selected text → "Quick Add Prompt" (or press `Alt+Shift+S`)
-- **🎨 Visual Interface**: Sidebar displays popularity with icons (🔥/⭐/📝)
-- **📁 Project Isolation**: Each workspace has its own independent prompt collection
-- **⬆️⬇️ Manual Sorting**: Right-click to move prompts up or down
-- **✏️ Native Editing**: Edit prompts like regular files with full VSCode support
+### 🔌 AI Agent Power (New!)
 
-![Feature Highlights](docs/assets/feature_highlights_v0003.png)
+- **🔌 14 MCP Tools**: Complete prompt management suite for AI agents.
+- **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
+- **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
+- **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
 
-<details>
-<summary>📖 View Previous Version (Basic UI Reference)</summary>
+### 📚 Prompt Management
 
-### Feature Highlights (Previous Version)
+- **🤖 AI-Powered Titles**: Automatic semantic title generation using local AI (Qwen1.5-0.5B).
+- **🎯 Lightning Fast Search**: Press `Alt+P` to search prompts, hit Enter to copy.
+- **🚀 Quick Add**: Right-click selected text → "Quick Add Prompt" (or press `Alt+Shift+S`).
+- **✏️ Native Editing**: Edit prompts like regular files with full VSCode support.
 
-![Feature Highlights - Previous](docs/assets/feature_highlights.png)
+### 🕒 Version Control
 
-*These images show the basic interface and core functionality that remains available in the current version.*
+- **🕒 Linear History**: Automatic tracking of every save.
+- **📌 Milestones**: Tag stable versions or important drafts.
+- **⚖️ Visual Diff**: One-click comparison between history and current state.
 
-</details>
+### 🔒 Privacy Protection
+
+- **🔒 Mask Prompt**: Right-click any prompt → `Mask Prompt`. Sensitive data is replaced with tokens (`[EMAIL-1]`, `[API-KEY-1]`…) in the stored content.
+- **🔓 Unmask**: Right-click a masked prompt → `Unmask Prompt` to restore the original values instantly.
+- **🔑 OS-Encrypted Storage**: The reverse mapping is stored in VS Code SecretStorage (OS Keychain) — persisted in encrypted form by the OS, never written to any plaintext file.
 
 ## 📸 Screenshots (AI Generated)
 
@@ -108,7 +129,7 @@ database of high-quality prompts for ChatGPT, Copilot, and Claude without switch
 - 🔥: Hot (used >= 10 times)
 - ⭐: Frequent (used >= 5 times)
 - 📝: Normal (used > 0 times)
-- 📝: Unused
+- ⚪: Unused
 - 📌: Pinned
 
 ## 📝 Managing Prompts
@@ -148,6 +169,48 @@ database of high-quality prompts for ChatGPT, Copilot, and Claude without switch
 - **Sort**: Right-click → Move Up/Down to manually arrange
 - **Delete**: Click **🗑️** to remove (no confirmation needed)
 
+### Using Version History (New)
+
+1. **View History**: Expand any prompt in the sidebar.
+2. **Compare**: Click on any historical version to open the **Diff View**.
+3. **Restore**: Right-click a version and select **Apply Version** to bring it back.
+4. **Milestones**: Tag important versions (like "V1.0 Stable") to keep them safe forever.
+
+## 🔒 Privacy Protection – Usage Guide
+
+Mask sensitive data before it reaches any AI model.
+
+### How It Works
+
+1. Add a prompt containing sensitive data — it shows a **yellow shield** warning
+2. Right-click → **`Mask Prompt`**
+3. Sensitive values are replaced with tokens like `[EMAIL-1]`, `[API-KEY-1]`; the prompt now shows a **green shield**
+4. Copy or insert the prompt — the agent receives only tokens, never the originals
+5. Right-click → **`Unmask Prompt`** to restore original values at any time
+
+> **Security model**: The reverse mapping (token → original value) is stored in VS Code **SecretStorage** (OS Keychain / Windows Credential Manager). It is never written to `prompts.json` or any file on disk. Unmask is machine-local — switching to a different machine means a masked prompt cannot be unmasked.
+
+### Detected Patterns (default on)
+
+- Email addresses → `[EMAIL-1]`
+- Phone numbers → `[PHONE-1]`
+- API keys (AWS, GitHub, OpenAI, etc.) → `[API-KEY-1]`
+- IP addresses → `[IP-ADDRESS-1]`
+- Private keys / certificates → `[PRIVATE-KEY-1]`
+- Credit card numbers → `[CREDIT-CARD-1]` *(default: off)*
+
+### Privacy Settings
+
+- `quickPrompt.privacy.enabled`: Enable/disable all privacy features (default: `true`)
+- `quickPrompt.privacy.patterns.email`: Mask emails (default: `true`)
+- `quickPrompt.privacy.patterns.phone`: Mask phone numbers (default: `true`)
+- `quickPrompt.privacy.patterns.apiKeys`: Mask API keys (default: `true`)
+- `quickPrompt.privacy.patterns.ipAddress`: Mask IP addresses (default: `true`)
+- `quickPrompt.privacy.patterns.privateKey`: Mask private keys (default: `true`)
+- `quickPrompt.privacy.patterns.creditCard`: Mask credit card numbers (default: `false`)
+
+---
+
 ## 📋 Clipboard History
 
 ### Auto Capture
@@ -163,7 +226,6 @@ The extension automatically captures clipboard content from:
 - ✅ Deduplication (no repeated entries)
 - ✅ Minimum length filter (default: 10 characters)
 - ✅ Excludes pure numbers
-- ✅ Auto-clean old items (default: 7 days)
 
 ### Managing History
 
@@ -187,7 +249,11 @@ Open VSCode Settings and search for "Quick Prompt":
 - `quickPrompt.clipboardHistory.enablePolling`: Enable background polling (default: `true`)
 - `quickPrompt.clipboardHistory.pollingInterval`: Polling interval in ms (default: `5000`)
 - `quickPrompt.clipboardHistory.minLength`: Minimum content length (default: `10`)
-- `quickPrompt.clipboardHistory.autoCleanDays`: Auto-clean after N days (default: `7`)
+
+#### AI Features
+
+- `quickPrompt.ai.enabled`: Enable/disable AI-powered features (default: `true`)
+- `quickPrompt.ai.autoGenerateTitle`: Automatically generate titles using AI (default: `true`)
 
 ### File Location
 
@@ -203,41 +269,34 @@ Open VSCode Settings and search for "Quick Prompt":
 
 ## 💡 Best Practices
 
-1. **Save on the Fly**: See a useful prompt? Select and press `Alt+Shift+S`
-2. **Use Clipboard History**: Don't worry about losing copied prompts - they're auto-saved
-3. **Pin Important Ones**: Convert frequently used clipboard items to permanent prompts
-4. **Organize Manually**: Use right-click to arrange prompts in your preferred order
-5. **Version Control**: Add `.vscode/prompts.json` to Git to share with your team
+1. **Queue while waiting**: When AI starts a long task, immediately open Quick Prompt and jot down what comes next — don't lose that thought
+2. **Capture on the fly**: See something worth keeping? Select it and press `Alt+Shift+S` — title is auto-generated
+3. **Let clipboard history be your safety net**: Copy freely; the last 20 items you copied are always retrievable (configurable via `maxItems`)
+4. **Pin your most-reached-for snippets**: Turn clipboard one-offs into permanent entries with one click
+5. **Commit to Git**: Add `.vscode/prompts.json` so the whole team shares the same reusable library
 
 ## 🎯 Use Cases
 
-### For AI Development
+### While AI is Running (Primary Use Case)
 
-- Save frequently used ChatGPT/Copilot/Claude prompts
-- Quick access to debugging prompts
-- Organize code review templates
+- AI is executing task N → you're already thinking about task N+1, N+2
+- Quick-capture your next steps without switching to Notepad++ or breaking focus
+- When the agent finishes, your queue is ready — paste and go
 
-### For Content Creation
+### Reusable Snippets & Templates
 
-- Store writing prompts and templates
-- Quick access to formatting instructions
-- Manage translation prompts
+- Store frequently used code patterns, review checklists, or boilerplate instructions
+- `Alt+P` to search, `Enter` to copy — faster than any file or note app
 
-### For Team Collaboration
+### Privacy-Sensitive Workflows
 
-- Share best prompts via Git
-- Standardize team communication with AI
-- Build a prompt library together
+- Working with client data, API keys, or NDA-covered content?
+- Mask sensitive values before they reach any AI model — unmask locally anytime
 
-## 🌐 Internationalization
+### Team Collaboration
 
-Quick Prompt supports multiple languages:
-
-- 🇺🇸 English
-- 🇹🇼 繁體中文 (Traditional Chinese)
-- 🇨🇳 简体中文 (Simplified Chinese)
-
-The extension automatically uses your VSCode language setting.
+- Commit `.vscode/prompts.json` to Git to share reusable snippets with your team
+- Build a shared task-queue vocabulary across the codebase
 
 ---
 
@@ -247,16 +306,20 @@ The extension automatically uses your VSCode language setting.
 
 **Enhance your AI workflow.**
 
-**Quick Prompt** helps you manage *what* to tell the AI. Pair it with **VirtualTabs** to manage *where* the AI looks.
+**Quick Prompt** keeps your thoughts organized inside the IDE. Pair it with **VirtualTabs** to keep your workspace organized too.
 
-- **Manage Context**: Group related files across directories regardless of location.
-- **AI-Ready**: Create precise file sets to paste into your LLM context.
+- **Quick Prompt**: capture what you're thinking *while* AI works
+- **VirtualTabs**: organize which files belong to which task — across any directory
 
-[**Get VirtualTabs on VS Code Marketplace
-**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry
-**](https://open-vsx.org/extension/winterdrive/virtual-tabs)
+Get VirtualTabs on [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs)
 
 ---
+
+## ❤️ Support
+
+If you find this extension helpful, please consider supporting the development!
+
+<a href="https://ko-fi.com/Q5Q41SR5WO"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" height="36" alt="ko-fi" /></a>
 
 ## 📄 License
 
@@ -264,300 +327,6 @@ MIT License
 
 ---
 
-**Enjoy efficient prompt management!** 🚀
+**Stop losing thoughts to window-switching.** 🚀
 
-*Made with ❤️ for AI developers*
-
----
-# DEVELOPMENT GUIDE
-[Quick Prompt Development Guide](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/DEVELOPMENT.md)
-
-# Quick Prompt Development Guide
-
-This document provides a complete guide for setting up the development environment and workflow for the Quick Prompt VS Code extension.
-
----
-
-## 🛠️ Environment Setup
-
-### System Requirements
-
-* **Node.js** (Recommended v16 or above)
-* **VS Code** (v1.75.0 or above)
-* **TypeScript** (included in devDependencies)
-
-### Setup Steps
-
-#### 1. Project Initialization
-
-```bash
-# Clone the project and enter the directory
-git clone https://github.com/winterdrive/QuickPrompt.git
-cd QuickPrompt
-
-# Install dependencies
-npm install
-```
-
-#### 2. Compile TypeScript
-
-```bash
-# One-time compilation
-npx tsc
-
-# Or use npm script
-npm run vscode:prepublish
-```
-
-#### 3. Start Development Mode
-
-There are two ways to start development mode:
-
-##### Method A: Use VS Code Debugging
-
-1. Open the project folder in VS Code
-2. Press `F5` or use the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-3. Select "Debug: Start Debugging"
-4. A new Extension Development Host window will open
-
-##### Method B: Use Command Line
-
-```bash
-# macOS/Linux
-code --extensionDevelopmentPath=. --new-window
-
-# Windows
-code.cmd --extensionDevelopmentPath=. --new-window
-```
-
-#### 4. Live Development & Debugging
-
-##### Start TypeScript Watch Mode
-
-```bash
-# Start TypeScript watch mode for auto-compilation
-npx tsc --watch
-
-# Or use VS Code tasks
-# Press Cmd+Shift+P → "Tasks: Run Task" → "tsc: watch - tsconfig.json"
-```
-
-##### Reload the Extension
-
-In the Extension Development Host window:
-
-* Press `Cmd+R` (macOS) or `Ctrl+R` (Windows/Linux) to reload
-* Or use Command Palette → "Developer: Reload Window"
-
----
-
-## 📁 Project Structure
-
-### Directory Overview
-
-```text
-QuickPrompt/
-├── .vscode/               # VS Code config files
-├── dist/                  # TypeScript build output
-├── i18n/                  # Internationalization files
-│   ├── en.json           # English messages
-│   ├── zh-tw.json        # Traditional Chinese messages
-│   └── zh-cn.json        # Simplified Chinese messages
-├── src/                   # TypeScript source code
-│   ├── extension.ts       # Extension entry (activate/deactivate)
-│   ├── promptProvider.ts  # TreeDataProvider implementation
-│   ├── promptFileSystem.ts # Virtual file system for editing prompts
-│   ├── clipboardManager.ts # Clipboard listener and history management
-│   ├── clipboardProvider.ts # TreeDataProvider for clipboard history
-│   └── i18n.ts           # Internationalization utility
-├── package.json           # Extension manifest
-├── package.nls.json       # English localization (package.json)
-├── package.nls.zh-tw.json # Traditional Chinese localization
-├── package.nls.zh-cn.json # Simplified Chinese localization
-├── tsconfig.json          # TypeScript config
-├── README.md              # User guide
-├── DEVELOPMENT.md         # This file
-└── LICENSE                # MIT License
-```
-
-### Module Responsibilities
-
-| Module File             | Description                                      | Main Class/Interface |
-| ----------------------- | ------------------------------------------------ | -------------------- |
-| `extension.ts`          | Extension lifecycle management, command registration | `activate()`, `deactivate()` |
-| `promptProvider.ts`     | Implements `TreeDataProvider`, manages prompt data | `PromptProvider`, `PromptItem` |
-| `promptFileSystem.ts`   | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider` |
-| `clipboardManager.ts`   | Clipboard listener and history tracking (polling/focus) | `ClipboardManager` |
-| `clipboardProvider.ts`  | Implements `TreeDataProvider` for clipboard history view | `ClipboardProvider` |
-| `i18n.ts`               | Internationalization utility, loads language files | `I18n` |
-
-### Core Data Flow
-
-```mermaid
-flowchart TD
-    A[Extension Startup] --> B[Initialize i18n]
-    B --> C[Initialize PromptProvider]
-    C --> D[Load prompts.json]
-    D --> E[Register TreeView]
-    E --> F[Register FileSystem]
-    F --> G[Register Commands]
-    H[User Actions] --> I[Command Execution]
-    I --> J[Update Prompt Data]
-    J --> K[Save prompts.json]
-    K --> L[Trigger UI Refresh]
-    L --> M[Sync FileSystem]
-```
-
----
-
-## 🌍 Internationalization (i18n)
-
-Quick Prompt supports multiple languages out of the box.
-
-### Supported Languages
-
-* **English** (`en`)
-* **Traditional Chinese** (`zh-tw`)
-* **Simplified Chinese** (`zh-cn`)
-
-### How It Works
-
-1. **package.json**: Uses `%key%` placeholders that reference `package.nls.json` files
-2. **Runtime Messages**: Uses `I18n.getMessage()` to load strings from `i18n/*.json` files
-3. **Auto-detection**: Automatically loads the correct language based on VS Code's locale setting
-
-### Adding a New Language
-
-1. Create `package.nls.[locale].json` (e.g., `package.nls.ja.json` for Japanese)
-2. Create `i18n/[locale].json` (e.g., `i18n/ja.json`)
-3. Translate all strings from the English versions
-4. Test by setting VS Code locale to your language
-
----
-
-## 🔧 Common Development Issues
-
-### Q: Compile error "Cannot find module 'vscode'"
-
-```bash
-# Make sure the correct @types/vscode version is installed
-npm install --save-dev @types/vscode@^1.75.0
-```
-
-### Q: Extension does not appear in Extension Development Host
-
-* Check if the `main` field in `package.json` points to the correct build file
-* Ensure TypeScript compiles without errors
-* Check Developer Tools Console for errors
-
-### Q: Code changes are not reflected
-
-* Make sure TypeScript has recompiled (check the `dist/` folder)
-* Reload the window in Extension Development Host (`Cmd+R`)
-
-### Q: i18n strings not showing correctly
-
-* Check if the language file exists in `i18n/` directory
-* Verify the locale code matches VS Code's language setting
-* Ensure `I18n.initialize()` is called in `activate()`
-
----
-
-## 🔁 Data Flow & Architecture
-
-### Prompt Data Structure
-
-```typescript
-interface Prompt {
-    id: string;           // Unique ID (e.g., "001", "002")
-    title: string;        // Prompt title
-    content: string;      // Prompt content
-    use_count: number;    // Usage count
-    last_used: string;    // Last used date (ISO format)
-    created_at: string;   // Creation date (ISO format)
-    pinned?: boolean;     // Whether pinned
-}
-```
-
-### Storage Location
-
-* **Workspace Mode**: `.vscode/prompts.json` (recommended, workspace-specific)
-* **Fallback Mode**: Extension directory (when no workspace is open)
-
-### Virtual File System
-
-Quick Prompt uses a custom file system provider (`prompt-sniper://`) to allow editing prompts in the native VSCode editor:
-
-* **URI Format**: `prompt-sniper://prompt/{id}.txt`
-* **Two-way Sync**: Changes in the editor automatically update `prompts.json`
-* **Native Experience**: Full VSCode editing features (syntax highlighting, undo/redo, etc.)
-
----
-
-## 🚀 Publishing & Deployment
-
-### Local Testing
-
-1. Ensure TypeScript compiles without errors
-2. Test all features in Extension Development Host
-3. Check version and dependencies in package.json
-
-### Package Extension
-
-```bash
-# Install vsce (Visual Studio Code Extension manager)
-npm install -g vsce
-
-# Package as .vsix file
-vsce package
-
-# Publish to VS Code Marketplace
-vsce publish
-```
-
-### Version Management
-
-```bash
-# Update version
-npm version patch  # Patch version (0.0.1 → 0.0.2)
-npm version minor  # Minor version (0.0.1 → 0.1.0)
-npm version major  # Major version (0.0.1 → 1.0.0)
-```
-
----
-
-## 🤝 Contribution Guide
-
-### Development Workflow
-
-1. Fork the project and create a feature branch
-2. Follow the existing code style and architecture
-3. Add appropriate comments and documentation
-4. Test new features or fixes
-5. Submit a Pull Request
-
-### Code Style
-
-* Use TypeScript strict mode
-* Follow existing naming conventions
-* Use JSDoc comments where appropriate
-* Keep functions focused and modular
-
-### Testing Checklist
-
-* [ ] TypeScript compiles without errors
-* [ ] All features work in Extension Development Host
-* [ ] i18n strings work in all supported languages
-* [ ] Virtual file system editing works
-* [ ] Commands work from both sidebar and command palette
-* [ ] Workspace isolation works correctly
-
----
-
-## 📚 Resources
-
-* [VS Code Extension API](https://code.visualstudio.com/api)
-* [VS Code Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-* [TreeView API Documentation](https://code.visualstudio.com/api/extension-guides/tree-view)
-* [FileSystemProvider API](https://code.visualstudio.com/api/references/vscode-api#FileSystemProvider)
-* [Internationalization Guide](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#internationalization)
+*Made with ❤️ for developers who think faster than their agents run*
