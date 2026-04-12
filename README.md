@@ -6,7 +6,7 @@
 
 [繁體中文](./README.zh-TW.md) | [English](./README.md)
 
-![Quick Prompt - VS Code AI Prompt Manager & Clipboard History Interface](docs/assets/hero_banner.png)
+![Quick Prompt - The in-IDE Scratch Pad for AI Agent Workflows](docs/assets/hero_banner.png)
 
 ---
 
@@ -18,7 +18,7 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 
 ---
 
-![Feature Highlights](docs/assets/feature_highlights_v0003.png)
+![Feature Highlights](docs/assets/feature_highlights.png)
 
 ---
 
@@ -75,17 +75,17 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ## 📸 Screenshots (AI Generated)
 
+### Interface Overview
+
+![Interface Overview](docs/assets/bottom_panel_overview.png)
+
+*The authentic unified view: Clipboard History (left) and Prompts with linear history (right)*
+
 ### Quick Search in Action
 
 ![Quick Search Demo](docs/assets/quick_search_demo.png)
 
-*Unified search interface for both prompts and clipboard history*
-
-### Sidebar Management
-
-![Sidebar View](docs/assets/sidebar_view.png)
-
-*Organized view with prompts and clipboard history*
+*Unified search interface for both capture queue and clipboard history*
 
 ## 🚀 Quick Start
 

@@ -308,7 +308,7 @@ async function handleSearch(
     // 1. 我的 Prompts（Pinned 優先）
     if (prompts.length > 0) {
         items.push({
-            label: '$(bookmark) 我的 Prompts',
+            label: '我的 Prompts',
             kind: vscode.QuickPickItemKind.Separator,
             type: 'prompt',
             data: null
@@ -330,7 +330,7 @@ async function handleSearch(
     // 2. 剪貼簿歷史（最近的放後面）
     if (clipboardHistory.length > 0) {
         items.push({
-            label: '$(history) 剪貼簿歷史',
+            label: '剪貼簿歷史',
             kind: vscode.QuickPickItemKind.Separator,
             type: 'prompt',
             data: null

@@ -6,7 +6,7 @@
 
 繁體中文 | **[English](README.md)**
 
-![Quick Prompt - VS Code AI Prompt Manager & Clipboard History Interface](docs/assets/hero_banner.png)
+![Quick Prompt - AI 協作時的 IDE 內建便條紙與任務排隊介面](docs/assets/hero_banner.png)
 
 ---
 
@@ -18,7 +18,7 @@
 
 ---
 
-![功能亮點](docs/assets/feature_highlights_v0003.png)
+![功能亮點](docs/assets/feature_highlights.png)
 
 ---
 
@@ -73,15 +73,19 @@
 - **🔓 解除遮罩**：右鍵 → `Unmask Prompt` 即時還原原始內容。
 - **🔑 OS 加密儲存**：還原對照表存入 VS Code SecretStorage（OS Keychain），以系統加密形式持久保存，不以明文寫入任何檔案。
 
-## 📸 功能截圖 (AI 生成)
+## 📸 操作截圖 (AI Generated)
+
+### 介面總覽
+
+![介面總覽](docs/assets/bottom_panel_overview.png)
+
+*真實的底部控制面板視圖：剪貼簿歷史（左）與支援線性歷史紀錄的 Prompt 列表（右）*
 
 ### 快速搜尋功能
 
-![快速搜尋示範](docs/assets/quick_search_demo.png)
+![快速搜尋](docs/assets/quick_search_demo.png)
 
-### 側邊欄管理
-
-![側邊欄視圖](docs/assets/sidebar_view.png)
+*整合式的 Quick Pick 介面，一鍵搜尋你的暫存區與剪貼簿歷史*
 
 ## 🚀 快速開始
 
