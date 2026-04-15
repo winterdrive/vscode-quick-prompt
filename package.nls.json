@@ -21,6 +21,7 @@
     "command.moveUp.title": "Move Up",
     "command.moveDown.title": "Move Down",
     "command.clearModelCache.title": "Clear AI Model Cache",
+    "command.testAIConnection.title": "Test AI Connection",
     "command.showVersionDiff.title": "Compare with Current Version",
     "command.applyVersion.title": "Apply Version",
     "command.tagMilestone.title": "Tag as Milestone",
@@ -28,5 +29,14 @@
     "command.removeMilestone.title": "Remove Milestone Tag",
     "command.deleteVersion.title": "Delete Version",
     "command.copyVersionContent.title": "Copy Version Content",
-    "config.confirmBeforeDelete.description": "Show confirmation dialog before deleting prompts or versions"
+    "config.confirmBeforeDelete.description": "Show confirmation dialog before deleting prompts or versions",
+    "config.ai.enabled.description": "Enable AI-powered features (disabled by default to keep the extension lightweight)",
+    "config.ai.provider.description": "AI engine provider to use for features like title generation",
+    "config.ai.provider.localQwen": "Built-in Qwen 0.5B model (downloads ~400MB on first use)",
+    "config.ai.provider.openaiCompatible": "External LLM via OpenAI-compatible API (Ollama, LM Studio, etc.)",
+    "config.ai.openaiCompatible.endpoint.description": "OpenAI-compatible API endpoint (e.g. Ollama: http://localhost:11434/v1)",
+    "config.ai.openaiCompatible.model.description": "Model name to request from the API (e.g. qwen2.5:0.5b, llama3.2:latest)",
+    "config.ai.openaiCompatible.apiKey.description": "API key (leave empty for local Ollama; required for OpenAI or cloud services)",
+    "config.ai.openaiCompatible.timeout.description": "Request timeout in milliseconds (default 15000)",
+    "config.ai.features.titleGeneration.description": "Use AI to automatically generate titles for new prompts"
 }

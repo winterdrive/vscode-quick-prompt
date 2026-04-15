@@ -6,6 +6,7 @@ import { PromptFileSystemProvider } from './promptFileSystem';
 import { I18n } from './i18n';
 import { getPromptQuickPickIcon, sortPrompts, generateAutoTitle, getRelativeTime, executeWithConfirmation } from './utils';
 import { AIEngine } from './ai/aiEngine';
+import { OpenAICompatibleClient } from './ai/openAIClient';
 import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { VersionItem } from './treeItems/VersionItem';
@@ -224,6 +225,13 @@ export function registerClipboardCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.clearModelCache', async () => {
             await handleClearModelCache(aiEngine);
+        })
+    );
+
+    // 測試 AI 連線（僅 openai-compatible 有意義）
+    context.subscriptions.push(
+        vscode.commands.registerCommand('quickPrompt.testAIConnection', async () => {
+            await handleTestAIConnection(aiEngine);
         })
     );
 }
@@ -737,5 +745,57 @@ async function handleClearModelCache(aiEngine: AIEngine): Promise<void> {
             console.error('[Commands] Failed to clear model cache:', error);
             vscode.window.showErrorMessage(`Failed to clear cache: ${error}`);
         }
+    }
+}
+
+/**
+ * Handle test AI connection command
+ *
+ * - provider=none / disabled → 提示使用者先開啟 AI 功能
+ * - provider=local-qwen      → 提示本機模型不需測試連線
+ * - provider=openai-compatible → 實際呼叫 API 測試並回傳結果
+ */
+async function handleTestAIConnection(aiEngine: AIEngine): Promise<void> {
+    const config = vscode.workspace.getConfiguration('quickPrompt.ai');
+    const enabled = config.get<boolean>('enabled', false);
+
+    if (!enabled) {
+        vscode.window.showWarningMessage(
+            'Quick Prompt: AI 功能尚未啟用。請先至設定中開啟 quickPrompt.ai.enabled。'
+        );
+        return;
+    }
+
+    const provider = config.get<string>('provider', 'local-qwen');
+
+    if (provider === 'local-qwen') {
+        const status = aiEngine.getStatus();
+        const statusText = status === 'ready' ? '✅ 已就緒' : status === 'initializing' ? '⏳ 載入中...' : `❌ ${status}`;
+        vscode.window.showInformationMessage(
+            `Quick Prompt: 本機 Qwen 模型狀態 — ${statusText}（本機模型不需測試連線）`
+        );
+        return;
+    }
+
+    if (provider === 'openai-compatible') {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Quick Prompt: 測試 AI 連線中...',
+            cancellable: false
+        }, async () => {
+            const client = new OpenAICompatibleClient();
+            const result = await client.testConnection();
+            const { endpoint, model } = client.getConfig();
+
+            if (result.ok) {
+                vscode.window.showInformationMessage(
+                    `✅ AI 連線成功！\n端點：${endpoint}\n模型：${model}`
+                );
+            } else {
+                vscode.window.showErrorMessage(
+                    `❌ AI 連線失敗：${result.error}\n\n請確認 Ollama 或伺服器已啟動，端點設定為：${endpoint}`
+                );
+            }
+        });
     }
 }

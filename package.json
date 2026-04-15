@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "0.3.4",
+    "version": "0.3.5",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -41,7 +41,7 @@
         "clipboard history"
     ],
     "engines": {
-        "vscode": "^1.75.0"
+        "vscode": "^1.79.0"
     },
     "main": "./dist/extension.js",
     "activationEvents": [
@@ -84,13 +84,51 @@
                 },
                 "quickPrompt.ai.enabled": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Enable AI-powered features (auto title generation, tag suggestions)"
+                    "default": false,
+                    "description": "%config.ai.enabled.description%"
                 },
-                "quickPrompt.ai.autoGenerateTitle": {
+                "quickPrompt.ai.provider": {
+                    "type": "string",
+                    "enum": ["local-qwen", "openai-compatible"],
+                    "default": "local-qwen",
+                    "enumDescriptions": [
+                        "%config.ai.provider.localQwen%",
+                        "%config.ai.provider.openaiCompatible%"
+                    ],
+                    "description": "%config.ai.provider.description%",
+                    "when": "config.quickPrompt.ai.enabled"
+                },
+                "quickPrompt.ai.openaiCompatible.endpoint": {
+                    "type": "string",
+                    "default": "http://localhost:11434/v1",
+                    "description": "%config.ai.openaiCompatible.endpoint.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == openai-compatible"
+                },
+                "quickPrompt.ai.openaiCompatible.model": {
+                    "type": "string",
+                    "default": "qwen2.5:0.5b",
+                    "description": "%config.ai.openaiCompatible.model.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == openai-compatible"
+                },
+                "quickPrompt.ai.openaiCompatible.apiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "%config.ai.openaiCompatible.apiKey.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == openai-compatible"
+                },
+                "quickPrompt.ai.openaiCompatible.timeout": {
+                    "type": "number",
+                    "default": 15000,
+                    "minimum": 3000,
+                    "maximum": 60000,
+                    "description": "%config.ai.openaiCompatible.timeout.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == openai-compatible"
+                },
+                "quickPrompt.ai.features.titleGeneration": {
                     "type": "boolean",
-                    "default": true,
-                    "description": "Automatically generate titles for new prompts using AI"
+                    "default": false,
+                    "description": "%config.ai.features.titleGeneration.description%",
+                    "when": "config.quickPrompt.ai.enabled"
                 },
                 "quickPrompt.confirmBeforeDelete": {
                     "type": "boolean",
@@ -269,6 +307,12 @@
                 "title": "%command.clearModelCache.title%",
                 "category": "Quick Prompt",
                 "icon": "$(trash)"
+            },
+            {
+                "command": "quickPrompt.testAIConnection",
+                "title": "%command.testAIConnection.title%",
+                "category": "Quick Prompt",
+                "icon": "$(plug)"
             },
             {
                 "command": "promptSniper.showVersionDiff",

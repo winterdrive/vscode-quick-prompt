@@ -33,10 +33,10 @@ export class TitleGenerationService {
         // 1. 立即生成 Fallback
         const fallbackTitle = generateAutoTitle(content);
 
-        // 2. 檢查是否啟用 AI
-        const config = vscode.workspace.getConfiguration('quickPrompt.ai');
-        const useAI = config.get<boolean>('autoGenerateTitle', true) &&
-            this.aiEngine.isReady();
+        // 2. 檢查是否啟用 AI 與標題生成功能
+        const aiEnabled = vscode.workspace.getConfiguration('quickPrompt.ai').get<boolean>('enabled', false);
+        const featureEnabled = vscode.workspace.getConfiguration('quickPrompt.ai.features').get<boolean>('titleGeneration', true);
+        const useAI = aiEnabled && featureEnabled && this.aiEngine.isReady();
 
         if (!useAI) {
             console.log('[TitleGen] AI 未啟用，使用 Fallback');

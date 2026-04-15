@@ -20,6 +20,7 @@
     "command.moveUp.title": "上移",
     "command.moveDown.title": "下移",
     "command.clearModelCache.title": "清除 AI 模型缓存",
+    "command.testAIConnection.title": "测试 AI 连接",
     "command.showVersionDiff.title": "与当前版本比较",
     "command.applyVersion.title": "应用版本",
     "command.tagMilestone.title": "标记为里程碑",
@@ -27,5 +28,14 @@
     "command.removeMilestone.title": "移除里程碑标签",
     "command.deleteVersion.title": "删除版本",
     "command.copyVersionContent.title": "复制版本内容",
-    "config.confirmBeforeDelete.description": "删除 Prompt 或版本前显示确认提示"
+    "config.confirmBeforeDelete.description": "删除 Prompt 或版本前显示确认提示",
+    "config.ai.enabled.description": "启用 AI 功能（默认关闭以保持扩展轻量化）",
+    "config.ai.provider.description": "AI 引擎来源，用于标题生成等功能",
+    "config.ai.provider.localQwen": "内置 Qwen 0.5B 模型（首次使用时需下载约 400MB）",
+    "config.ai.provider.openaiCompatible": "通过 OpenAI 兼容 API 连接外部 LLM（Ollama、LM Studio 等）",
+    "config.ai.openaiCompatible.endpoint.description": "OpenAI 兼容 API 地址（例如 Ollama：http://localhost:11434/v1）",
+    "config.ai.openaiCompatible.model.description": "向 API 请求的模型名称（例如 qwen2.5:0.5b、llama3.2:latest）",
+    "config.ai.openaiCompatible.apiKey.description": "API 密钥（本地 Ollama 可留空；OpenAI 或云服务必填）",
+    "config.ai.openaiCompatible.timeout.description": "API 请求超时时间（毫秒，默认 15000）",
+    "config.ai.features.titleGeneration.description": "使用 AI 为新增的 Prompt 自动生成标题"
 }

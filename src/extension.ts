@@ -49,12 +49,39 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize i18n
     await I18n.initialize(context);
 
-    // Initialize AI engine (lazy loading - won't block startup)
+    // Initialize AI engine (opt-in: only starts if user explicitly enabled)
     const aiEngine = AIEngine.getInstance();
-    // Don't await - let it initialize in background
-    aiEngine.initialize(context).catch(err => {
-        console.error('[Extension] AI Engine initialization failed:', err);
-    });
+    const aiEnabled = vscode.workspace.getConfiguration('quickPrompt.ai').get<boolean>('enabled', false);
+    if (aiEnabled) {
+        // Don't await - let it initialize in background
+        aiEngine.initialize(context).catch(err => {
+            console.error('[Extension] AI Engine initialization failed:', err);
+        });
+    } else {
+        console.log('[Extension] AI features disabled (quickPrompt.ai.enabled=false). Engine not started.');
+    }
+
+    // Re-initialize when user changes AI settings
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('quickPrompt.ai.enabled') ||
+                e.affectsConfiguration('quickPrompt.ai.provider') ||
+                e.affectsConfiguration('quickPrompt.ai.openaiCompatible')) {
+
+                const nowEnabled = vscode.workspace.getConfiguration('quickPrompt.ai').get<boolean>('enabled', false);
+                if (nowEnabled) {
+                    // Reinitialize with new settings
+                    aiEngine.dispose();
+                    aiEngine.initialize(context).catch(err => {
+                        console.error('[Extension] AI Engine re-initialization failed:', err);
+                    });
+                } else {
+                    aiEngine.dispose();
+                    console.log('[Extension] AI engine disposed (user disabled AI).');
+                }
+            }
+        })
+    );
 
     // Initialize Privacy Protection (v0.3.0)
     const maskingEngine = MaskingEngine.getInstance(context);

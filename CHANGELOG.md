@@ -4,6 +4,21 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.5] - 2026-04-15
+
+### 🤖 Custom AI Endpoints (Ollama / LM Studio) & Opt-in Framework
+
+A major structural update addressing performance, security, and flexibility of the AI Engine.
+
+**What changed:**
+
+- **OpenAI-Compatible API Support**: You can now route AI tasks (like title generation) through external endpoints (e.g., Ollama or LM Studio) instead of relying solely on the bundled Qwen model. Configure via `quickPrompt.ai.provider` and `quickPrompt.ai.openaiCompatible.*`.
+- **Command: Test AI Connection**: Added `Quick Prompt: Test AI Connection` to instantly verify your endpoint configurations.
+- **Strict Opt-In AI**: By default, **all AI features are now disabled**. The AI engine will not load into memory, nor will it start background processes on install. Users must intentionally enable `quickPrompt.ai.enabled` to use these features, providing a zero-overhead experience for users who only want to use the clipboard management and Prompt CRUD functions.
+- **Bug Fix**: Fixed a critical memory and thread leak that occurred when repeatedly toggling the AI provider in settings. The Singleton AI engine now scales and disposes underlying worker threads efficiently without losing its references.
+
+---
+
 ## [0.3.3] - 2026-04-10
 
 ### 🔄 Product Repositioning — From "Prompt Manager" to "In-IDE Scratch Pad"
