@@ -33,6 +33,7 @@ import { PromptManager } from '../../src/core/PromptManager.js';
 import { VersionManager } from '../../src/core/VersionManager.js';
 import { PromptTools } from './tools/promptTools.js';
 import { VersionTools } from './tools/versionTools.js';
+import { ClipboardTools } from './tools/clipboardTools.js';
 
 const SERVER_NAME = 'quickprompt';
 const SERVER_VERSION = '0.1.0';
@@ -92,10 +93,10 @@ const TOOL_DEFS = {
       direction: z.enum(['up', 'down']).describe('Direction to move: "up" or "down".'),
     },
   },
-  search_prompts: {
-    description: 'Search prompts by keyword (matches title and content). Returns matching prompts.',
+  search_prompts_fuzzy: {
+    description: 'Fuzzy semantic search for prompts based on user\'s spoken or typed intent. Matches against titles and content. Use this to heavily tolerate homophones (e.g. from speech-to-text) or fat-finger typos.',
     schema: {
-      query: z.string().describe('Search keyword.'),
+      query: z.string().describe('The natural language spoken keyword or fuzzy concept to search for.'),
     },
   },
   copy_prompt_content: {
@@ -154,6 +155,14 @@ const TOOL_DEFS = {
     schema: {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to un-tag.'),
+    },
+  },
+
+  // ── Clipboard History ────────────────────────────────────────────────────────
+  get_clipboard_item: {
+    description: 'Get a specific clipboard history item by its index. ALways translate the user\'s oral/natural language reference (e.g., "second copy", "拷貝二號") into the corresponding integer index (0, 1, 2...).',
+    schema: {
+      index: z.number().describe('The 0-based integer index of the clipboard item (0 is the most recent).'),
     },
   },
 
@@ -291,8 +300,10 @@ export class QuickPromptMCPServer {
   // Tool handlers
   private promptTools?: PromptTools;
   private versionTools?: VersionTools;
+  private clipboardTools: ClipboardTools;
 
   constructor(workspaceRoot?: string) {
+    this.clipboardTools = new ClipboardTools();
     this.server = new Server(
       { name: SERVER_NAME, version: SERVER_VERSION },
       {
@@ -442,8 +453,8 @@ export class QuickPromptMCPServer {
           return this.wrap(() => this.promptTools!.togglePin(this.parseArgs(TOOL_DEFS.toggle_pin.schema, args)));
         case 'move_prompt':
           return this.wrap(() => this.promptTools!.movePrompt(this.parseArgs(TOOL_DEFS.move_prompt.schema, args)));
-        case 'search_prompts':
-          return this.wrap(() => this.promptTools!.searchPrompts(this.parseArgs(TOOL_DEFS.search_prompts.schema, args)));
+        case 'search_prompts_fuzzy':
+          return this.wrap(() => this.promptTools!.searchPrompts(this.parseArgs(TOOL_DEFS.search_prompts_fuzzy.schema, args)));
         case 'copy_prompt_content':
           return this.wrap(() => this.promptTools!.copyPromptContent(this.parseArgs(TOOL_DEFS.copy_prompt_content.schema, args)));
 
@@ -462,6 +473,10 @@ export class QuickPromptMCPServer {
           return this.wrap(() => this.versionTools!.renameMilestone(this.parseArgs(TOOL_DEFS.rename_milestone.schema, args)));
         case 'remove_milestone':
           return this.wrap(() => this.versionTools!.removeMilestone(this.parseArgs(TOOL_DEFS.remove_milestone.schema, args)));
+
+        // ── Clipboard History ──────────────────────────────────────────────
+        case 'get_clipboard_item':
+          return this.wrap(() => this.clipboardTools.getClipboardItem(this.parseArgs(TOOL_DEFS.get_clipboard_item.schema, args)));
 
         default:
           return {

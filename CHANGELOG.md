@@ -4,6 +4,18 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.6] - 2026-04-22
+
+### 🚀 Voice‑Ready MCP Integration & Reliability
+
+**What changed:**
+
+- **Voice‑Ready Optimization**: Completed E2E testing for the Voice-Ready MCP architecture. Validated semantic routing and phonetic error tolerance (e.g., mapping "Li-Ate" to "React").
+- **Global Clipboard Persistence**: Migrated clipboard history storage from VS Code's internal `globalState` (SQLite) to a global JSON file (`~/.quickprompt/clipboard-history.json`). This enables cross-IDE access and persistence that survives extension reloads or external agent queries.
+- **Global Clipboard Tool**: Enhanced the `get_clipboard_item` MCP tool with better error handling, boundary checks, and descriptive indexing hints for AI agents.
+- **Smart Skill Generation**: Updated `SkillGenerator.ts` to inject phonetic and typographical error-handling instructions into generated Skill files, empowering agents to interpret ambiguous voice inputs.
+- **Documentation**: Synchronized all technical specifications, READMEs, and Release Notes to reflect the new capabilities.
+
 ## [0.3.5] - 2026-04-15
 
 ### 🤖 Custom AI Endpoints (Ollama / LM Studio) & Opt-in Framework

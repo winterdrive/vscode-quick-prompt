@@ -90,8 +90,12 @@ To configure the MCP server for your AI tool:
 - \`delete_prompt\`: Delete a prompt and its version history
 - \`toggle_pin\`: Toggle pinned state
 - \`move_prompt\`: Move prompt up/down in display order
-- \`search_prompts\`: Search by keyword across titles and content
+- \`search_prompts_fuzzy\`: Fuzzy semantic search based on spoken/typed keywords (tolerates homophones and typos)
 - \`copy_prompt_content\`: Get content for clipboard use (increments use_count)
+
+### Clipboard History (1 tool)
+
+- \`get_clipboard_item\`: Retrieve a specific clipboard history item by integer index. Must convert the user's natural language / oral alias (e.g. "拷貝二號", "second copy") into an integer index (0-based) before calling.
 
 ### Version History (7 tools)
 
@@ -147,6 +151,13 @@ Attempt to call \`list_prompts\` now.
 ### Layer 1: Standard MCP Tools ✅ (Use whenever available)
 
 Already listed above under "Available Tools". Always prefer these.
+
+> 🛠️ **Voice-Ready & Typo-Tolerance Guidance**
+> When the user queries for a resource (Prompt or Clipboard), they may use **Voice Input** or **Keyboard Input**. You MUST actively anticipate and correct:
+> 1. **Voice Input Errors (Homophones/Phonetics)**: Example: "React" recognized as "瑞阿特", "API" recognized as "A P I". Use fuzzy semantic understanding or word-sound (諧音) associations to deduce the correct target.
+> 2. **Typing Input Errors (Fat-finger/Transposition)**: Example: "reacr" (t next to r), "teh" (the). 
+> 
+> *Routing Rule*: If a user says "Get the second pasted item" (or "提取拷貝二號"), deduce the index (\`index: 1\` or \`index: 2\` depending on 0-based logic) and call \`get_clipboard_item\`. If they ask for a template but the spelling is strange, use \`search_prompts_fuzzy\`.
 
 ---
 

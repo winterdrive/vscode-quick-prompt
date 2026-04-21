@@ -1,4 +1,7 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { CLIPBOARD_CONSTANTS } from './utils/constants';
 export interface ClipboardHistoryItem {
     id: string;              // 唯一識別碼
@@ -277,11 +280,39 @@ export class ClipboardManager {
     }
 
     /**
-     * 載入歷史（從 globalState）
+     * 取得檔案存放路徑
+     */
+    private getStoragePath(): string {
+        const dir = path.join(os.homedir(), '.quickprompt');
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        return path.join(dir, 'clipboard-history.json');
+    }
+
+    /**
+     * 載入歷史（從 ~/.quickprompt/clipboard-history.json）
      */
     private loadHistory() {
-        const saved = this.context.globalState.get<ClipboardHistoryItem[]>('clipboardHistory', []);
-        this.history = saved;
+        const storagePath = this.getStoragePath();
+        
+        // 嘗試從新架構檔案讀取
+        if (fs.existsSync(storagePath)) {
+            try {
+                const data = fs.readFileSync(storagePath, 'utf-8');
+                this.history = JSON.parse(data);
+            } catch (err) {
+                console.error('Failed to parse clipboard history file:', err);
+                this.history = [];
+            }
+        } else {
+            // 如果檔案不存在，嘗試從舊版 globalState 遷移
+            const saved = this.context.globalState.get<ClipboardHistoryItem[]>('clipboardHistory', []);
+            this.history = saved;
+            if (this.history.length > 0) {
+                this.saveHistory(); // 寫入到新架構檔案
+            }
+        }
 
         // 初始化 lastClipboard
         if (this.history.length > 0) {
@@ -290,10 +321,16 @@ export class ClipboardManager {
     }
 
     /**
-     * 儲存歷史（到 globalState）
+     * 儲存歷史（到 ~/.quickprompt/clipboard-history.json）
      */
     private saveHistory() {
-        this.context.globalState.update('clipboardHistory', this.history);
+        try {
+            fs.writeFileSync(this.getStoragePath(), JSON.stringify(this.history, null, 2), 'utf-8');
+            // 同時更新 globalState 以防舊版依賴，或可直接移除
+            this.context.globalState.update('clipboardHistory', this.history);
+        } catch (err) {
+            console.error('Failed to save clipboard history file:', err);
+        }
     }
 
     /**
