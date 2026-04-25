@@ -218,9 +218,20 @@
                     "name": "%view.clipboard.name%",
                     "icon": "$(clippy)",
                     "when": "config.quickPrompt.clipboardHistory.enabled"
+                },
+                {
+                    "id": "sessionHandoffView",
+                    "name": "Edo Tensei Sessions",
+                    "icon": "$(archive)"
                 }
             ]
         },
+        "viewsWelcome": [
+            {
+                "view": "sessionHandoffView",
+                "contents": "No recent sessions found or not scanned yet.\n[Scan IDE Sessions](command:edoTensei.scanSessions)\n\nScans local storage for active AI sessions in other IDEs like Copilot, Cursor, and Trae."
+            }
+        ],
         "commands": [
             {
                 "command": "promptSniper.search",
@@ -380,6 +391,36 @@
                 "command": "promptSniper.restorePromptWarning",
                 "title": "Restore Privacy Warning",
                 "icon": "$(eye)"
+            },
+            {
+                "command": "edoTensei.sealSession",
+                "title": "Edo Tensei: Seal Session",
+                "category": "Edo Tensei",
+                "icon": "$(archive)"
+            },
+            {
+                "command": "edoTensei.resurrectSession",
+                "title": "Edo Tensei: Resurrect Session",
+                "category": "Edo Tensei",
+                "icon": "$(sparkle)"
+            },
+            {
+                "command": "edoTensei.copyHandoffPrompt",
+                "title": "Edo Tensei: Copy Handoff Prompt",
+                "category": "Edo Tensei",
+                "icon": "$(copy)"
+            },
+            {
+                "command": "edoTensei.openSessionFile",
+                "title": "Edo Tensei: Open Session File",
+                "category": "Edo Tensei",
+                "icon": "$(file-code)"
+            },
+            {
+                "command": "edoTensei.scanSessions",
+                "title": "Scan IDE Sessions",
+                "category": "Edo Tensei",
+                "icon": "$(refresh)"
             }
         ],
         "keybindings": [
@@ -424,6 +465,11 @@
                 {
                     "command": "promptSniper.clearClipboardHistory",
                     "when": "view == clipboardHistoryView",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "edoTensei.scanSessions",
+                    "when": "view == sessionHandoffView",
                     "group": "navigation@1"
                 }
             ],
@@ -547,6 +593,16 @@
                     "command": "promptSniper.unmaskPrompt",
                     "when": "view == promptSniperView && viewItem == promptItem_protected",
                     "group": "3_privacy@1"
+                },
+                {
+                    "command": "edoTensei.resurrectSession",
+                    "when": "view == sessionHandoffView && viewItem == sessionItem",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "edoTensei.copyHandoffPrompt",
+                    "when": "view == sessionHandoffView && viewItem == sessionItem",
+                    "group": "inline@2"
                 }
             ],
             "editor/context": [

@@ -34,6 +34,7 @@ import { VersionManager } from '../../src/core/VersionManager.js';
 import { PromptTools } from './tools/promptTools.js';
 import { VersionTools } from './tools/versionTools.js';
 import { ClipboardTools } from './tools/clipboardTools.js';
+import { sessionTools, handleSessionTool } from './tools/sessionTools.js';
 
 const SERVER_NAME = 'quickprompt';
 const SERVER_VERSION = '0.1.0';
@@ -166,6 +167,14 @@ const TOOL_DEFS = {
     },
   },
 
+  // ── Session Tools ────────────────────────────────────────────────────────────
+  seal_session: {
+    description: sessionTools[0].description,
+    schema: {
+      history: z.string().describe('The full chat history or a comprehensive summary of the conversation that led to the current state. Provide as much detail as possible so the next AI agent can seamlessly continue.'),
+      files_referenced: z.array(z.string()).optional().describe('A list of files that were heavily involved in the current session.'),
+    },
+  },
 };
 
 // ── Prompt templates ────────────────────────────────────────────────────────────
@@ -477,6 +486,10 @@ export class QuickPromptMCPServer {
         // ── Clipboard History ──────────────────────────────────────────────
         case 'get_clipboard_item':
           return this.wrap(() => this.clipboardTools.getClipboardItem(this.parseArgs(TOOL_DEFS.get_clipboard_item.schema, args)));
+
+        // ── Session Tools ──────────────────────────────────────────────────
+        case 'seal_session':
+          return this.wrap(() => handleSessionTool(name, args, this.workspaceRoot!));
 
         default:
           return {

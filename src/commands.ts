@@ -13,6 +13,8 @@ import { VersionItem } from './treeItems/VersionItem';
 import * as versionCommands from './commands/versionCommands';
 import { MaskingEngine } from './privacy/maskingEngine';
 import { PatternEngine } from './privacy/masking/patternEngine';
+import { SessionHandoffService } from './core/SessionHandoffService';
+import { SessionItem } from './ui/SessionHandoffProvider';
 /**
  * Register all prompt-related commands
  */
@@ -290,6 +292,32 @@ export function registerVersionCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.copyVersionContent', async (item: VersionItem) => {
             await versionCommands.handleCopyVersionContent(item, promptProvider);
+        })
+    );
+}
+
+/**
+ * Register Edo Tensei session handoff commands
+ */
+export function registerSessionHandoffCommands(
+    context: vscode.ExtensionContext,
+    sessionService: SessionHandoffService
+): void {
+    context.subscriptions.push(
+        vscode.commands.registerCommand('edoTensei.sealSession', async () => {
+            await handleSealSession(sessionService);
+        }),
+        vscode.commands.registerCommand('edoTensei.resurrectSession', async (item?: SessionItem) => {
+            await handleResurrectSession(sessionService, item);
+        }),
+        vscode.commands.registerCommand('edoTensei.copyHandoffPrompt', async (item?: SessionItem) => {
+            await handleCopyHandoffPrompt(sessionService, item);
+        }),
+        vscode.commands.registerCommand('edoTensei.openSessionFile', async () => {
+            await handleOpenSessionFile(sessionService);
+        }),
+        vscode.commands.registerCommand('edoTensei.scanSessions', async () => {
+            await handleScanSessions(sessionService);
         })
     );
 }
@@ -798,4 +826,107 @@ async function handleTestAIConnection(aiEngine: AIEngine): Promise<void> {
             }
         });
     }
+}
+
+async function handleSealSession(sessionService: SessionHandoffService): Promise<void> {
+    if (!sessionService.getWorkspaceRoot()) {
+        vscode.window.showWarningMessage('Edo Tensei: 請先開啟專案資料夾再封印 session。');
+        return;
+    }
+
+    // Minimal context capture for manual UI trigger
+    const activeEditor = vscode.window.activeTextEditor;
+    let historyStr = '[System]: Session sealed manually via UI. Full chat history not available.\n';
+    if (activeEditor) {
+        historyStr += `Currently active file: ${activeEditor.document.uri.fsPath}\n`;
+    }
+
+    const savedUri = await sessionService.saveSession(historyStr);
+    if (!savedUri) {
+        vscode.window.showErrorMessage('Edo Tensei: 封印失敗，找不到工作區。');
+        return;
+    }
+
+    vscode.window.showInformationMessage(`Edo Tensei: 已一鍵封印 session 至 ${savedUri.fsPath}`);
+}
+
+async function handleResurrectSession(sessionService: SessionHandoffService, item?: SessionItem): Promise<void> {
+    let handoffPrompt = '';
+    let description = '';
+
+    if (item) {
+        handoffPrompt = sessionService.buildPromptFromCapturedSession(item.session);
+        description = `來自 ${item.session.sourceIde} 的 session`;
+    } else {
+        const session = await sessionService.readSession();
+        if (!session) {
+            vscode.window.showWarningMessage('Edo Tensei: 找不到可復活的 session。');
+            return;
+        }
+        handoffPrompt = session.handoffPrompt;
+        description = `前次 session（最後更新：${new Date(session.savedAt).toLocaleString()}）`;
+    }
+
+    const action = await vscode.window.showInformationMessage(
+        `Edo Tensei: 偵測到${description}`,
+        '複製接手指令',
+        item ? '取消' : '開啟 session 檔案'
+    );
+
+    if (action === '複製接手指令') {
+        await vscode.env.clipboard.writeText(handoffPrompt);
+        vscode.window.showInformationMessage('Edo Tensei: 已複製接手指令，請到 Chat 直接貼上送出。');
+    } else if (action === '開啟 session 檔案' && !item) {
+        await handleOpenSessionFile(sessionService);
+    }
+}
+
+async function handleCopyHandoffPrompt(sessionService: SessionHandoffService, item?: SessionItem): Promise<void> {
+    if (item) {
+        const prompt = sessionService.buildPromptFromCapturedSession(item.session);
+        await vscode.env.clipboard.writeText(prompt);
+        vscode.window.showInformationMessage('Edo Tensei: 已複製 handoff prompt。');
+        return;
+    }
+
+    const session = await sessionService.readSession();
+    if (!session) {
+        vscode.window.showWarningMessage('Edo Tensei: 找不到 session，請先封印。');
+        return;
+    }
+    await vscode.env.clipboard.writeText(session.handoffPrompt);
+    vscode.window.showInformationMessage('Edo Tensei: 已複製 handoff prompt。');
+}
+
+async function handleOpenSessionFile(sessionService: SessionHandoffService): Promise<void> {
+    const uri = sessionService.getSessionFileUri();
+    if (!uri) {
+        vscode.window.showErrorMessage('Edo Tensei: 無法取得 session 檔案路徑。');
+        return;
+    }
+    try {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        await vscode.window.showTextDocument(doc);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Edo Tensei: 開啟檔案失敗 (${error})`);
+    }
+}
+
+async function handleScanSessions(sessionService: SessionHandoffService): Promise<void> {
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Scanning IDE Sessions...",
+        cancellable: false
+    }, async (progress) => {
+        try {
+            const sessions = await sessionService.scanAllIDEs();
+            if (sessions.length > 0) {
+                vscode.window.showInformationMessage(`Edo Tensei: Found ${sessions.length} sessions.`);
+            } else {
+                vscode.window.showInformationMessage('Edo Tensei: No recent sessions found in other IDEs.');
+            }
+        } catch (e) {
+            vscode.window.showErrorMessage('Edo Tensei: Error scanning sessions.');
+        }
+    });
 }

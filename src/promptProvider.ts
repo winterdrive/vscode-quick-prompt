@@ -8,13 +8,9 @@ import { SecretStorageManager } from './privacy/masking/secretStorage';
 import {
     getPromptIcon,
     sortPrompts,
-    generateAutoTitle,
     generatePromptId,
-    getDaysSince,
     formatRelativeTime,
-    getTodayISOString,
-    getRelativeTime
-} from './utils';
+    getTodayISOString} from './utils';
 
 // Prompt 與 PrivacyMeta 的唯一來源，從 core/types 統一 re-export
 export type { Prompt, PrivacyMeta } from './core/types';

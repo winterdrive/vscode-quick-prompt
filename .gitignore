@@ -13,3 +13,13 @@ docs/specs/**
 package-lock.json
 docs/ref/**
 docs/assets/deprecated/**
+docs/MCP_CRUD_TEST_CASES.md
+docs/MCP_E2E_TESTING_GUIDE.md
+docs/TESTING_GUIDE.md
+MCP_SKILL_GAP_ANALYSIS.md
+IMPLEMENTATION_STATUS.md
+Manual_Stage_Guide.md
+PRIVACY_TEST_GUIDE.md
+prompts.json
+README copy.md
+CHANGELOG copy.md

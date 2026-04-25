@@ -5,13 +5,15 @@ import { PromptFileSystemProvider } from './promptFileSystem';
 import { ClipboardManager } from './clipboardManager';
 import { PromptHoverProvider } from './promptHoverProvider';
 import { I18n } from './i18n';
-import { registerPromptCommands, registerClipboardCommands, registerVersionCommands } from './commands';
+import { registerPromptCommands, registerClipboardCommands, registerVersionCommands, registerSessionHandoffCommands } from './commands';
 import { MaskingEngine } from './privacy/maskingEngine';
 import { AIEngine } from './ai/aiEngine';
 import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { McpConfigPanel } from './mcp/McpConfigPanel';
 import { SkillGenerator } from './mcp/SkillGenerator';
+import { SessionHandoffService } from './core/SessionHandoffService';
+import { SessionHandoffProvider } from './ui/SessionHandoffProvider';
 
 /**
  * Deploys the MCP server to a stable path under globalStorageUri, independent of the extension version.
@@ -107,12 +109,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Initialize title generation services
     const titleGenService = new TitleGenerationService(aiEngine);
+    const sessionHandoffService = new SessionHandoffService(context);
+
+    // Initialize Session Handoff Provider
+    const sessionHandoffProvider = new SessionHandoffProvider(sessionHandoffService);
+    vscode.window.registerTreeDataProvider('sessionHandoffView', sessionHandoffProvider);
 
 
     // Register all commands (pass aiEngine and title services)
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
     registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService, maskingEngine);
     registerVersionCommands(context, promptProvider, versionHistoryService);
+    registerSessionHandoffCommands(context, sessionHandoffService);
 
     // Register MCP commands
     context.subscriptions.push(
@@ -228,6 +236,33 @@ function initializeStatusBar(
     context: vscode.ExtensionContext,
     clipboardManager: ClipboardManager
 ): void {
+    const edoSealStatusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right,
+        120
+    );
+    edoSealStatusBar.command = 'edoTensei.sealSession';
+    edoSealStatusBar.text = '$(archive) 封印';
+    edoSealStatusBar.tooltip = 'Edo Tensei: 封印目前 session';
+    context.subscriptions.push(edoSealStatusBar);
+
+    const edoResurrectStatusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right,
+        119
+    );
+    edoResurrectStatusBar.command = 'edoTensei.resurrectSession';
+    edoResurrectStatusBar.text = '$(sparkle) 復活';
+    edoResurrectStatusBar.tooltip = 'Edo Tensei: 復活已封印 session';
+    context.subscriptions.push(edoResurrectStatusBar);
+
+    const edoCopyHandoffStatusBar = vscode.window.createStatusBarItem(
+        vscode.StatusBarAlignment.Right,
+        118
+    );
+    edoCopyHandoffStatusBar.command = 'edoTensei.copyHandoffPrompt';
+    edoCopyHandoffStatusBar.text = '$(copy) 接手指令';
+    edoCopyHandoffStatusBar.tooltip = 'Edo Tensei: 一鍵複製接手指令到剪貼簿';
+    context.subscriptions.push(edoCopyHandoffStatusBar);
+
     const clipboardStatusBar = vscode.window.createStatusBarItem(
         vscode.StatusBarAlignment.Right,
         100
@@ -252,6 +287,9 @@ function initializeStatusBar(
 
     // 初始更新
     updateStatusBar();
+    edoSealStatusBar.show();
+    edoResurrectStatusBar.show();
+    edoCopyHandoffStatusBar.show();
 
     // 監聽剪貼簿歷史變化
     clipboardManager.onHistoryChanged(() => {
