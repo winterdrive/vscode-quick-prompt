@@ -30,68 +30,62 @@ interface KiroChatFile {
 export class KiroExtractor implements IChatExtractor {
   readonly ideId = 'kiro' as const;
 
-  private getStorageDir(): string {
+  private getProjectsDir(): string {
     const appData = process.env.APPDATA || '';
     return path.join(appData, 'Kiro', 'User', 'globalStorage', 'kiro.kiroagent');
   }
 
   async extract(workspacePath?: string): Promise<CapturedSession> {
-    const storageDir = this.getStorageDir();
+    const sessions = await this.extractAll(workspacePath);
+    return sessions.length > 0 
+      ? sessions[0] 
+      : { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: this.getProjectsDir(), readStatus: 'empty' };
+  }
 
+  async extractAll(workspacePath?: string): Promise<CapturedSession[]> {
+    const projectsDir = this.getProjectsDir();
     try {
-      await fs.access(storageDir);
+      await fs.access(projectsDir);
     } catch {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: storageDir, readStatus: 'not_found' };
+      return [];
     }
 
     try {
-      const dirs = await fs.readdir(storageDir);
-      const candidates: Array<{ filePath: string; mtime: number }> = [];
+      const folders = await fs.readdir(projectsDir);
+      const results: CapturedSession[] = [];
 
-      for (const dir of dirs) {
-        const fullDirPath = path.join(storageDir, dir);
+      for (const folder of folders) {
+        const folderPath = path.join(projectsDir, folder);
         try {
-          const stat = await fs.stat(fullDirPath);
-          if (!stat.isDirectory()) continue;
+          const s = await fs.stat(folderPath);
+          if (!s.isDirectory()) continue;
 
-          // Skip hidden or internal dirs
-          if (dir.startsWith('.')) continue;
+          const files = await fs.readdir(folderPath);
+          const chatFiles = files.filter(f => f.endsWith('.chat'));
 
-          const files = await fs.readdir(fullDirPath);
-          for (const file of files) {
-            if (file.endsWith('.chat')) {
-              const filePath = path.join(fullDirPath, file);
-              const fStat = await fs.stat(filePath);
-              
-              // If workspacePath is provided, we could try to filter by content
-              // But for now, we just pick the latest active chat across all Kiro projects
-              // as Kiro's hash logic is non-trivial.
-              candidates.push({ filePath, mtime: fStat.mtimeMs });
-            }
+          for (const f of chatFiles) {
+            const filePath = path.join(folderPath, f);
+            try {
+              const fsStat = await fs.stat(filePath);
+              const raw = await fs.readFile(filePath, 'utf8');
+              const messages = this.parseKiroChat(raw);
+              if (messages.length > 0) {
+                results.push({
+                  sourceIde: this.ideId,
+                  capturedAt: new Date(fsStat.mtimeMs).toISOString(),
+                  messages,
+                  rawPath: filePath,
+                  readStatus: 'success',
+                });
+              }
+            } catch { /* skip */ }
           }
         } catch { /* skip */ }
       }
 
-      if (candidates.length === 0) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: storageDir, readStatus: 'empty' };
-      }
-
-      // Sort by mtime DESC
-      candidates.sort((a, b) => b.mtime - a.mtime);
-      const targetFile = candidates[0].filePath;
-
-      const raw = await fs.readFile(targetFile, 'utf8');
-      const messages = this.parseKiroChat(raw);
-
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        messages,
-        rawPath: targetFile,
-        readStatus: messages.length > 0 ? 'success' : 'empty',
-      };
-    } catch (err) {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: storageDir, readStatus: 'error', errorDetail: String(err) };
+      return results.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+    } catch {
+      return [];
     }
   }
 

@@ -6,10 +6,16 @@
  * 儲存路徑：
  *   ~\.gemini\antigravity\brain\{uuid}\.system_generated\logs\overview.txt
  *
- * overview.txt 格式：每行一個 JSON 物件，type 為 PLANNER_RESPONSE / TOOL_CALL_RESULT 等。
- * 我們只需要 source=USER 的 PLANNER_RESPONSE 作為 user，source=MODEL 作為 assistant。
+ * ⚠️ 重要限制（2026-04-27 實測確認）：
+ *   overview.txt 是 **preview-only 日誌**，並非完整對話記錄。
+ *   每筆訊息的 content 欄位最多保留約 900 chars，超出部分在雲端回傳時即截斷。
+ *   截斷標記格式為 `<truncated N bytes>`。
+ *   我們保留此標記而不將其隱藏，藉此清楚讓使用者知道對話記錄並不完整。
+ *   完整對話記錄存於 Antigravity 雲端，本地不落地。
+ *   這已是本地能讀取的最佳方案，待 Antigravity 開放 API 或 export 功能後再升級。
  *
- * 優先找最近修改的 uuid 目錄。
+ * overview.txt 格式：每行一個 JSON 物件，type 為 PLANNER_RESPONSE / TOOL_CALL_RESULT 等。
+ * 我們只需要 source=USER/USER_EXPLICIT 作為 user，source=MODEL 作為 assistant。
  */
 
 import * as fs from 'fs/promises';
@@ -38,56 +44,68 @@ interface OverviewLine {
 export class AntigravityExtractor implements IChatExtractor {
   readonly ideId = 'antigravity' as const;
 
-  private getBrainDir(): string {
+  private getBaseDir(): string {
     return path.join(os.homedir(), '.gemini', 'antigravity', 'brain');
   }
 
   async extract(_workspacePath?: string): Promise<CapturedSession> {
-    const brainDir = this.getBrainDir();
+    const sessions = await this.extractAll(_workspacePath);
+    return sessions.length > 0 
+      ? sessions[0] 
+      : { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: this.getBaseDir(), readStatus: 'empty' };
+  }
 
+  async extractAll(_workspacePath?: string): Promise<CapturedSession[]> {
+    const baseDir = this.getBaseDir();
     try {
-      await fs.access(brainDir);
+      await fs.access(baseDir);
     } catch {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: brainDir, readStatus: 'not_found' };
+      return [];
     }
 
     try {
-      const uuids = await fs.readdir(brainDir);
-      const candidates: Array<{ uuid: string; overviewPath: string; mtime: number }> = [];
+      const brainIds = await fs.readdir(baseDir);
+      const candidates: Array<{ path: string; uuid: string; mtime: number }> = [];
 
-      for (const uuid of uuids) {
-        const overviewPath = path.join(brainDir, uuid, '.system_generated', 'logs', 'overview.txt');
+      for (const id of brainIds) {
+        const overviewPath = path.join(baseDir, id, '.system_generated', 'logs', 'overview.txt');
         try {
           const s = await fs.stat(overviewPath);
-          candidates.push({ uuid, overviewPath, mtime: s.mtimeMs });
-        } catch { /* no overview.txt for this uuid */ }
+          candidates.push({ path: overviewPath, uuid: id, mtime: s.mtimeMs });
+        } catch { /* skip */ }
       }
 
-      if (candidates.length === 0) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: brainDir, readStatus: 'empty' };
+      if (candidates.length === 0) return [];
+
+      const results: CapturedSession[] = [];
+      for (const cand of candidates) {
+        try {
+          const raw = await fs.readFile(cand.path, 'utf8');
+          const { messages, hasTruncation } = this.parseOverview(raw);
+          if (messages.length > 0) {
+            results.push({
+              sourceIde: this.ideId,
+              capturedAt: new Date(cand.mtime).toISOString(),
+              sessionId: cand.uuid,
+              messages,
+              rawPath: cand.path,
+              // 若原始日誌有截斷標記，記錄於 readStatus（overview.txt 的設計即為 preview-only）
+              readStatus: hasTruncation ? 'success' : 'success',
+              errorDetail: hasTruncation ? 'overview.txt is preview-only; some messages are truncated at source' : undefined,
+            });
+          }
+        } catch { /* skip */ }
       }
 
-      candidates.sort((a, b) => b.mtime - a.mtime);
-      const { uuid, overviewPath } = candidates[0];
-
-      const raw = await fs.readFile(overviewPath, 'utf8');
-      const messages = this.parseOverview(raw);
-
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        sessionId: uuid,
-        messages,
-        rawPath: overviewPath,
-        readStatus: messages.length > 0 ? 'success' : 'empty',
-      };
-    } catch (err) {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: brainDir, readStatus: 'error', errorDetail: String(err) };
+      return results.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+    } catch {
+      return [];
     }
   }
 
-  private parseOverview(raw: string): ChatMessage[] {
+  private parseOverview(raw: string): { messages: ChatMessage[]; hasTruncation: boolean } {
     const messages: ChatMessage[] = [];
+    let hasTruncation = false;
 
     for (const line of raw.split('\n')) {
       const trimmed = line.trim();
@@ -98,7 +116,12 @@ export class AntigravityExtractor implements IChatExtractor {
 
         // User messages
         if ((obj.source === 'USER' || obj.source === 'USER_EXPLICIT') && (obj.input || obj.content || obj.text)) {
-          const content = obj.input || obj.content || obj.text || '';
+          let content = obj.input || obj.content || obj.text || '';
+          // 偵測 Antigravity overview.txt 的截斷標記，但不將其隱藏
+          const truncMatch = content.match(/<truncated \d+ bytes>\s*$/);
+          if (truncMatch) {
+            hasTruncation = true;
+          }
           if (content.trim()) {
             messages.push({
               role: 'user',
@@ -111,7 +134,12 @@ export class AntigravityExtractor implements IChatExtractor {
         else if (obj.source === 'MODEL' && obj.type === 'PLANNER_RESPONSE') {
           // Case 1: Direct content
           if (obj.content || obj.text) {
-             const content = obj.content || obj.text || '';
+             let content = obj.content || obj.text || '';
+             // 偵測 Antigravity overview.txt 的截斷標記，但不將其隱藏
+             const truncMatch = content.match(/<truncated \d+ bytes>\s*$/);
+             if (truncMatch) {
+               hasTruncation = true;
+             }
              if (content.trim()) {
                messages.push({ role: 'assistant', content: content.trim(), timestamp: obj.created_at });
              }
@@ -133,6 +161,6 @@ export class AntigravityExtractor implements IChatExtractor {
       } catch { /* skip malformed lines */ }
     }
 
-    return messages;
+    return { messages, hasTruncation };
   }
 }

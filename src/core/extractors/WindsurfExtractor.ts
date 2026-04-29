@@ -23,62 +23,55 @@ export class WindsurfExtractor implements IChatExtractor {
   }
 
   async extract(_workspacePath?: string): Promise<CapturedSession> {
-    const cascadeDir = this.getCascadeDir();
+    const sessions = await this.extractAll(_workspacePath);
+    return sessions.length > 0 
+      ? sessions[0] 
+      : { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: this.getCascadeDir(), readStatus: 'empty' };
+  }
 
+  async extractAll(_workspacePath?: string): Promise<CapturedSession[]> {
+    const cascadeDir = this.getCascadeDir();
     try {
       await fs.access(cascadeDir);
     } catch {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: cascadeDir, readStatus: 'not_found' };
+      return [];
     }
 
     try {
       const files = await fs.readdir(cascadeDir);
       const pbFiles = files.filter(f => f.endsWith('.pb'));
+      const results: CapturedSession[] = [];
 
-      if (pbFiles.length === 0) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: cascadeDir, readStatus: 'empty' };
-      }
+      for (const f of pbFiles) {
+        const filePath = path.join(cascadeDir, f);
+        try {
+          const s = await fs.stat(filePath);
+          const buffer = await fs.readFile(filePath);
+          const extractedText = this.extractPrintableStrings(buffer);
 
-      // Sort by modified time descending
-      const stats = await Promise.all(
-        pbFiles.map(async f => {
-          try {
-            return { name: f, mtime: (await fs.stat(path.join(cascadeDir, f))).mtimeMs };
-          } catch {
-            return { name: f, mtime: 0 };
+          const messages: ChatMessage[] = [];
+          for (const text of extractedText) {
+            if (text.length > 30) {
+              messages.push({ role: 'assistant', content: text.trim() });
+            }
           }
-        })
-      );
-      stats.sort((a, b) => b.mtime - a.mtime);
-      const latestFile = path.join(cascadeDir, stats[0].name);
-      const uuid = stats[0].name.replace('.pb', '');
 
-      const buffer = await fs.readFile(latestFile);
-      const extractedText = this.extractPrintableStrings(buffer);
-
-      // We cannot easily determine role from raw strings without schema, 
-      // but we can look for markers or just dump everything as a single context.
-      const messages: ChatMessage[] = [];
-      for (const text of extractedText) {
-        if (text.length > 30) {
-          messages.push({
-            role: 'assistant', // Default to assistant to provide context
-            content: text.trim()
-          });
-        }
+          if (messages.length > 0) {
+            results.push({
+              sourceIde: this.ideId,
+              capturedAt: new Date(s.mtimeMs).toISOString(),
+              sessionId: f.replace('.pb', ''),
+              messages,
+              rawPath: filePath,
+              readStatus: 'success',
+            });
+          }
+        } catch { /* skip */ }
       }
 
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        sessionId: uuid,
-        messages,
-        rawPath: latestFile,
-        readStatus: messages.length > 0 ? 'success' : 'empty',
-      };
-
-    } catch (err) {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: cascadeDir, readStatus: 'error', errorDetail: String(err) };
+      return results.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+    } catch {
+      return [];
     }
   }
 
@@ -91,8 +84,6 @@ export class WindsurfExtractor implements IChatExtractor {
 
     for (let i = 0; i < buffer.length; i++) {
       const byte = buffer[i];
-      // Allow ASCII printable (32-126) and common UTF-8 ranges
-      // We are more restrictive here to avoid binary noise
       if ((byte >= 0x20 && byte <= 0x7E) || (byte >= 0x09 && byte <= 0x0D) || byte >= 0xA0) {
         currentString.push(byte);
       } else {
@@ -121,17 +112,10 @@ export class WindsurfExtractor implements IChatExtractor {
   }
 
   private isHumanText(str: string): boolean {
-    // Heuristics to filter out binary noise
-    // 1. Density of printable characters
     const printableCount = (str.match(/[\x20-\x7E\u4e00-\u9fa5\s\n\t]/g) || []).length;
     const ratio = printableCount / str.length;
-    
-    // 2. Must contain at least some letters or CJK characters
     const hasLanguage = /[a-zA-Z\u4e00-\u9fa5]/.test(str);
-    
-    // 3. Avoid long sequences of identical characters (often found in binary)
-    const tooManyRepeats = /(.)\1{10,}/.test(str);
-
-    return ratio > 0.85 && hasLanguage && !tooManyRepeats;
+    const tooManyRepeats = /(.)\1{20,}/.test(str); // 放寬重複字元過濾
+    return ratio > 0.6 && hasLanguage && !tooManyRepeats; // 降低可列印字元比例門檻
   }
 }

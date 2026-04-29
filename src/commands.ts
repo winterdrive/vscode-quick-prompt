@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { PromptProvider, PromptItem } from './promptProvider';
 import { ClipboardTreeItem } from './clipboardProvider';
 import { ClipboardManager } from './clipboardManager';
@@ -15,6 +16,7 @@ import { MaskingEngine } from './privacy/maskingEngine';
 import { PatternEngine } from './privacy/masking/patternEngine';
 import { SessionHandoffService } from './core/SessionHandoffService';
 import { SessionItem } from './ui/SessionHandoffProvider';
+
 /**
  * Register all prompt-related commands
  */
@@ -317,7 +319,13 @@ export function registerSessionHandoffCommands(
             await handleOpenSessionFile(sessionService);
         }),
         vscode.commands.registerCommand('edoTensei.scanSessions', async () => {
-            await handleScanSessions(sessionService);
+            await handleScanProjectSessions(sessionService);
+        }),
+        vscode.commands.registerCommand('edoTensei.fetchAllSessions', async () => {
+            await handleFetchAllSessions(sessionService);
+        }),
+        vscode.commands.registerCommand('edoTensei.exportAllSessions', async () => {
+            await handleExportAllSessions(sessionService);
         })
     );
 }
@@ -852,11 +860,9 @@ async function handleSealSession(sessionService: SessionHandoffService): Promise
 
 async function handleResurrectSession(sessionService: SessionHandoffService, item?: SessionItem): Promise<void> {
     let handoffPrompt = '';
-    let description = '';
-
+    
     if (item) {
         handoffPrompt = sessionService.buildPromptFromCapturedSession(item.session);
-        description = `來自 ${item.session.sourceIde} 的 session`;
     } else {
         const session = await sessionService.readSession();
         if (!session) {
@@ -864,20 +870,60 @@ async function handleResurrectSession(sessionService: SessionHandoffService, ite
             return;
         }
         handoffPrompt = session.handoffPrompt;
-        description = `前次 session（最後更新：${new Date(session.savedAt).toLocaleString()}）`;
     }
 
-    const action = await vscode.window.showInformationMessage(
-        `Edo Tensei: 偵測到${description}`,
-        '複製接手指令',
-        item ? '取消' : '開啟 session 檔案'
-    );
+    const workspaceRoot = sessionService.getWorkspaceRoot()?.fsPath;
+    let uri: vscode.Uri;
 
-    if (action === '複製接手指令') {
-        await vscode.env.clipboard.writeText(handoffPrompt);
-        vscode.window.showInformationMessage('Edo Tensei: 已複製接手指令，請到 Chat 直接貼上送出。');
-    } else if (action === '開啟 session 檔案' && !item) {
-        await handleOpenSessionFile(sessionService);
+    if (workspaceRoot) {
+        let projectName = 'unknown';
+        let capturedAt = new Date().toISOString();
+        let sourceIde = 'general';
+
+        if (item) {
+            sourceIde = item.session.sourceIde;
+            capturedAt = item.session.capturedAt;
+            if (item.session.workspacePath) {
+                projectName = path.basename(item.session.workspacePath);
+            } else if (item.session.rawPath) {
+                const parts = item.session.rawPath.split(/[\\\/]/);
+                if (parts.length > 2) {
+                    projectName = parts[parts.length - 2];
+                }
+            }
+        }
+
+        const datePart = capturedAt.replace(/[:.]/g, '-').slice(0, 19);
+        const targetDir = path.join(workspaceRoot, '.edo_tensei', sourceIde, projectName);
+        const filePath = path.join(targetDir, `resurrect_${datePart}.md`);
+        
+        // 確保目錄存在
+        try {
+            await vscode.workspace.fs.createDirectory(vscode.Uri.file(targetDir));
+        } catch { /* ignore */ }
+
+        uri = vscode.Uri.file(filePath).with({ scheme: 'untitled' });
+    } else {
+        uri = vscode.Uri.parse('untitled:resurrected_session.md');
+    }
+
+    try {
+        const doc = await vscode.workspace.openTextDocument(uri);
+        const editor = await vscode.window.showTextDocument(doc, { preview: false });
+        
+        // 填入內容（覆蓋，避免連點重複 append）
+        const lastLine = doc.lineAt(doc.lineCount - 1);
+        const fullRange = new vscode.Range(
+            new vscode.Position(0, 0),
+            new vscode.Position(doc.lineCount - 1, lastLine.text.length)
+        );
+        await editor.edit((editBuilder) => {
+            editBuilder.replace(fullRange, handoffPrompt);
+        });
+        
+        vscode.window.setStatusBarMessage('✨ Edo Tensei: Session 復活成功，已開啟草稿。', 3000);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Edo Tensei: 無法復活 session (${error})`);
     }
 }
 
@@ -912,21 +958,104 @@ async function handleOpenSessionFile(sessionService: SessionHandoffService): Pro
     }
 }
 
-async function handleScanSessions(sessionService: SessionHandoffService): Promise<void> {
-    vscode.window.withProgress({
+async function handleScanProjectSessions(sessionService: SessionHandoffService): Promise<void> {
+    await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Scanning IDE Sessions...",
+        title: "Scanning Project IDE Sessions...",
         cancellable: false
-    }, async (progress) => {
+    }, async () => {
         try {
-            const sessions = await sessionService.scanAllIDEs();
+            const sessions = await sessionService.scanProjectSessions();
             if (sessions.length > 0) {
-                vscode.window.showInformationMessage(`Edo Tensei: Found ${sessions.length} sessions.`);
+                vscode.window.setStatusBarMessage(`✅ Edo Tensei: Found ${sessions.length} project sessions`, 3000);
             } else {
-                vscode.window.showInformationMessage('Edo Tensei: No recent sessions found in other IDEs.');
+                vscode.window.showInformationMessage('Edo Tensei: No project matching sessions found.');
             }
         } catch (e) {
             vscode.window.showErrorMessage('Edo Tensei: Error scanning sessions.');
+        }
+    });
+}
+
+async function handleFetchAllSessions(sessionService: SessionHandoffService): Promise<void> {
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Fetching ALL Historical IDE Sessions...",
+        cancellable: false
+    }, async () => {
+        try {
+            const sessions = await sessionService.scanAllSessions();
+            vscode.window.showInformationMessage(`Edo Tensei: Fetched ${sessions.length} historical sessions.`);
+        } catch (e) {
+            vscode.window.showErrorMessage('Edo Tensei: Error fetching all sessions.');
+        }
+    });
+}
+
+async function handleExportAllSessions(sessionService: SessionHandoffService): Promise<void> {
+    const sessions = sessionService.getSessions();
+    if (sessions.length === 0) {
+        vscode.window.showWarningMessage('Edo Tensei: 面板中沒有可匯出的對話紀錄。請先掃描或 Fetch All。');
+        return;
+    }
+
+    const workspaceRoot = sessionService.getWorkspaceRoot()?.fsPath;
+    if (!workspaceRoot) {
+        vscode.window.showErrorMessage('Edo Tensei: 請先開啟專案資料夾再執行批次匯出。');
+        return;
+    }
+
+    const edoTenseiDir = path.join(workspaceRoot, '.edo_tensei');
+    const edoTenseiUri = vscode.Uri.file(edoTenseiDir);
+
+    await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `Edo Tensei: 正在批次匯出 ${sessions.length} 個 Session...`,
+        cancellable: false
+    }, async (progress) => {
+        try {
+            // 確保目錄存在
+            await vscode.workspace.fs.createDirectory(edoTenseiUri);
+
+            let successCount = 0;
+            for (let i = 0; i < sessions.length; i++) {
+                const session = sessions[i];
+                // 使用 ISO 格式簡化，並移除非法字元
+                const datePart = session.capturedAt.replace(/[:.]/g, '-').slice(0, 19);
+                
+                // 取得專案名稱
+                let projectName = 'unknown';
+                if (session.workspacePath) {
+                    projectName = path.basename(session.workspacePath);
+                } else if (session.rawPath) {
+                    // 如果沒有專案路徑，試著從原始路徑推測（例如取父目錄名稱）
+                    const parts = session.rawPath.split(/[\\\/]/);
+                    if (parts.length > 2) {
+                        projectName = parts[parts.length - 2];
+                    }
+                }
+
+                // 建立層級路徑: .edo_tensei/[IDE]/[Project]/
+                const ideFolderUri = vscode.Uri.joinPath(edoTenseiUri, session.sourceIde);
+                const projectFolderUri = vscode.Uri.joinPath(ideFolderUri, projectName);
+                
+                await vscode.workspace.fs.createDirectory(projectFolderUri);
+
+                // 檔名加入 sessionId 前 8 碼確保唯一性
+                const shortId = (session.sessionId || 'nosid').substring(0, 8);
+                const fileName = `${datePart}_${shortId}.md`;
+                const fileUri = vscode.Uri.joinPath(projectFolderUri, fileName);
+                
+                const content = sessionService.buildPromptFromCapturedSession(session);
+                await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf8'));
+                
+                successCount++;
+                progress.report({ increment: (1 / sessions.length) * 100 });
+            }
+
+            vscode.window.showInformationMessage(`✅ Edo Tensei: 成功匯出 ${successCount} 個 Session 至 .edo_tensei 資料夾！`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`❌ Edo Tensei: 匯出過程發生錯誤 (${error})`);
         }
     });
 }

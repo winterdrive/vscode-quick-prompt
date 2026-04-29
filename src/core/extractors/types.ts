@@ -13,7 +13,7 @@ export interface ChatMessage {
  * A session extracted from a specific IDE's local storage.
  */
 export interface CapturedSession {
-  sourceIde: 'copilot' | 'cursor' | 'antigravity' | 'windsurf' | 'trae' | 'kiro';
+  sourceIde: 'copilot' | 'cursor' | 'antigravity' | 'windsurf' | 'trae' | 'kiro' | 'claude' | 'codex';
   capturedAt: string; // ISO timestamp
   sessionId?: string;
   title?: string;
@@ -33,4 +33,9 @@ export interface IChatExtractor {
    * @param workspacePath - 目前開啟的 workspace 資料夾路徑（部分 IDE 需要此資訊定位對應紀錄）
    */
   extract(workspacePath?: string): Promise<CapturedSession>;
+
+  /** 抓取本地儲存中該 IDE 的所有歷史 Chat Sessions。
+   * @param workspacePath - 用於過濾或排序的參考路徑
+   */
+  extractAll(workspacePath?: string): Promise<CapturedSession[]>;
 }

@@ -8,6 +8,7 @@
  * 由於 Trae 使用 SQLite，為了避免在 VS Code extension 中引入
  * native node-sqlite3 編譯依賴，這裡實作一個輕量的「二進位字串萃取器」，
  * 直接從 `.db` 檔案中掃描提取出人類可讀的對話內容（因為 SQLite 的文字欄位以 UTF-8 儲存）。
+ * TODO: Fix garbled output (encoding issue). Currently disabled in SessionHandoffService.
  */
 
 import * as fs from 'fs/promises';
@@ -83,6 +84,11 @@ export class TraeExtractor implements IChatExtractor {
     } catch (err) {
       return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: storageDir, readStatus: 'error', errorDetail: String(err) };
     }
+  }
+
+  async extractAll(_workspacePath?: string): Promise<CapturedSession[]> {
+    // TODO: Implement Trae history extraction
+    return [];
   }
 
   private extractPrintableStrings(buffer: Buffer): string[] {

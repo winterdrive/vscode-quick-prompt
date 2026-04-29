@@ -48,8 +48,6 @@ interface CopilotJsonlLine {
   v?: CopilotSession;
 }
 
-// ─── Extractor ─────────────────────────────────────────────────────────────────
-
 export class CopilotExtractor implements IChatExtractor {
   readonly ideId = 'copilot' as const;
 
@@ -58,82 +56,161 @@ export class CopilotExtractor implements IChatExtractor {
     return path.join(appData, 'Code', 'User', 'globalStorage', 'emptyWindowChatSessions');
   }
 
-  async extract(_workspacePath?: string): Promise<CapturedSession> {
-    const baseDir = this.getBaseDir();
+  private getWorkspaceStorageDir(): string {
+    const appData = process.env.APPDATA || '';
+    return path.join(appData, 'Code', 'User', 'workspaceStorage');
+  }
 
-    try {
-      await fs.access(baseDir);
-    } catch {
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        messages: [],
-        rawPath: baseDir,
-        readStatus: 'not_found',
-        errorDetail: `Directory not found: ${baseDir}`,
-      };
+  async extract(workspacePath?: string): Promise<CapturedSession> {
+    const emptyWindowDir = this.getBaseDir();
+    const workspaceStorageDir = this.getWorkspaceStorageDir();
+
+    let targetDirs: string[] = [emptyWindowDir];
+
+    if (workspacePath) {
+      try {
+        const entries = await fs.readdir(workspaceStorageDir);
+        const stats = await this.listDirsByMtime(workspaceStorageDir, entries);
+
+        for (const { name } of stats.slice(0, 30)) {
+          const wsJsonPath = path.join(workspaceStorageDir, name, 'workspace.json');
+          try {
+            const content = await fs.readFile(wsJsonPath, 'utf8');
+            const wsJson = JSON.parse(content);
+            const folderUri = wsJson.folder || wsJson.workspace;
+            if (folderUri && typeof folderUri === 'string') {
+              const decodedUri = decodeURIComponent(folderUri);
+              const normalizedWsPath = workspacePath.replace(/\\/g, '/').toLowerCase();
+              if (decodedUri.toLowerCase().includes(normalizedWsPath)) {
+                const chatSessionsDir = path.join(workspaceStorageDir, name, 'chatSessions');
+                targetDirs.unshift(chatSessionsDir);
+                break;
+              }
+            }
+          } catch { /* skip */ }
+        }
+      } catch { /* skip */ }
     }
 
+    for (const dir of targetDirs) {
+      const sessions = await this.extractFromDir(dir);
+      if (sessions.length > 0) return sessions[0];
+    }
+
+    return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: emptyWindowDir, readStatus: 'empty' };
+  }
+
+  async extractAll(_workspacePath?: string): Promise<CapturedSession[]> {
+    const emptyWindowDir = this.getBaseDir();
+    const workspaceStorageDir = this.getWorkspaceStorageDir();
+    const allSessions: CapturedSession[] = [];
+
+    // 1. Scan empty window sessions
+    const emptySessions = await this.extractFromDir(emptyWindowDir);
+    allSessions.push(...emptySessions);
+
+    // 2. Scan all workspace storage folders
     try {
-      const entries = await fs.readdir(baseDir);
-      const sessionFiles = entries.filter(e => e.endsWith('.json') || e.endsWith('.jsonl'));
+      const entries = await fs.readdir(workspaceStorageDir);
+      for (const entry of entries) {
+        const entryDir = path.join(workspaceStorageDir, entry);
+        let resolvedWsPath: string | undefined;
 
-      if (sessionFiles.length === 0) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: baseDir, readStatus: 'empty' };
-      }
-
-      // Sort by mtime descending, pick the most recently modified session that has content
-      const stats = await Promise.all(
-        sessionFiles.map(async f => ({ name: f, mtime: (await fs.stat(path.join(baseDir, f))).mtimeMs }))
-      );
-      stats.sort((a, b) => b.mtime - a.mtime);
-
-      for (const { name } of stats) {
-        const filePath = path.join(baseDir, name);
-        const raw = await fs.readFile(filePath, 'utf8');
-
-        let session: CopilotSession | undefined;
-
-        if (name.endsWith('.jsonl')) {
-          // JSONL: take the first line which is the root session object
-          const firstLine = raw.split('\n').find(l => l.trim());
-          if (firstLine) {
-            const parsed = JSON.parse(firstLine) as CopilotJsonlLine;
-            session = parsed.v;
+        // Try to get actual workspace path from workspace.json
+        try {
+          const wsJsonPath = path.join(entryDir, 'workspace.json');
+          const content = await fs.readFile(wsJsonPath, 'utf8');
+          const wsJson = JSON.parse(content);
+          const folderUri = wsJson.folder || wsJson.workspace;
+          if (folderUri && typeof folderUri === 'string') {
+            resolvedWsPath = decodeURIComponent(folderUri).replace(/^file:\/\/\//, '').replace(/\//g, path.sep);
           }
-        } else {
-          // Plain JSON
-          session = JSON.parse(raw) as CopilotSession;
-        }
+        } catch { /* skip */ }
 
-        if (!session || !session.requests || session.requests.length === 0) {
-          continue; // try next file
-        }
-
-        const messages = this.parseMessages(session.requests);
-        if (messages.length === 0) { continue; }
-
-        return {
-          sourceIde: this.ideId,
-          capturedAt: new Date().toISOString(),
-          sessionId: session.sessionId,
-          title: session.customTitle,
-          messages,
-          rawPath: filePath,
-          readStatus: 'success',
-        };
+        const chatSessionsDir = path.join(entryDir, 'chatSessions');
+        const sessions = await this.extractFromDir(chatSessionsDir, resolvedWsPath);
+        allSessions.push(...sessions);
       }
+    } catch { /* skip */ }
 
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: baseDir, readStatus: 'empty' };
-    } catch (err) {
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        messages: [],
-        rawPath: baseDir,
-        readStatus: 'error',
-        errorDetail: String(err),
-      };
+    return allSessions.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+  }
+
+  private async listDirsByMtime(baseDir: string, entries: string[]): Promise<Array<{ name: string; mtime: number }>> {
+    const stats = await Promise.all(
+      entries.map(async e => {
+        try {
+          const s = await fs.stat(path.join(baseDir, e));
+          return { name: e, mtime: s.mtimeMs };
+        } catch { return { name: e, mtime: 0 }; }
+      })
+    );
+    return stats.sort((a, b) => b.mtime - a.mtime);
+  }
+
+  private async extractFromDir(dir: string, wsPath?: string): Promise<CapturedSession[]> {
+    try {
+      await fs.access(dir);
+      const entries = await fs.readdir(dir);
+      const files = entries.filter(e => e.endsWith('.json') || e.endsWith('.jsonl'));
+      const results: CapturedSession[] = [];
+
+      // A & B: 檔案大小過濾與並行處理
+      const CHUNK_SIZE = 20; // 同時處理 20 個檔案
+      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+        const chunk = files.slice(i, i + CHUNK_SIZE);
+        await Promise.all(chunk.map(async (f) => {
+          const filePath = path.join(dir, f);
+          try {
+            const s = await fs.stat(filePath);
+            
+            // 優化 A: 如果檔案小於 500 bytes，通常是沒有對話的空紀錄，直接跳過不讀取
+            if (s.size < 500) {
+              return;
+            }
+
+            const raw = await fs.readFile(filePath, 'utf8');
+            const sessions: CopilotSession[] = [];
+
+            if (filePath.endsWith('.jsonl')) {
+              for (const line of raw.split('\n')) {
+                const trimmed = line.trim();
+                if (trimmed) {
+                  try {
+                    const parsed = JSON.parse(trimmed) as CopilotJsonlLine;
+                    if (parsed.v) sessions.push(parsed.v);
+                  } catch { /* skip */ }
+                }
+              }
+            } else {
+              try {
+                sessions.push(JSON.parse(raw) as CopilotSession);
+              } catch { /* skip */ }
+            }
+
+            for (const session of sessions) {
+              if (session && session.requests && session.requests.length > 0) {
+                const messages = this.parseMessages(session.requests);
+                if (messages.length > 0) {
+                  results.push({
+                    sourceIde: this.ideId,
+                    capturedAt: new Date(s.mtimeMs).toISOString(),
+                    sessionId: session.sessionId || path.basename(f, path.extname(f)),
+                    title: session.customTitle,
+                    workspacePath: wsPath,
+                    messages,
+                    rawPath: filePath,
+                    readStatus: 'success',
+                  });
+                }
+              }
+            }
+          } catch { /* skip */ }
+        }));
+      }
+      return results;
+    } catch {
+      return [];
     }
   }
 
@@ -141,7 +218,6 @@ export class CopilotExtractor implements IChatExtractor {
     const messages: ChatMessage[] = [];
 
     for (const req of requests) {
-      // User message
       const userText = req.message?.text?.trim() ?? '';
       if (userText) {
         messages.push({
@@ -151,10 +227,9 @@ export class CopilotExtractor implements IChatExtractor {
         });
       }
 
-      // Assistant response: collect text parts only
       if (req.response) {
         const assistantParts = req.response
-          .filter(p => p.value && !p.kind) // text parts have no `kind` field
+          .filter(p => p.value && !p.kind)
           .map(p => p.value ?? '')
           .join('');
         if (assistantParts.trim()) {

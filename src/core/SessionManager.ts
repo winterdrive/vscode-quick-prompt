@@ -69,7 +69,7 @@ export class SessionManager {
 
     public buildHandoffPrompt(input: { history?: string; goal?: string; summary?: string; nextSteps?: string }): string {
         const lines: string[] = [
-            '你現在接手上一段 AI session，請先閱讀以下資訊：',
+            '你現在接手上一段 AI session，請先閱讀以下資訊並先用你的話總結目前理解（包含目前的目標、已嘗試的方法與下一步），再提出接手後的執行計畫：',
             '',
         ];
 
@@ -96,8 +96,8 @@ export class SessionManager {
             lines.push(input.nextSteps.trim());
             lines.push('');
         }
-
-        lines.push('請先用你的話總結目前理解（包含目前的目標、已嘗試的方法與下一步），再提出接手後的執行計畫。');
+        
+        return lines.join('\n');
         
         return lines.join('\n');
     }

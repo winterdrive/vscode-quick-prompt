@@ -60,30 +60,20 @@ export class CursorExtractor implements IChatExtractor {
         await fs.access(candidate);
         targetProjectDir = candidate;
       } catch {
-        // fall through to scan
+        // fall through
       }
     }
 
-    // If not found by slug, find the most recently modified project
+    // If not found by slug, do NOT fall back to latest project IF workspacePath was provided.
+    if (!targetProjectDir && workspacePath) {
+      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: projectsDir, readStatus: 'empty' };
+    }
+
+    // Only if NO workspacePath was provided at all, fall back to most recently modified project
     if (!targetProjectDir) {
-      try {
-        const entries = await fs.readdir(projectsDir);
-        const statsArr = await Promise.all(
-          entries.map(async e => {
-            try {
-              const s = await fs.stat(path.join(projectsDir, e));
-              return { name: e, mtime: s.mtimeMs };
-            } catch {
-              return { name: e, mtime: 0 };
-            }
-          })
-        );
-        statsArr.sort((a, b) => b.mtime - a.mtime);
-        if (statsArr.length > 0) {
-          targetProjectDir = path.join(projectsDir, statsArr[0].name);
-        }
-      } catch (err) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: projectsDir, readStatus: 'error', errorDetail: String(err) };
+      const allProjects = await this.listAllProjects(projectsDir);
+      if (allProjects.length > 0) {
+        targetProjectDir = allProjects[0].path;
       }
     }
 
@@ -91,50 +81,81 @@ export class CursorExtractor implements IChatExtractor {
       return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: projectsDir, readStatus: 'empty' };
     }
 
-    const transcriptsDir = path.join(targetProjectDir, 'agent-transcripts');
+    const sessions = await this.extractFromProject(targetProjectDir);
+    return sessions.length > 0 
+      ? sessions[0] 
+      : { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: targetProjectDir, readStatus: 'empty' };
+  }
+
+  async extractAll(_workspacePath?: string): Promise<CapturedSession[]> {
+    const projectsDir = this.getProjectsDir();
+    try {
+      await fs.access(projectsDir);
+      const allProjects = await this.listAllProjects(projectsDir);
+      
+      const allSessions: CapturedSession[] = [];
+      for (const project of allProjects) {
+        const sessions = await this.extractFromProject(project.path);
+        allSessions.push(...sessions);
+      }
+      
+      // Sort all sessions by mtime DESC
+      return allSessions.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+    } catch {
+      return [];
+    }
+  }
+
+  private async listAllProjects(projectsDir: string): Promise<Array<{ name: string; path: string; mtime: number }>> {
+    try {
+      const entries = await fs.readdir(projectsDir);
+      const statsArr = await Promise.all(
+        entries.map(async e => {
+          try {
+            const p = path.join(projectsDir, e);
+            const s = await fs.stat(p);
+            return { name: e, path: p, mtime: s.mtimeMs };
+          } catch {
+            return null;
+          }
+        })
+      );
+      return (statsArr.filter(x => x !== null) as any[]).sort((a, b) => b.mtime - a.mtime);
+    } catch {
+      return [];
+    }
+  }
+
+  private async extractFromProject(projectDir: string): Promise<CapturedSession[]> {
+    const transcriptsDir = path.join(projectDir, 'agent-transcripts');
     try {
       await fs.access(transcriptsDir);
-    } catch {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: targetProjectDir, readStatus: 'empty' };
-    }
-
-    // Find the latest transcript
-    try {
       const uuidDirs = await fs.readdir(transcriptsDir);
-      const latestJsonls: Array<{ filePath: string; mtime: number }> = [];
+      const results: CapturedSession[] = [];
 
       for (const uuidDir of uuidDirs) {
         const jsonlPath = path.join(transcriptsDir, uuidDir, `${uuidDir}.jsonl`);
         try {
           const s = await fs.stat(jsonlPath);
-          // Check if file is not empty (e.g. > 100 bytes)
           if (s.size > 100) {
-            latestJsonls.push({ filePath: jsonlPath, mtime: s.mtimeMs });
+            const raw = await fs.readFile(jsonlPath, 'utf8');
+            const messages = this.parseJsonl(raw);
+            if (messages.length > 0) {
+              results.push({
+                sourceIde: this.ideId,
+                capturedAt: new Date(s.mtimeMs).toISOString(),
+                workspacePath: projectDir,
+                messages,
+                rawPath: jsonlPath,
+                readStatus: 'success',
+              });
+            }
           }
         } catch { /* skip */ }
       }
-
-      if (latestJsonls.length === 0) {
-        return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: transcriptsDir, readStatus: 'empty' };
-      }
-
-      // Sort by mtime DESC to get the latest active session
-      latestJsonls.sort((a, b) => b.mtime - a.mtime);
-      const chosenFile = latestJsonls[0].filePath;
-
-      const raw = await fs.readFile(chosenFile, 'utf8');
-      const messages = this.parseJsonl(raw);
-
-      return {
-        sourceIde: this.ideId,
-        capturedAt: new Date().toISOString(),
-        workspacePath: targetProjectDir,
-        messages,
-        rawPath: chosenFile,
-        readStatus: messages.length > 0 ? 'success' : 'empty',
-      };
-    } catch (err) {
-      return { sourceIde: this.ideId, capturedAt: new Date().toISOString(), messages: [], rawPath: transcriptsDir, readStatus: 'error', errorDetail: String(err) };
+      return results.sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime());
+    } catch {
+      return [];
     }
   }
 
