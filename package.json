@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "%extension.displayName%",
     "description": "%extension.description%",
-    "version": "0.3.7",
+    "version": "0.3.6",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -218,20 +218,9 @@
                     "name": "%view.clipboard.name%",
                     "icon": "$(clippy)",
                     "when": "config.quickPrompt.clipboardHistory.enabled"
-                },
-                {
-                    "id": "sessionHandoffView",
-                    "name": "Edo Tensei Sessions",
-                    "icon": "$(archive)"
                 }
             ]
         },
-        "viewsWelcome": [
-            {
-                "view": "sessionHandoffView",
-                "contents": "Ready for Edo Tensei?\n\n[Fetch ALL Historical Sessions](command:edoTensei.fetchAllSessions)"
-            }
-        ],
         "commands": [
             {
                 "command": "promptSniper.search",
@@ -391,48 +380,6 @@
                 "command": "promptSniper.restorePromptWarning",
                 "title": "Restore Privacy Warning",
                 "icon": "$(eye)"
-            },
-            {
-                "command": "edoTensei.sealSession",
-                "title": "Edo Tensei: Seal Session",
-                "category": "Edo Tensei",
-                "icon": "$(archive)"
-            },
-            {
-                "command": "edoTensei.resurrectSession",
-                "title": "Edo Tensei: Resurrect Session",
-                "category": "Edo Tensei",
-                "icon": "$(sparkle)"
-            },
-            {
-                "command": "edoTensei.copyHandoffPrompt",
-                "title": "Edo Tensei: Copy Handoff Prompt",
-                "category": "Edo Tensei",
-                "icon": "$(copy)"
-            },
-            {
-                "command": "edoTensei.openSessionFile",
-                "title": "Edo Tensei: Open Session File",
-                "category": "Edo Tensei",
-                "icon": "$(file-code)"
-            },
-            {
-                "command": "edoTensei.scanSessions",
-                "title": "Scan Project Sessions",
-                "category": "Edo Tensei",
-                "icon": "$(search)"
-            },
-            {
-                "command": "edoTensei.fetchAllSessions",
-                "title": "Fetch ALL Historical Sessions",
-                "category": "Edo Tensei",
-                "icon": "$(history)"
-            },
-            {
-                "command": "edoTensei.exportAllSessions",
-                "title": "Export All Sessions to .edo_tensei",
-                "category": "Edo Tensei",
-                "icon": "$(save-all)"
             }
         ],
         "keybindings": [
@@ -478,21 +425,6 @@
                     "command": "promptSniper.clearClipboardHistory",
                     "when": "view == clipboardHistoryView",
                     "group": "navigation@1"
-                },
-                {
-                    "command": "edoTensei.scanSessions",
-                    "when": "view == sessionHandoffView",
-                    "group": "navigation@1"
-                },
-                {
-                    "command": "edoTensei.fetchAllSessions",
-                    "when": "view == sessionHandoffView",
-                    "group": "navigation@2"
-                },
-                {
-                    "command": "edoTensei.exportAllSessions",
-                    "when": "view == sessionHandoffView",
-                    "group": "navigation@3"
                 }
             ],
             "view/item/context": [
@@ -615,11 +547,6 @@
                     "command": "promptSniper.unmaskPrompt",
                     "when": "view == promptSniperView && viewItem == promptItem_protected",
                     "group": "3_privacy@1"
-                },
-                {
-                    "command": "edoTensei.copyHandoffPrompt",
-                    "when": "view == sessionHandoffView && viewItem == sessionItem",
-                    "group": "inline@2"
                 }
             ],
             "editor/context": [
