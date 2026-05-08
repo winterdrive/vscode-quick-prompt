@@ -10,6 +10,8 @@ dist/**
 tools/**
 docs/specs/**
 .kiro/**
-package-lock.json
 docs/ref/**
 docs/assets/deprecated/**
+.claude/settings.json
+.claude/settings.local.json
+prompts.json
