@@ -89,7 +89,10 @@
                 },
                 "quickPrompt.ai.provider": {
                     "type": "string",
-                    "enum": ["local-qwen", "openai-compatible"],
+                    "enum": [
+                        "local-qwen",
+                        "openai-compatible"
+                    ],
                     "default": "local-qwen",
                     "enumDescriptions": [
                         "%config.ai.provider.localQwen%",
@@ -574,6 +577,7 @@
     },
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.27.1",
+        "@xenova/transformers": "^2.17.2",
         "zod": "^3.23.8"
     }
 }
