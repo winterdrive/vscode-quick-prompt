@@ -324,13 +324,11 @@ export class ClipboardManager {
      * 儲存歷史（到 ~/.quickprompt/clipboard-history.json）
      */
     private saveHistory() {
-        try {
-            fs.writeFileSync(this.getStoragePath(), JSON.stringify(this.history, null, 2), 'utf-8');
-            // 同時更新 globalState 以防舊版依賴，或可直接移除
-            this.context.globalState.update('clipboardHistory', this.history);
-        } catch (err) {
-            console.error('Failed to save clipboard history file:', err);
-        }
+        fs.promises.writeFile(
+            this.getStoragePath(),
+            JSON.stringify(this.history, null, 2),
+            'utf-8'
+        ).catch(err => console.error('Failed to save clipboard history file:', err));
     }
 
     /**
