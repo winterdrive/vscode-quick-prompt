@@ -12,6 +12,5 @@ docs/specs/**
 .kiro/**
 docs/ref/**
 docs/assets/deprecated/**
-.claude/settings.json
-.claude/settings.local.json
+.claude/**
 prompts.json
