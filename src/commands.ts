@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { PromptProvider, PromptItem } from './promptProvider';
 import { ClipboardTreeItem } from './clipboardProvider';
 import { ClipboardManager } from './clipboardManager';
@@ -13,6 +14,7 @@ import { VersionItem } from './treeItems/VersionItem';
 import * as versionCommands from './commands/versionCommands';
 import { MaskingEngine } from './privacy/maskingEngine';
 import { PatternEngine } from './privacy/masking/patternEngine';
+
 /**
  * Register all prompt-related commands
  */
@@ -293,6 +295,8 @@ export function registerVersionCommands(
         })
     );
 }
+
+
 
 // ==================== Command Handlers ====================
 

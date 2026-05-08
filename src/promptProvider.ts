@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { I18n } from './i18n';
 import { ClipboardManager } from './clipboardManager';
 import { VersionHistoryService } from './services/VersionHistoryService';
@@ -8,13 +9,9 @@ import { SecretStorageManager } from './privacy/masking/secretStorage';
 import {
     getPromptIcon,
     sortPrompts,
-    generateAutoTitle,
     generatePromptId,
-    getDaysSince,
     formatRelativeTime,
-    getTodayISOString,
-    getRelativeTime
-} from './utils';
+    getTodayISOString} from './utils';
 
 // Prompt 與 PrivacyMeta 的唯一來源，從 core/types 統一 re-export
 export type { Prompt, PrivacyMeta } from './core/types';
@@ -36,6 +33,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     private clipboardManager?: ClipboardManager;
     private versionHistoryService: VersionHistoryService;
     private secretStorage: SecretStorageManager;
+    private _savingCount = 0;
 
     constructor(private context: vscode.ExtensionContext, versionHistoryService?: VersionHistoryService) {
         this.secretStorage = new SecretStorageManager(context.secrets);
@@ -57,6 +55,18 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         this.loadPrompts().catch(err => {
             console.error('Failed to load prompts:', err);
         });
+
+        // 監聽外部對 prompts.json 的修改（自己寫入時 _savingCount > 0，予以忽略）
+        const promptsDir = vscode.Uri.file(path.dirname(this.promptsFilePath));
+        const watcher = vscode.workspace.createFileSystemWatcher(
+            new vscode.RelativePattern(promptsDir, 'prompts.json')
+        );
+        watcher.onDidChange(async () => {
+            if (this._savingCount === 0) {
+                await this.refresh();
+            }
+        });
+        context.subscriptions.push(watcher);
     }
 
     /**
@@ -65,9 +75,9 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     setClipboardManager(manager: ClipboardManager) {
         this.clipboardManager = manager;
 
-        // 監聽剪貼簿歷史變化
+        // 監聽剪貼簿歷史變化：只重繪 TreeView，不重讀磁碟
         manager.onHistoryChanged(() => {
-            this.refresh();
+            this._onDidChangeTreeData.fire();
         });
     }
 
@@ -84,31 +94,20 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
             // 自動遷移：移除舊欄位 (status)，補齊新欄位
             let needsMigration = false;
-            let needsMetaUpdate = false;
 
-            // 平行處理所有 Prompts 的 Metadata 檢查
-            const processedPrompts = await Promise.all(prompts.map(async (p: any) => {
+            // 處理所有 Prompts 的欄位正規化（純記憶體操作，不讀磁碟）
+            const today = getTodayISOString();
+            const processedPrompts = prompts.map((p: any, index: number) => {
                 // 檢查是否有舊欄位
                 if ('status' in p) {
                     needsMigration = true;
                 }
 
-                // 檢查是否缺少 meta
+                // 缺少 meta 時給預設值（正確值由 initializeVersionHistory 在 activate 時補齊）
                 if (!p.meta) {
-                    needsMetaUpdate = true;
-                    // 讀取歷史檔案以取得正確的版本資訊
-                    try {
-                        const history = await this.versionHistoryService.loadHistory(p.id);
-                        p.meta = {
-                            totalVersions: history.versions.length,
-                            latestVersionId: history.currentVersionId
-                        };
-                    } catch (e) {
-                        p.meta = { totalVersions: 0 };
-                    }
+                    p.meta = { totalVersions: 0 };
                 }
 
-                const today = getTodayISOString();
                 return {
                     id: p.id,
                     title: p.title,
@@ -118,18 +117,18 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                     created_at: p.created_at || p.last_used || today,
                     pinned: p.pinned ?? false,
                     titleSource: p.titleSource,
-                    order: p.order,
+                    order: p.order ?? index,
                     meta: p.meta,
                     ignorePrivacyWarning: p.ignorePrivacyWarning ?? false,
                     privacyMeta: p.privacyMeta
                 };
-            }));
+            });
 
             this.prompts = processedPrompts;
 
-            // 如果有遷移,自動儲存清理後的資料(靜默模式)
-            if (needsMigration || needsMetaUpdate) {
-                console.log('[PromptProvider] Doing migration or meta update...');
+            // 有舊欄位（status）才需要儲存清理；meta 缺失由 initializeVersionHistory 補齊後 save
+            if (needsMigration) {
+                console.log('[PromptProvider] Running schema migration...');
                 await this.savePrompts();
             }
         } catch (error: any) {
@@ -213,6 +212,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     }
 
     private async savePrompts(): Promise<void> {
+        this._savingCount++;
         try {
             const uri = vscode.Uri.file(this.promptsFilePath);
             const content = JSON.stringify(this.prompts, null, 2);
@@ -221,6 +221,9 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         } catch (error) {
             console.error('Failed to save prompts:', error);
             throw error;
+        } finally {
+            // 延遲清零，讓 FileSystemWatcher 事件有時間觸發並看到 _savingCount > 0
+            setTimeout(() => { this._savingCount--; }, 300);
         }
     }
 
@@ -249,11 +252,12 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             last_used: today,
             created_at: today,
             pinned: false,
-            titleSource
+            titleSource,
+            order: this.prompts.length
         };
         this.prompts.push(newPrompt);
         await this.savePrompts();
-        await this.refresh();
+        this._onDidChangeTreeData.fire();
 
         if (!silent) {
             vscode.window.showInformationMessage(I18n.getMessage('message.promptAdded', title));
@@ -269,7 +273,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             prompt.use_count++;
             prompt.last_used = getTodayISOString();
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
         }
     }
 
@@ -280,7 +284,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             await this.savePrompts();
             await this.versionHistoryService.deleteHistory(item.prompt.id);
             await this.secretStorage.delete(item.prompt.id);
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
             vscode.window.setStatusBarMessage(I18n.getMessage('message.promptDeleted', item.prompt.title), 2000);
         }
     }
@@ -290,7 +294,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         if (prompt) {
             prompt.pinned = !prompt.pinned;
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
         }
     }
 
@@ -307,7 +311,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
             prompt.content = content;
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
         }
     }
 
@@ -327,7 +331,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         prompt.content = maskedContent;
         prompt.privacyMeta = { maskedAt: Date.now(), types };
         await this.savePrompts();
-        await this.refresh();
+        this._onDidChangeTreeData.fire();
     }
 
     async unmaskPromptContent(id: string): Promise<boolean> {
@@ -346,7 +350,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         delete prompt.privacyMeta;
         await this.secretStorage.delete(id);
         await this.savePrompts();
-        await this.refresh();
+        this._onDidChangeTreeData.fire();
         return true;
     }
 
@@ -355,7 +359,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         if (prompt) {
             prompt.title = title;
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
         }
     }
 
@@ -366,7 +370,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         if (prompt) {
             prompt.ignorePrivacyWarning = true;
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
             vscode.window.setStatusBarMessage(`✅ 防護警示已忽略`, 2000);
         }
     }
@@ -377,7 +381,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         if (prompt) {
             prompt.ignorePrivacyWarning = false;
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
             vscode.window.setStatusBarMessage(`✅ 隱私防護警示已重新啟用`, 2000);
         }
     }
@@ -393,7 +397,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             this.prompts.forEach((p, i) => p.order = i);
 
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
             vscode.window.setStatusBarMessage(`✅ 已上移: ${item.prompt.title}`, 2000);
         }
     }
@@ -409,7 +413,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             this.prompts.forEach((p, i) => p.order = i);
 
             await this.savePrompts();
-            await this.refresh();
+            this._onDidChangeTreeData.fire();
             vscode.window.setStatusBarMessage(`✅ 已下移: ${item.prompt.title}`, 2000);
         }
     }
