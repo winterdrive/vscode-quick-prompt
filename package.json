@@ -562,9 +562,9 @@
         "vscode:prepublish": "npm run build:qp && npm run build:mcp && tsc -p ./",
         "build": "npm run clean && tsc -p ./ && npm run build:qp && npm run build:mcp",
         "_trigger_publish": "echo 'Triggering publish workflow'",
-        "build:qp": "node node_modules/esbuild/bin/esbuild qp-entry.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/qp.bundle.js --external:vscode",
-        "build:mcp": "node node_modules/esbuild/bin/esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode",
-        "build:mcp:watch": "node node_modules/esbuild/bin/esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode --watch"
+        "build:qp": "esbuild qp-entry.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/qp.bundle.js --external:vscode",
+        "build:mcp": "esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode",
+        "build:mcp:watch": "esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode --watch"
     },
     "devDependencies": {
         "@types/node": "^16.x",
