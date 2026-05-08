@@ -4,6 +4,17 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.7] - 2026-05-08
+
+### ⚡ Performance & CI/CD Enhancements
+
+**What changed:**
+
+- **Performance Optimization**: Enhanced state management and memory efficiency in the core providers (`ClipboardManager` and `PromptProvider`).
+- **Automated Publishing**: Added GitHub Actions workflow (`publish.yml`) for automated deployments to the VS Code Marketplace and Open VSX.
+
+---
+
 ## [0.3.6] - 2026-04-22
 
 ### 🚀 Voice‑Ready MCP Integration & Reliability
