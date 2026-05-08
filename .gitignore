@@ -13,4 +13,3 @@ docs/specs/**
 docs/ref/**
 docs/assets/deprecated/**
 .claude/**
-prompts.json
