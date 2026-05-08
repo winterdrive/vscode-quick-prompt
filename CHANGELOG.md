@@ -4,6 +4,18 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.3.7] - 2026-05-08
+
+### ⚡ Performance & CI/CD Enhancements
+
+**What changed:**
+
+- **Performance Optimization**: Enhanced state management and memory efficiency in the core providers (`ClipboardManager` and `PromptProvider`).
+- **Automated Publishing**: Added GitHub Actions workflow (`publish.yml`) for automated deployments to the VS Code Marketplace and Open VSX.
+- **Codebase Cleanup**: Removed obsolete Edo-Tensei prototype files (Session Handoff Extractors, UI Providers, and related documentation) from the repository to maintain a cleaner core architecture.
+
+---
+
 ## [0.3.6] - 2026-04-22
 
 ### 🚀 Voice‑Ready MCP Integration & Reliability
