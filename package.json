@@ -1,6 +1,6 @@
 {
     "name": "quick-prompt",
-    "displayName": "%extension.displayName%",
+    "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
     "version": "0.3.8",
     "publisher": "winterdrive",
