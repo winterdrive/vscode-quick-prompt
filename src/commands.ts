@@ -391,7 +391,7 @@ async function handleInsertPrompt(item: PromptItem, promptProvider: PromptProvid
 
 /**
  * Handle add prompt command (漸進式版本)
- * 支援 "標題::內容" 語法，但優先使用漸進式 AI 生成
+ * 只輸入內容，標題一律自動生成
  */
 async function handleAddPrompt(
     promptProvider: PromptProvider,
@@ -413,36 +413,10 @@ async function handleAddPrompt(
         return;
     }
 
-    // 2. 智慧解析：支援 "標題::內容" 格式
-    let title: string = '';
-    let content: string;
-    let userProvidedTitle = false;
+    // 2. 僅接收內容，標題改為自動生成
+    const content = input.trim();
 
-    if (input.includes('::')) {
-        const parts = input.split('::', 2);
-        const parsedTitle = parts[0].trim();
-        content = parts[1].trim();
-
-        if (parsedTitle) {
-            // 使用者提供了標題，直接使用
-            title = parsedTitle;
-            userProvidedTitle = true;
-        } else {
-            // 標題為空，使用漸進式生成
-            userProvidedTitle = false;
-        }
-    } else {
-        content = input;
-        userProvidedTitle = false;
-    }
-
-    // 3. 如果使用者已提供標題，直接儲存
-    if (userProvidedTitle) {
-        await promptProvider.addPrompt(title, content, 'user');
-        return;
-    }
-
-    // 4. Silent 模式: 立即生成 Fallback 標題並儲存 (不等待 AI)
+    // 3. Silent 模式: 立即生成 Fallback 標題並儲存 (不等待 AI)
     const fallbackTitle = generateAutoTitle(content);
     const promptId = await promptProvider.addPromptWithOption(
         fallbackTitle,
@@ -451,13 +425,13 @@ async function handleAddPrompt(
         'ai'
     );
 
-    // 5. 顯示狀態列訊息
+    // 4. 顯示狀態列訊息
     vscode.window.setStatusBarMessage(
         `✅ 已儲存: ${fallbackTitle}`,
         3000
     );
 
-    // 6. 背景 AI 生成優化標題 (不阻塞)
+    // 5. 背景 AI 生成優化標題 (不阻塞)
     titleGenService.generateProgressively(
         content,
         async (aiTitle, fallbackTitleFromAI) => {
@@ -482,15 +456,44 @@ async function handleAddPrompt(
 }
 
 /**
- * Handle add prompt with custom title command (漸進式版本)
- * 現在與 handleAddPrompt 行為一致，保留此命令以維持向後相容
+ * Handle add prompt with custom title command
+ * 顯式讓使用者先輸入標題，再輸入內容
  */
 async function handleAddPromptWithTitle(
     promptProvider: PromptProvider,
     titleGenService: TitleGenerationService
 ): Promise<void> {
-    // 直接呼叫 handleAddPrompt，行為完全一致
-    await handleAddPrompt(promptProvider, titleGenService);
+    const title = await vscode.window.showInputBox({
+        prompt: I18n.getMessage('input.pinPromptTitle'),
+        placeHolder: I18n.getMessage('input.addPromptTitlePlaceholder'),
+        validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+                return I18n.getMessage('input.contentRequired');
+            }
+            return null;
+        }
+    });
+
+    if (!title) {
+        return;
+    }
+
+    const content = await vscode.window.showInputBox({
+        prompt: I18n.getMessage('input.addPromptWithTitleContentPrompt'),
+        placeHolder: I18n.getMessage('input.addPromptPlaceholder'),
+        validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+                return I18n.getMessage('input.contentRequired');
+            }
+            return null;
+        }
+    });
+
+    if (!content) {
+        return;
+    }
+
+    await promptProvider.addPrompt(title.trim(), content.trim(), 'user');
 }
 
 /**
