@@ -464,7 +464,7 @@ async function handleAddPromptWithTitle(
     titleGenService: TitleGenerationService
 ): Promise<void> {
     const title = await vscode.window.showInputBox({
-        prompt: I18n.getMessage('input.addPromptTitlePrompt'),
+        prompt: I18n.getMessage('input.addPromptWithTitleTitlePrompt'),
         placeHolder: I18n.getMessage('input.addPromptTitlePlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
@@ -480,7 +480,7 @@ async function handleAddPromptWithTitle(
 
     const content = await vscode.window.showInputBox({
         prompt: I18n.getMessage('input.addPromptWithTitleContentPrompt'),
-        placeHolder: I18n.getMessage('input.addPromptPlaceholder'),
+        placeHolder: I18n.getMessage('input.addPromptWithTitleContentPlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
                 return I18n.getMessage('input.contentRequired');
