@@ -13,6 +13,7 @@
     "input.addPromptTitlePlaceholder": "例如:Debug 检查清单",
     "input.addPromptWithTitleContentPrompt": "输入 Prompt 内容",
     "input.addPromptWithTitleContentPlaceholder": "例如:请分析错误日志...",
+    "input.titleRequired": "标题不能为空",
     "input.contentRequired": "内容不能为空",
     "confirm.deletePrompt": "确定要删除「{0}」吗?",
     "confirm.cancel": "取消",

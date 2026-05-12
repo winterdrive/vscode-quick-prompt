@@ -13,6 +13,7 @@
     "input.addPromptTitlePlaceholder": "e.g., Debug Checklist",
     "input.addPromptWithTitleContentPrompt": "Enter Prompt content",
     "input.addPromptWithTitleContentPlaceholder": "e.g., Analyze error logs...",
+    "input.titleRequired": "Title cannot be empty",
     "input.contentRequired": "Content cannot be empty",
     "confirm.deletePrompt": "Are you sure you want to delete '{0}'?",
     "confirm.yes": "Yes",

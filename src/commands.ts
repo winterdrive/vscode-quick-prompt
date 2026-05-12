@@ -468,7 +468,7 @@ async function handleAddPromptWithTitle(
         placeHolder: I18n.getMessage('input.addPromptTitlePlaceholder'),
         validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-                return I18n.getMessage('input.contentRequired');
+                return I18n.getMessage('input.titleRequired');
             }
             return null;
         }
