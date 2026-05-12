@@ -9,6 +9,7 @@
     "message.promptUnpinned": "📌 已取消固定 Prompt「{0}」",
     "input.addPromptPrompt": "输入 Prompt 内容 (标题会自动生成)",
     "input.addPromptPlaceholder": "例如:请分析错误日志...",
+    "input.addPromptTitlePrompt": "为此 Prompt 设置标题",
     "input.addPromptTitlePlaceholder": "例如:Debug 检查清单",
     "input.addPromptWithTitleContentPrompt": "输入 Prompt 内容",
     "input.contentRequired": "内容不能为空",

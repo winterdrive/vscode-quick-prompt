@@ -9,6 +9,7 @@
     "message.promptUnpinned": "📌 Prompt '{0}' unpinned",
     "input.addPromptPrompt": "Enter Prompt content (title will be auto-generated)",
     "input.addPromptPlaceholder": "e.g., Analyze error logs...",
+    "input.addPromptTitlePrompt": "Set title for this prompt",
     "input.addPromptTitlePlaceholder": "e.g., Debug Checklist",
     "input.addPromptWithTitleContentPrompt": "Enter Prompt content",
     "input.contentRequired": "Content cannot be empty",
