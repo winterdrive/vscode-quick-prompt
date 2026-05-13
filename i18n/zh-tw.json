@@ -14,6 +14,7 @@
     "input.addPromptWithTitleContentPrompt": "輸入 Prompt 內容",
     "input.addPromptWithTitleContentPlaceholder": "例如:請分析錯誤日誌...",
     "input.titleRequired": "標題不能為空",
+    "input.untitledPrompt": "未命名 Prompt",
     "input.contentRequired": "內容不能為空",
     "confirm.deletePrompt": "確定要刪除「{0}」嗎?",
     "confirm.yes": "是",

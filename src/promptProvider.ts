@@ -97,7 +97,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
             // 處理所有 Prompts 的欄位正規化（純記憶體操作，不讀磁碟）
             const today = getTodayISOString();
-            const processedPrompts = prompts.map((p: any, index: number) => {
+            const processedPrompts: Prompt[] = prompts.map((p: any) => {
                 // 檢查是否有舊欄位
                 if ('status' in p) {
                     needsMigration = true;
@@ -117,12 +117,26 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                     created_at: p.created_at || p.last_used || today,
                     pinned: p.pinned ?? false,
                     titleSource: p.titleSource,
-                    order: p.order ?? index,
+                    order: p.order,
                     meta: p.meta,
                     ignorePrivacyWarning: p.ignorePrivacyWarning ?? false,
                     privacyMeta: p.privacyMeta
                 };
             });
+
+            // 遷移：清除舊格式自動指派的連續 order 值（0,1,2,...N-1）
+            // 這類 order 並非使用者手動排序，清除後改用 created_at 降冪作為預設排序
+            const definedOrders = processedPrompts
+                .map(p => p.order)
+                .filter((o): o is number => o !== undefined);
+            if (definedOrders.length === processedPrompts.length) {
+                const sorted = [...definedOrders].sort((a, b) => a - b);
+                const isSequential = sorted.every((o, i) => o === i);
+                if (isSequential) {
+                    processedPrompts.forEach(p => { p.order = undefined; });
+                    needsMigration = true;
+                }
+            }
 
             this.prompts = processedPrompts;
 
@@ -241,7 +255,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         content: string,
         silent: boolean = false,
         titleSource?: 'user' | 'ai'
-    ): Promise<void> {
+    ): Promise<string> {
         const today = getTodayISOString();
         const newId = generatePromptId(this.prompts);
         const newPrompt: Prompt = {
@@ -250,10 +264,9 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             content,
             use_count: 0,
             last_used: today,
-            created_at: today,
+            created_at: new Date().toISOString(), // full datetime for accurate sort ordering
             pinned: false,
             titleSource,
-            order: this.prompts.length
         };
         this.prompts.push(newPrompt);
         await this.savePrompts();
@@ -264,6 +277,8 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         } else {
             vscode.window.setStatusBarMessage(`✅ Prompt Saved: ${title}`, 3000);
         }
+
+        return newId;
     }
 
     // 增加使用次數
@@ -388,34 +403,33 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
     // 上移 Prompt
     async moveUp(item: PromptItem): Promise<void> {
-        const index = this.prompts.findIndex(p => p.id === item.prompt.id);
-        if (index > 0) {
-            // 交換位置
-            [this.prompts[index - 1], this.prompts[index]] = [this.prompts[index], this.prompts[index - 1]];
+        const sorted = sortPrompts(this.prompts);
+        const idx = sorted.findIndex(p => p.id === item.prompt.id);
+        if (idx <= 0) { return; }
+        if (sorted[idx - 1].pinned && !item.prompt.pinned) { return; } // 不可越過 pinned
 
-            // 更新 order 欄位
-            this.prompts.forEach((p, i) => p.order = i);
+        // 首次手動移動：為所有 prompt 指派基於當前排序的 order
+        sorted.forEach((p, i) => { p.order = i; });
+        [sorted[idx - 1].order, sorted[idx].order] = [sorted[idx].order, sorted[idx - 1].order];
 
-            await this.savePrompts();
-            this._onDidChangeTreeData.fire();
-            vscode.window.setStatusBarMessage(`✅ 已上移: ${item.prompt.title}`, 2000);
-        }
+        await this.savePrompts();
+        this._onDidChangeTreeData.fire();
+        vscode.window.setStatusBarMessage(`✅ 已上移: ${item.prompt.title}`, 2000);
     }
 
     // 下移 Prompt
     async moveDown(item: PromptItem): Promise<void> {
-        const index = this.prompts.findIndex(p => p.id === item.prompt.id);
-        if (index < this.prompts.length - 1 && index !== -1) {
-            // 交換位置
-            [this.prompts[index], this.prompts[index + 1]] = [this.prompts[index + 1], this.prompts[index]];
+        const sorted = sortPrompts(this.prompts);
+        const idx = sorted.findIndex(p => p.id === item.prompt.id);
+        if (idx < 0 || idx >= sorted.length - 1) { return; }
+        if (item.prompt.pinned && !sorted[idx + 1].pinned) { return; } // pinned 不可移至非 pinned 之後
 
-            // 更新 order 欄位
-            this.prompts.forEach((p, i) => p.order = i);
+        sorted.forEach((p, i) => { p.order = i; });
+        [sorted[idx].order, sorted[idx + 1].order] = [sorted[idx + 1].order, sorted[idx].order];
 
-            await this.savePrompts();
-            this._onDidChangeTreeData.fire();
-            vscode.window.setStatusBarMessage(`✅ 已下移: ${item.prompt.title}`, 2000);
-        }
+        await this.savePrompts();
+        this._onDidChangeTreeData.fire();
+        vscode.window.setStatusBarMessage(`✅ 已下移: ${item.prompt.title}`, 2000);
     }
 
     /**
@@ -455,7 +469,20 @@ export class PromptItem extends vscode.TreeItem {
         const versionCountText = versionCount > 0 ? ` • ${versionCount} 個版本` : '';
         this.description = useCountText + versionCountText;
 
-        this.tooltip = `${prompt.content}\n\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+        // Tooltip: metadata first so it's always visible, then truncated content
+        const MAX_PREVIEW = 300;
+        const contentPreview = prompt.content.length > MAX_PREVIEW
+            ? `${prompt.content.slice(0, MAX_PREVIEW)}...`
+            : prompt.content;
+        const metaLine = `${useCountText}${versionCountText}  |  ${I18n.getMessage('status.lastUsed', timeText)}`;
+        this.tooltip = `${metaLine}\n\n${contentPreview}`;
+
+        // 點擊 item 直接開啟編輯畫面
+        this.command = {
+            command: 'promptSniper.editPrompt',
+            title: 'Edit Prompt',
+            arguments: [this]
+        };
 
         // 根據使用次數設定圖示 (預設)
         this.iconPath = getPromptIcon(prompt);
@@ -469,14 +496,14 @@ export class PromptItem extends vscode.TreeItem {
         if (hasReversibleMask) {
             // 狀態 1: 已遮罩 (綠色盾牌)
             const maskedTypes = prompt.privacyMeta?.types.join(', ') ?? '';
-            const typesLine = maskedTypes ? `\nTypes: ${maskedTypes}` : '';
+            const typesLine = maskedTypes ? `  |  Types: ${maskedTypes}` : '';
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("testing.iconPassed"));
-            this.tooltip = `${prompt.content}\n\n🛡️ Sensitive Data Masked${typesLine}\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.tooltip = `🛡️ Sensitive Data Masked${typesLine}\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_protected';
         } else if (hasLegacyMaskToken) {
             // 狀態 2: 舊資料已遮罩但缺少對照表 (不可還原)
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
-            this.tooltip = `${prompt.content}\n\n⚠ Masked tokens found, but mapping is missing (cannot unmask)\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.tooltip = `⚠ Masked tokens found, but mapping is missing (cannot unmask)\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_masked_unrestorable';
         } else if (prompt.ignorePrivacyWarning && hasRawSensitiveData) {
             // 狀態 3: 使用者選擇忽略警報 (白名單)
@@ -484,7 +511,7 @@ export class PromptItem extends vscode.TreeItem {
         } else if (hasRawSensitiveData) {
             // 狀態 4: 含裸露敏感資料，尚未遮罩 (黃色盾牌)
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
-            this.tooltip = `${prompt.content}\n\n⚠ Contains sensitive data (Maskable)\n${useCountText}${versionCountText}\n${I18n.getMessage('status.lastUsed', timeText)}`;
+            this.tooltip = `⚠ Contains sensitive data (Maskable)\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_maskable';
         }
     }

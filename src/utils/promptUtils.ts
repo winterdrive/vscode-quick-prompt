@@ -61,18 +61,15 @@ export function getPromptQuickPickIcon(prompt: Prompt): string {
  * @returns Comparison result
  */
 export function comparePrompts(a: Prompt, b: Prompt): number {
-    // Pinned prompts come first
     if (a.pinned !== b.pinned) {
         return a.pinned ? -1 : 1;
     }
-
-    // Then sort by explicit order (if both have it)
-    if (a.order !== undefined && b.order !== undefined && a.order !== b.order) {
+    // Explicit order (set by moveUp/moveDown) takes precedence
+    if (a.order !== undefined && b.order !== undefined) {
         return a.order - b.order;
     }
-
-    // Finally sort by last used date (newest first)
-    return new Date(b.last_used).getTime() - new Date(a.last_used).getTime();
+    // Default: newest created first
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 }
 
 /**

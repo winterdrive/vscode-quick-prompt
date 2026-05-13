@@ -137,7 +137,7 @@ export class PromptManager {
             content,
             use_count: 0,
             last_used: today,
-            created_at: today,
+            created_at: new Date().toISOString(),
             pinned: options?.pinned ?? false,
             titleSource: options?.titleSource,
             meta: { totalVersions: 0 },

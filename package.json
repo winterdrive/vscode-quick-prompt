@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.3.9",
+    "version": "0.4.0",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -271,6 +271,11 @@
                 "icon": "$(edit)"
             },
             {
+                "command": "promptSniper.renamePrompt",
+                "title": "%command.renamePrompt.title%",
+                "icon": "$(tag)"
+            },
+            {
                 "command": "promptSniper.copyClipboardItem",
                 "title": "%command.copyClipboardItem.title%",
                 "icon": "$(copy)"
@@ -442,14 +447,14 @@
                     "group": "inline@2"
                 },
                 {
-                    "command": "promptSniper.editPrompt",
+                    "command": "promptSniper.deletePrompt",
                     "when": "view == promptSniperView && viewItem =~ /^promptItem/",
                     "group": "inline@3"
                 },
                 {
-                    "command": "promptSniper.deletePrompt",
+                    "command": "promptSniper.renamePrompt",
                     "when": "view == promptSniperView && viewItem =~ /^promptItem/",
-                    "group": "inline@4"
+                    "group": "1_actions@1"
                 },
                 {
                     "command": "promptSniper.moveUp",

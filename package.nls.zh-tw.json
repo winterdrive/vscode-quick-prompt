@@ -13,6 +13,7 @@
     "command.togglePin.title": "釘選/取消釘選",
     "command.refresh.title": "重新整理",
     "command.editPrompt.title": "編輯 Prompt",
+    "command.renamePrompt.title": "重新命名 Prompt",
     "command.copyClipboardItem.title": "複製剪貼簿項目",
     "command.pinClipboardItem.title": "固定到 Prompts",
     "command.editClipboardItem.title": "編輯為 Prompt",

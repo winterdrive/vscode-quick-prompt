@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "執行擴充功能",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: vscode:prepublish"
+        },
+        {
+            "name": "擴充功能測試",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/dist/test/suite/index"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/test/**/*.js"
+            ],
+            "preLaunchTask": "npm: vscode:prepublish"
+        }
+    ]
+}

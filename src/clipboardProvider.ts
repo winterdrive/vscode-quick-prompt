@@ -12,7 +12,12 @@ export class ClipboardTreeItem extends vscode.TreeItem {
         // 使用視覺寬度截斷，確保多語系字元呈現一致寬度
         this.label = `${item.preview}`;
         this.description = `${relativeTime}`;
-        this.tooltip = `${item.content}\n\n${I18n.getMessage('clipboard.source.' + item.source)}\n${I18n.getMessage('clipboard.chars', item.length.toString())}\n${new Date(item.timestamp).toLocaleString()}`;
+        const MAX_PREVIEW = 300;
+        const contentPreview = item.content.length > MAX_PREVIEW
+            ? `${item.content.slice(0, MAX_PREVIEW)}...`
+            : item.content;
+        const metaLine = `${I18n.getMessage('clipboard.source.' + item.source)}  |  ${I18n.getMessage('clipboard.chars', item.length.toString())}  |  ${new Date(item.timestamp).toLocaleString()}`;
+        this.tooltip = `${metaLine}\n\n${contentPreview}`;
         this.contextValue = 'clipboardItem';
         this.iconPath = new vscode.ThemeIcon('history', new vscode.ThemeColor('descriptionForeground'));
 

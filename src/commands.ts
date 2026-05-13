@@ -42,10 +42,10 @@ export function registerPromptCommands(
         })
     );
 
-    // 新增 Prompt - 智慧模式（支援 "標題::內容" 語法）
+    // 新增 Prompt - 從 panel 建立空白內容並直接開啟編輯器
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.addPrompt', async () => {
-            await handleAddPrompt(promptProvider, titleGenService);
+            await handleAddPrompt(promptProvider, fileSystemProvider);
         })
     );
 
@@ -158,6 +158,13 @@ export function registerPromptCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('promptSniper.editPrompt', async (item: PromptItem) => {
             await handleEditPrompt(item, fileSystemProvider);
+        })
+    );
+
+    // 重新命名 Prompt 標題
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.renamePrompt', async (item: PromptItem) => {
+            await handleRenamePrompt(item, promptProvider);
         })
     );
 
@@ -390,69 +397,29 @@ async function handleInsertPrompt(item: PromptItem, promptProvider: PromptProvid
 }
 
 /**
- * Handle add prompt command (漸進式版本)
- * 只輸入內容，標題一律自動生成
+ * Handle add prompt command
+ * 建立空白 Prompt 並直接開啟內容編輯器，避免先要求輸入標題
  */
 async function handleAddPrompt(
     promptProvider: PromptProvider,
-    titleGenService: TitleGenerationService
+    fileSystemProvider: PromptFileSystemProvider
 ): Promise<void> {
-    // 1. 輸入內容
-    const input = await vscode.window.showInputBox({
-        prompt: I18n.getMessage('input.addPromptPrompt'),
-        placeHolder: I18n.getMessage('input.addPromptPlaceholder'),
-        validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-                return I18n.getMessage('input.contentRequired');
-            }
-            return null;
-        }
-    });
-
-    if (!input) {
-        return;
-    }
-
-    // 2. 僅接收內容，標題改為自動生成
-    const content = input.trim();
-
-    // 3. Silent 模式: 立即生成 Fallback 標題並儲存 (不等待 AI)
-    const fallbackTitle = generateAutoTitle(content);
+    const fallbackTitle = I18n.getMessage('input.untitledPrompt');
     const promptId = await promptProvider.addPromptWithOption(
         fallbackTitle,
-        content,
+        '',
         true,  // silent=true,不顯示儲存通知
         'ai'
     );
 
-    // 4. 顯示狀態列訊息
-    vscode.window.setStatusBarMessage(
-        `✅ 已儲存: ${fallbackTitle}`,
-        3000
-    );
+    const uri = fileSystemProvider.getUriForPrompt(promptId);
+    const doc = await vscode.workspace.openTextDocument(uri);
+    await vscode.window.showTextDocument(doc, {
+        preview: false,
+        preserveFocus: false
+    });
 
-    // 5. 背景 AI 生成優化標題 (不阻塞)
-    titleGenService.generateProgressively(
-        content,
-        async (aiTitle, fallbackTitleFromAI) => {
-            // AI 完成後,更新 Prompt 標題
-            const prompts = promptProvider.getPrompts();
-            const prompt = prompts.find(p => p.content === content);
-
-            if (prompt && aiTitle !== fallbackTitle) {
-                // 更新標題
-                await promptProvider.updatePromptTitle(prompt.id, aiTitle);
-
-                // 顯示可撤銷通知
-                showPostSaveNotification(
-                    aiTitle,
-                    fallbackTitle,
-                    prompt.id,
-                    promptProvider
-                );
-            }
-        }
-    );
+    vscode.window.setStatusBarMessage(I18n.getMessage('message.promptAdded', fallbackTitle), 3000);
 }
 
 /**
@@ -610,6 +577,19 @@ async function handleEditPrompt(
         preview: false, // 不使用預覽模式，確保分頁不會被自動關閉
         preserveFocus: false
     });
+}
+
+async function handleRenamePrompt(item: PromptItem, promptProvider: PromptProvider): Promise<void> {
+    const newTitle = await vscode.window.showInputBox({
+        prompt: I18n.getMessage('input.addPromptWithTitleTitlePrompt'),
+        value: item.prompt.title,
+        valueSelection: [0, item.prompt.title.length],
+        validateInput: (v) => (!v || v.trim().length === 0)
+            ? I18n.getMessage('input.titleRequired')
+            : null
+    });
+    if (!newTitle) { return; }
+    await promptProvider.updatePromptTitle(item.prompt.id, newTitle.trim());
 }
 
 /**

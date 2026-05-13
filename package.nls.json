@@ -13,6 +13,7 @@
     "command.togglePin.title": "Pin/Unpin Prompt",
     "command.refresh.title": "Refresh Prompts",
     "command.editPrompt.title": "Edit Prompt",
+    "command.renamePrompt.title": "Rename Prompt",
     "command.copyClipboardItem.title": "Copy Clipboard Item",
     "command.pinClipboardItem.title": "Pin to Prompts",
     "command.editClipboardItem.title": "Edit as Prompt",
