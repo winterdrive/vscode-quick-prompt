@@ -12,6 +12,7 @@ import { TitleGenerationService } from './services/titleGenerationService';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { McpConfigPanel } from './mcp/McpConfigPanel';
 import { SkillGenerator } from './mcp/SkillGenerator';
+import { generateAutoTitle } from './utils';
 
 /**
  * Deploys the MCP server to a stable path under globalStorageUri, independent of the extension version.
@@ -96,18 +97,17 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize version history for existing prompts (migration)
     await initializeVersionHistory(promptProvider, versionHistoryService);
 
+    // Initialize title generation services
+    const titleGenService = new TitleGenerationService(aiEngine);
+
     // Initialize file system
-    const fileSystemProvider = initializeFileSystem(context, promptProvider);
+    const fileSystemProvider = initializeFileSystem(context, promptProvider, titleGenService);
 
     // Initialize hover provider
     initializeHoverProvider(context, promptProvider, clipboardManager);
 
     // Initialize status bar
     initializeStatusBar(context, clipboardManager);
-
-    // Initialize title generation services
-    const titleGenService = new TitleGenerationService(aiEngine);
-
 
     // Register all commands (pass aiEngine and title services)
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
@@ -165,7 +165,8 @@ function initializeProviders(context: vscode.ExtensionContext, versionHistorySer
  */
 function initializeFileSystem(
     context: vscode.ExtensionContext,
-    promptProvider: PromptProvider
+    promptProvider: PromptProvider,
+    titleGenService: TitleGenerationService
 ): PromptFileSystemProvider {
     const fileSystemProvider = new PromptFileSystemProvider();
 
@@ -178,7 +179,27 @@ function initializeFileSystem(
 
     // 設定雙向綁定：FileSystem ↔ PromptProvider
     fileSystemProvider.setCallbacks(
-        (id, content) => promptProvider.updatePromptContent(id, content),
+        async (id, content) => {
+            await promptProvider.updatePromptContent(id, content);
+
+            const prompt = promptProvider.getPrompts().find(p => p.id === id);
+            if (!prompt || prompt.titleSource !== 'ai' || content.trim().length === 0) {
+                return;
+            }
+
+            const untitled = I18n.getMessage('input.untitledPrompt');
+            if (prompt.title !== untitled) {
+                return;
+            }
+
+            const fallbackTitle = generateAutoTitle(content);
+            await promptProvider.updatePromptTitle(id, fallbackTitle);
+            titleGenService.generateProgressively(content, async (aiTitle) => {
+                if (aiTitle !== fallbackTitle) {
+                    await promptProvider.updatePromptTitle(id, aiTitle);
+                }
+            });
+        },
         () => promptProvider.getPrompts()
     );
 

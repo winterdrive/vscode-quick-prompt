@@ -4,6 +4,24 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.4.0] - 2026-05-14
+
+### ✨ Streamlined Add Flow & Sort Improvements
+
+**What changed:**
+
+- **Frictionless Add**: The "Add Prompt" command now creates an empty prompt with a placeholder title ("Untitled Prompt") and immediately opens the editor — no upfront input box required. Start writing directly.
+- **Auto Title on First Save**: When you save content in the editor for the first time, a fallback title is generated automatically from the content. If AI is enabled, the title is then refined in the background without blocking you.
+- **Add Prompt (Custom Title)**: The previous two-step input flow (title → content) is preserved as a separate command for users who prefer to set the title explicitly upfront.
+- **Smarter Default Sort**: Prompts without a manual order are now sorted by creation time (newest first) instead of last-used date, giving newly added items predictable placement.
+- **Lazy Manual Ordering**: Explicit `order` values are only assigned when you first use Move Up / Move Down. Existing data with auto-assigned sequential orders is migrated to the new sort automatically.
+- **Click to Edit**: Clicking a prompt in the sidebar now opens the editor directly. The redundant Edit button has been removed from the inline toolbar.
+- **Rename Prompt**: Right-click any prompt and choose "Rename Prompt" to edit its title inline without opening the full editor.
+- **Tooltip Improvement**: Prompt and clipboard tooltips now show metadata (usage count, last used, source) at the top, followed by a truncated content preview (300 chars), so key info is always visible without scrolling.
+- **Precise `created_at`**: New prompts store a full ISO datetime instead of a date-only string, enabling accurate same-day sort ordering.
+
+---
+
 ## [0.3.7] - 2026-05-08
 
 ### ⚡ Performance & CI/CD Enhancements

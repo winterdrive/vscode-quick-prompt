@@ -1,5 +1,7 @@
 *.map
 .vscode/**
+!.vscode/launch.json
+!.vscode/tasks.json
 .idea/**
 .git/**
 node_modules/**
