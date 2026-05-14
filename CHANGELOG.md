@@ -4,6 +4,21 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.4.2] - 2026-05-14
+
+### ⚡ Startup & Runtime Performance
+
+**What changed:**
+
+- **Non-blocking version history init**: Version history migration no longer runs synchronously during extension activation. It now runs in the background, so the sidebar appears immediately without waiting for N sequential file reads.
+- **Clipboard history loads asynchronously**: `clipboard-history.json` is now read with non-blocking async I/O instead of `readFileSync`. The clipboard panel refreshes automatically once loading completes.
+- **Config caching in ClipboardManager**: Clipboard settings (`enabled`, `pollingInterval`, `maxItems`, `minLength`, etc.) are now cached at startup and updated only when the user changes settings — eliminating 4–6 redundant `getConfiguration()` deserializations per poll cycle. Polling restarts automatically when settings change.
+- **Storage path cached**: The clipboard storage path (`~/.quickprompt/clipboard-history.json`) is computed once at startup instead of rechecking directory existence on every save.
+- **Faster deep clone**: Replaced `JSON.parse(JSON.stringify(...))` with `structuredClone()` throughout `PromptManager`, which is 3–5× faster for the same operation.
+- **Clipboard item "View Full Content"**: The inline clipboard action previously labelled "Edit as Prompt" has been replaced with "View Full Content". The old behavior automatically converted the clipboard item into a permanent Prompt and opened it for editing. The new behavior opens the raw content in a read-only temporary editor — leaving the clipboard history untouched — so you can inspect the full text without committing it as a Prompt.
+
+---
+
 ## [0.4.0] - 2026-05-14
 
 ### ✨ Streamlined Add Flow & Sort Improvements

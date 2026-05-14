@@ -16,7 +16,7 @@
     "command.renamePrompt.title": "重命名 Prompt",
     "command.copyClipboardItem.title": "复制剪贴板项目",
     "command.pinClipboardItem.title": "固定到 Prompts",
-    "command.editClipboardItem.title": "编辑为 Prompt",
+    "command.viewClipboardItem.title": "查看完整内容",
     "command.removeClipboardItem.title": "从历史移除",
     "command.clearClipboardHistory.title": "清空剪贴板历史",
     "command.moveUp.title": "上移",

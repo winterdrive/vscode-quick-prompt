@@ -94,8 +94,10 @@ export async function activate(context: vscode.ExtensionContext) {
     // Initialize providers
     const { promptProvider, clipboardManager, clipboardProvider } = initializeProviders(context, versionHistoryService);
 
-    // Initialize version history for existing prompts (migration)
-    await initializeVersionHistory(promptProvider, versionHistoryService);
+    // Initialize version history for existing prompts (migration) — run in background, not blocking activate
+    initializeVersionHistory(promptProvider, versionHistoryService).catch(err => {
+        console.error('Failed to initialize version history:', err);
+    });
 
     // Initialize title generation services
     const titleGenService = new TitleGenerationService(aiEngine);

@@ -17,13 +17,57 @@ export class ClipboardManager {
     private lastClipboard: string = '';
     private pollingInterval: NodeJS.Timeout | null = null;
     private isVSCodeActive: boolean = true;
+    private historyLoaded: boolean = false;
+    private readonly storagePath: string;
+    private readonly configListener: vscode.Disposable;
+
+    // Cached config — invalidated on onDidChangeConfiguration
+    private cfg = {
+        enabled: true,
+        pollingEnabled: true,
+        pollingInterval: 5000,
+        maxItems: 20,
+        minLength: 10,
+    };
 
     private _onHistoryChanged: vscode.EventEmitter<void> = new vscode.EventEmitter<void>();
     readonly onHistoryChanged: vscode.Event<void> = this._onHistoryChanged.event;
 
     constructor(private context: vscode.ExtensionContext) {
-        this.loadHistory();
+        const dir = path.join(os.homedir(), '.quickprompt');
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        this.storagePath = path.join(dir, 'clipboard-history.json');
+
+        this.reloadConfig();
+        this.configListener = vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('quickPrompt.clipboardHistory')) {
+                this.reloadConfig();
+                // Restart polling so new interval/enabled state takes effect
+                this.stopPolling();
+                this.startPollingIfEnabled();
+            }
+        });
+
+        this.loadHistory()
+            .then(() => {
+                this.historyLoaded = true;
+                this._onHistoryChanged.fire();
+            })
+            .catch(err => console.error('Failed to load clipboard history:', err));
         this.setupListeners();
+    }
+
+    private reloadConfig() {
+        const c = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
+        this.cfg = {
+            enabled:         c.get<boolean>('enabled', true),
+            pollingEnabled:  c.get<boolean>('enablePolling', true),
+            pollingInterval: c.get<number>('pollingInterval', 5000),
+            maxItems:        c.get<number>('maxItems', 20),
+            minLength:       c.get<number>('minLength', CLIPBOARD_CONSTANTS.MIN_SELECTION_LENGTH),
+        };
     }
 
     /**
@@ -96,12 +140,7 @@ export class ClipboardManager {
      * 輕量級輪詢 - 僅在 VSCode 活躍時執行
      */
     private startPollingIfEnabled() {
-        const config = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
-        const enabled = config.get<boolean>('enabled', true);
-        const pollingEnabled = config.get<boolean>('enablePolling', true);
-        const interval = config.get<number>('pollingInterval', 5000);
-
-        if (!enabled || !pollingEnabled) {
+        if (!this.cfg.enabled || !this.cfg.pollingEnabled) {
             return;
         }
 
@@ -114,7 +153,7 @@ export class ClipboardManager {
             if (this.isVSCodeActive) {
                 this.checkClipboard('external');
             }
-        }, interval);
+        }, this.cfg.pollingInterval);
     }
 
     /**
@@ -131,10 +170,7 @@ export class ClipboardManager {
      * 檢查剪貼簿是否有新內容
      */
     async checkClipboard(source: 'vscode' | 'external' = 'external') {
-        const config = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
-        const enabled = config.get<boolean>('enabled', true);
-
-        if (!enabled) {
+        if (!this.cfg.enabled || !this.historyLoaded) {
             return;
         }
 
@@ -178,9 +214,7 @@ export class ClipboardManager {
      * 檢查是否符合最小長度要求
      */
     private meetsMinLength(content: string): boolean {
-        const config = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
-        const minLength = config.get<number>('minLength', CLIPBOARD_CONSTANTS.MIN_SELECTION_LENGTH);
-        return content.trim().length >= minLength;
+        return content.trim().length >= this.cfg.minLength;
     }
 
     /**
@@ -206,9 +240,6 @@ export class ClipboardManager {
             return;
         }
 
-        const config = vscode.workspace.getConfiguration('quickPrompt.clipboardHistory');
-        const maxItems = config.get<number>('maxItems', 20);
-
         // 建立新項目（儲存原始內容，遮罩在 prompt 插入層處理）
         const newItem: ClipboardHistoryItem = {
             id: this.generateId(),
@@ -226,8 +257,8 @@ export class ClipboardManager {
         this.lastClipboard = content;
 
         // 限制最大筆數
-        if (this.history.length > maxItems) {
-            this.history = this.history.slice(0, maxItems);
+        if (this.history.length > this.cfg.maxItems) {
+            this.history = this.history.slice(0, this.cfg.maxItems);
         }
 
         // 儲存並通知
@@ -280,26 +311,12 @@ export class ClipboardManager {
     }
 
     /**
-     * 取得檔案存放路徑
-     */
-    private getStoragePath(): string {
-        const dir = path.join(os.homedir(), '.quickprompt');
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        return path.join(dir, 'clipboard-history.json');
-    }
-
-    /**
      * 載入歷史（從 ~/.quickprompt/clipboard-history.json）
      */
-    private loadHistory() {
-        const storagePath = this.getStoragePath();
-        
-        // 嘗試從新架構檔案讀取
-        if (fs.existsSync(storagePath)) {
+    private async loadHistory(): Promise<void> {
+        if (fs.existsSync(this.storagePath)) {
             try {
-                const data = fs.readFileSync(storagePath, 'utf-8');
+                const data = await fs.promises.readFile(this.storagePath, 'utf-8');
                 this.history = JSON.parse(data);
             } catch (err) {
                 console.error('Failed to parse clipboard history file:', err);
@@ -310,11 +327,10 @@ export class ClipboardManager {
             const saved = this.context.globalState.get<ClipboardHistoryItem[]>('clipboardHistory', []);
             this.history = saved;
             if (this.history.length > 0) {
-                this.saveHistory(); // 寫入到新架構檔案
+                this.saveHistory();
             }
         }
 
-        // 初始化 lastClipboard
         if (this.history.length > 0) {
             this.lastClipboard = this.history[0].content;
         }
@@ -325,7 +341,7 @@ export class ClipboardManager {
      */
     private saveHistory() {
         fs.promises.writeFile(
-            this.getStoragePath(),
+            this.storagePath,
             JSON.stringify(this.history, null, 2),
             'utf-8'
         ).catch(err => console.error('Failed to save clipboard history file:', err));
@@ -349,6 +365,7 @@ export class ClipboardManager {
      */
     dispose() {
         this.stopPolling();
+        this.configListener.dispose();
         this._onHistoryChanged.dispose();
     }
 }

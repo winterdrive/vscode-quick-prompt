@@ -62,7 +62,7 @@ export class PromptManager {
                 meta: p.meta,
             } as Prompt));
 
-            this.cachedPrompts = JSON.parse(JSON.stringify(normalized));
+            this.cachedPrompts = structuredClone(normalized);
             this.cachedVersion = version;
             return { prompts: normalized, version };
         } catch (error) {
@@ -77,7 +77,7 @@ export class PromptManager {
      */
     getPrompts(): Prompt[] {
         if (this.cachedPrompts) {
-            return JSON.parse(JSON.stringify(this.cachedPrompts));
+            return structuredClone(this.cachedPrompts);
         }
         return this.loadPrompts().prompts;
     }
@@ -115,7 +115,7 @@ export class PromptManager {
 
         PathUtils.writeJsonFile(this.promptsFilePath, prompts);
         const newVersion = PathUtils.getMtime(this.promptsFilePath);
-        this.cachedPrompts = JSON.parse(JSON.stringify(prompts));
+        this.cachedPrompts = structuredClone(prompts);
         this.cachedVersion = newVersion;
         return newVersion;
     }

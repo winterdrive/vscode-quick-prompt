@@ -16,7 +16,7 @@
     "command.renamePrompt.title": "Rename Prompt",
     "command.copyClipboardItem.title": "Copy Clipboard Item",
     "command.pinClipboardItem.title": "Pin to Prompts",
-    "command.editClipboardItem.title": "Edit as Prompt",
+    "command.viewClipboardItem.title": "View Full Content",
     "command.removeClipboardItem.title": "Remove from History",
     "command.clearClipboardHistory.title": "Clear Clipboard History",
     "command.moveUp.title": "Move Up",
