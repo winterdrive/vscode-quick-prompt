@@ -361,7 +361,7 @@
                 "command": "quickPrompt.showMcpConfig",
                 "title": "Show MCP Config",
                 "category": "Quick Prompt",
-                "icon": "$(server-environment)"
+                "icon": "$(gear)"
             },
             {
                 "command": "quickPrompt.generateSkill",
