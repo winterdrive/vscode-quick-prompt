@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -286,9 +286,9 @@
                 "icon": "$(pin)"
             },
             {
-                "command": "promptSniper.editClipboardItem",
-                "title": "%command.editClipboardItem.title%",
-                "icon": "$(edit)"
+                "command": "promptSniper.viewClipboardItem",
+                "title": "%command.viewClipboardItem.title%",
+                "icon": "$(open-preview)"
             },
             {
                 "command": "promptSniper.removeClipboardItem",
@@ -361,7 +361,7 @@
                 "command": "quickPrompt.showMcpConfig",
                 "title": "Show MCP Config",
                 "category": "Quick Prompt",
-                "icon": "$(server-environment)"
+                "icon": "$(gear)"
             },
             {
                 "command": "quickPrompt.generateSkill",
@@ -477,14 +477,14 @@
                     "group": "inline@2"
                 },
                 {
-                    "command": "promptSniper.editClipboardItem",
+                    "command": "promptSniper.removeClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
                     "group": "inline@3"
                 },
                 {
-                    "command": "promptSniper.removeClipboardItem",
+                    "command": "promptSniper.viewClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
-                    "group": "inline@4"
+                    "group": "1_actions@1"
                 },
                 {
                     "command": "promptSniper.tagMilestone",

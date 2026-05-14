@@ -1,5 +1,24 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+
+class ClipboardPreviewProvider implements vscode.TextDocumentContentProvider {
+    static readonly scheme = 'quickprompt-preview';
+    static readonly uri = vscode.Uri.parse(`${ClipboardPreviewProvider.scheme}://clipboard/preview`);
+
+    private _content = '';
+    private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
+    readonly onDidChange = this._onDidChange.event;
+
+    update(content: string) {
+        this._content = content;
+        this._onDidChange.fire(ClipboardPreviewProvider.uri);
+    }
+
+    provideTextDocumentContent(): string {
+        return this._content;
+    }
+}
+
 import { PromptProvider, PromptItem } from './promptProvider';
 import { ClipboardTreeItem } from './clipboardProvider';
 import { ClipboardManager } from './clipboardManager';
@@ -209,10 +228,14 @@ export function registerClipboardCommands(
         })
     );
 
-    // 編輯剪貼簿項目（自動轉為永久 Prompt）
+    // 查看剪貼簿項目完整內容（唯讀暫時文件）
+    const previewProvider = new ClipboardPreviewProvider();
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.editClipboardItem', async (item: ClipboardTreeItem) => {
-            await handleEditClipboardItem(item, promptProvider, clipboardManager, fileSystemProvider);
+        vscode.workspace.registerTextDocumentContentProvider(ClipboardPreviewProvider.scheme, previewProvider)
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand('promptSniper.viewClipboardItem', async (item: ClipboardTreeItem) => {
+            await handleViewClipboardItem(item, previewProvider);
         })
     );
 
@@ -655,34 +678,11 @@ async function handlePinClipboardItem(
     );
 }
 
-/**
- * Handle edit clipboard item command
- */
-async function handleEditClipboardItem(
-    item: ClipboardTreeItem,
-    promptProvider: PromptProvider,
-    clipboardManager: ClipboardManager,
-    fileSystemProvider: PromptFileSystemProvider
-): Promise<void> {
-    if (!item || !item.item) return;
-
-    // 自動轉為 Prompt（使用預覽作為標題，靜默模式）
-    const title = generateAutoTitle(item.item.preview);
-    await promptProvider.addPromptWithOption(title, item.item.content, true);
-    clipboardManager.removeFromHistory(item.item.id);
-
-    // 找到剛新增的 Prompt 並開啟編輯
-    const prompts = promptProvider.getPrompts();
-    const newPrompt = prompts[prompts.length - 1]; // 最新的一個
-
-    if (newPrompt) {
-        const uri = fileSystemProvider.getUriForPrompt(newPrompt.id);
-        const doc = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(doc, {
-            preview: false,
-            preserveFocus: false
-        });
-    }
+async function handleViewClipboardItem(item: ClipboardTreeItem, previewProvider: ClipboardPreviewProvider): Promise<void> {
+    if (!item || !item.item) { return; }
+    previewProvider.update(item.item.content);
+    const doc = await vscode.workspace.openTextDocument(ClipboardPreviewProvider.uri);
+    await vscode.window.showTextDocument(doc, { preview: true, preserveFocus: false });
 }
 
 /**
