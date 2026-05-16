@@ -33,11 +33,16 @@
     "config.confirmBeforeDelete.description": "刪除 Prompt 或版本前顯示確認提示",
     "config.ai.enabled.description": "啟用 AI 功能（預設關閉以保持擴充套件輕量化）",
     "config.ai.provider.description": "AI 引擎來源，用於標題生成等功能",
-    "config.ai.provider.localQwen": "內建 Qwen 0.5B 模型（首次使用時需下載約 400MB）",
+    "config.ai.provider.localQwen": "內建地端模型（首次使用時自動下載，詳見下方「地端模型」設定）",
+    "config.ai.localModel.description": "AI 功能使用的地端模型（Provider 為「地端」時生效）",
+    "config.ai.localModel.smollm2135m": "SmolLM2 135M（約 137 MB）— 最快，基本品質",
+    "config.ai.localModel.smollm2360m": "SmolLM2 360M（約 365 MB）— 平衡（推薦）",
+    "config.ai.localModel.qwen3": "Qwen3 0.6B（約 618 MB）— 最佳多語言／中文支援",
     "config.ai.provider.openaiCompatible": "透過 OpenAI 相容 API 串接外部 LLM（Ollama、LM Studio 等）",
     "config.ai.openaiCompatible.endpoint.description": "OpenAI 相容 API 位址（例如 Ollama：http://localhost:11434/v1）",
     "config.ai.openaiCompatible.model.description": "向 API 請求的模型名稱（例如 qwen2.5:0.5b、llama3.2:latest）",
     "config.ai.openaiCompatible.apiKey.description": "API 金鑰（本機 Ollama 可留空；OpenAI 或雲端服務必填）",
     "config.ai.openaiCompatible.timeout.description": "API 請求逾時時間（毫秒，預設 15000）",
+    "config.ai.enableThinking.description": "啟用 Qwen3 思考模式（推理更深，較慢）。關閉時使用 /no_think 加快回應速度。",
     "config.ai.features.titleGeneration.description": "使用 AI 為新增的 Prompt 自動生成標題"
 }

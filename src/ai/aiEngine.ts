@@ -152,7 +152,8 @@ export class AIEngine {
                     }
                 };
 
-                this.worker?.postMessage({ command: 'init', cacheDir });
+                const modelKey = vscode.workspace.getConfiguration('quickPrompt.ai').get<string>('localModel', 'smollm2-360m');
+                this.worker?.postMessage({ command: 'init', cacheDir, modelKey });
 
                 vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
@@ -219,6 +220,7 @@ export class AIEngine {
             }
             case 'error':
                 console.error('[AIEngine] Worker reported error:', message.error);
+                this.status = 'error';
                 break;
         }
     }
@@ -258,14 +260,14 @@ export class AIEngine {
      */
     async summarize(text: string, maxLength: number = 50): Promise<string> {
         if (!this.isReady()) {
-            return this.simpleFallback(text);
+            return this.simpleFallback(text, maxLength);
         }
 
         // 檢查功能開關
         const featureEnabled = vscode.workspace.getConfiguration('quickPrompt.ai.features')
             .get<boolean>('titleGeneration', true);
         if (!featureEnabled) {
-            return this.simpleFallback(text);
+            return this.simpleFallback(text, maxLength);
         }
 
         if (this.provider === 'openai-compatible' && this.openAIClient) {
@@ -276,7 +278,7 @@ export class AIEngine {
             return this.summarizeViaWorker(text, maxLength);
         }
 
-        return this.simpleFallback(text);
+        return this.simpleFallback(text, maxLength);
     }
 
     /**
@@ -300,7 +302,7 @@ export class AIEngine {
             return this.cleanTitle(result);
         } catch (error) {
             console.warn('[AIEngine] OpenAI summarize failed, using fallback:', error);
-            return this.simpleFallback(text);
+            return this.simpleFallback(text, maxLength);
         }
     }
 
@@ -315,9 +317,9 @@ export class AIEngine {
                 if (this.pendingRequests.has(requestId)) {
                     this.pendingRequests.delete(requestId);
                     console.warn('[AIEngine] Worker request timed out');
-                    resolve(this.simpleFallback(text));
+                    resolve(this.simpleFallback(text, maxLength));
                 }
-            }, 30000);
+            }, 90000);
 
             this.pendingRequests.set(requestId, {
                 resolve: (title) => {
@@ -326,22 +328,26 @@ export class AIEngine {
                 },
                 reject: () => {
                     clearTimeout(timeoutId);
-                    resolve(this.simpleFallback(text));
+                    resolve(this.simpleFallback(text, maxLength));
                 }
             });
 
-            this.worker?.postMessage({ command: 'summarize', text, maxLength, requestId });
+            const enableThinking = vscode.workspace.getConfiguration('quickPrompt.ai').get<boolean>('enableThinking', false);
+            this.worker?.postMessage({ command: 'summarize', text, maxLength, requestId, thinking: enableThinking });
         });
     }
 
-    /**
-     * 簡單降級策略 — 取前 10 字
-     */
-    private simpleFallback(text: string): string {
+    private simpleFallback(text: string, maxLength: number = 50): string {
         const cleaned = text.replace(/[\r\n]+/g, ' ').trim();
-        const maxLen = 10;
-        if (cleaned.length <= maxLen) return cleaned;
-        return cleaned.substring(0, maxLen) + '...';
+        if (cleaned.length <= maxLength) { return cleaned; }
+        // Try to cut at a sentence boundary first
+        const sentenceEnd = cleaned.search(/[。！？!?.]/);
+        if (sentenceEnd > 0 && sentenceEnd <= maxLength) {
+            return cleaned.substring(0, sentenceEnd + 1).trim();
+        }
+        // Otherwise cut at last space/word boundary before maxLength
+        const cut = cleaned.lastIndexOf(' ', maxLength);
+        return (cut > 0 ? cleaned.substring(0, cut) : cleaned.substring(0, maxLength)) + '...';
     }
 
     /**

@@ -1,8 +1,11 @@
 # Quick Prompt – AI 工作時，同步捕捉想法與排隊任務
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![Visual Studio Marketplace Version](https://vsmarketplacebadges.dev/version-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/QuickPrompt/llms.txt)
+<!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
+<!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
 繁體中文 | **[English](README.md)**
 
@@ -56,7 +59,7 @@
 
 ### 📚 提示詞管理 (Prompt Management)
 
-- **🤖 AI 智慧標題**：使用本地 AI 模型 (Qwen1.5-0.5B) 自動生成語義化標題。
+- **🤖 AI 智慧標題**：使用本地 AI 模型（SmolLM2 / Qwen3，可自選）自動生成語義化標題。
 - **🎯 極速搜尋**：按 `Alt+P` 搜尋 Prompt，按 Enter 直接複製。
 - **🚀 快速新增**：選取文字按 `Alt+Shift+S` 立即新增。
 - **✏️ 原生編輯**：像編輯一般檔案一樣編輯 Prompt，完整支援 VSCode 功能。

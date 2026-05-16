@@ -21,7 +21,7 @@ class ClipboardPreviewProvider implements vscode.TextDocumentContentProvider {
 
 import { PromptProvider, PromptItem } from './promptProvider';
 import { ClipboardTreeItem } from './clipboardProvider';
-import { ClipboardManager } from './clipboardManager';
+import { ClipboardManager } from './ClipboardManager';
 import { PromptFileSystemProvider } from './promptFileSystem';
 import { I18n } from './i18n';
 import { getPromptQuickPickIcon, sortPrompts, generateAutoTitle, getRelativeTime, executeWithConfirmation } from './utils';
