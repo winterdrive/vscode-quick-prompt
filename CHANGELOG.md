@@ -4,6 +4,26 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.5.0] - 2026-05-17
+
+### 🧪 Unit Testing Framework
+
+**What changed:**
+
+- **Jest + ts-jest unit test suite introduced**: 77 tests covering the three core pure-Node.js modules — `PromptManager`, `VersionManager`, and `PathUtils`. All tests use real file I/O against temporary directories (no mock filesystem), so they catch real regression at the integration boundary without any VSCode runtime.
+- **Coverage thresholds enforced**: `npm run test:coverage` reports per-file coverage and fails the build if statements < 80 %, branches < 70 %, functions < 80 %, or lines < 80 %. Current baseline is ~95 % across all three files.
+- **VSCode mock infrastructure** (`src/test/__mocks__/vscode.ts`): A hand-written stub for the most commonly needed VSCode APIs (`workspace`, `window`, `commands`, `ThemeIcon`, `ThemeColor`, `Uri`, `EventEmitter`, `ExtensionContext`). The mock is injected at Jest's `moduleNameMapper` layer so source files that `import * as vscode from 'vscode'` get the stub at test time with zero changes to production code.
+- **Property-based testing ready** (`fast-check` installed): `npm run test` already includes `src/test/properties/` on the test-match pattern. Drop a `*.test.ts` file there and use `fc.property()` + `fc.assert()` to write invariant-based tests.
+- **UI test scaffold** (`vscode-extension-tester` + Mocha): A separate compilation target (`tsconfig.test.ui.json` → `out/test/ui/`) runs against a real downloaded VSCode instance via Selenium WebDriver. Initial tests cover Activity Bar icon presence, sidebar open, title verification, and toolbar action discovery. Run with `npm run test:ui:setup` (once) then `npm run test:ui`.
+- **New npm scripts**:
+  - `npm test` — unit tests (Jest, `--runInBand`)
+  - `npm run test:coverage` — unit tests with coverage report
+  - `npm run test:watch` — Jest watch mode for TDD
+  - `npm run test:ui:setup` — download VSCode and install extension under test
+  - `npm run test:ui` — compile + run UI tests against real VSCode
+
+---
+
 ## [0.4.3] - 2026-05-16
 
 ### 🤖 Local AI Engine Overhaul

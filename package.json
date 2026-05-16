@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.4.3",
+    "version": "0.5.0",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -594,13 +594,27 @@
         "_trigger_publish": "echo 'Triggering publish workflow'",
         "build:qp": "esbuild qp-entry.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/qp.bundle.js --external:vscode",
         "build:mcp": "esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode",
-        "build:mcp:watch": "esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode --watch"
+        "build:mcp:watch": "esbuild mcp-server/src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/mcp/index.js --external:vscode --watch",
+        "test": "jest --runInBand",
+        "test:coverage": "jest --runInBand --coverage",
+        "test:watch": "jest --watch",
+        "test:ui:setup": "extest setup-tests -c 1.96.0",
+        "test:ui": "tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\" -c 1.96.0"
     },
     "devDependencies": {
+        "@types/chai": "^5.2.3",
+        "@types/jest": "^29.5.14",
+        "@types/mocha": "^10.0.10",
         "@types/node": "^16.x",
         "@types/vscode": "^1.75.0",
+        "chai": "^4.5.0",
         "esbuild": "^0.25.0",
-        "typescript": "^5.9.3"
+        "fast-check": "^4.8.0",
+        "jest": "^29.7.0",
+        "mocha": "^10.8.2",
+        "ts-jest": "^29.4.9",
+        "typescript": "^5.9.3",
+        "vscode-extension-tester": "^8.23.0"
     },
     "dependencies": {
         "@huggingface/transformers": "^3.0.0",

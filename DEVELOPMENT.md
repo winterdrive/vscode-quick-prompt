@@ -8,8 +8,8 @@ This document provides a complete guide for setting up the development environme
 
 ### System Requirements
 
-* **Node.js** (Recommended v16 or above)
-* **VS Code** (v1.75.0 or above)
+* **Node.js** v18 or above (v20 recommended; required for `structuredClone` and modern ESM)
+* **VS Code** v1.75.0 or above
 * **TypeScript** (included in devDependencies)
 
 ### Setup Steps
@@ -85,48 +85,76 @@ In the Extension Development Host window:
 
 ```text
 QuickPrompt/
+├── .github/
+│   └── workflows/
+│       ├── validate.yml   # PR validation (type check, tests, VSIX build, manifest check)
+│       └── publish.yml    # Marketplace publish (triggers on version bump in master)
 ├── .vscode/               # VS Code config files
-├── dist/                  # TypeScript build output
+├── dist/                  # TypeScript build output (excluded from git)
+├── coverage/              # Jest coverage report (excluded from git)
+├── out/                   # UI test compiled output (excluded from git)
 ├── i18n/                  # Internationalization files
-│   ├── en.json           # English messages
-│   ├── zh-tw.json        # Traditional Chinese messages
-│   └── zh-cn.json        # Simplified Chinese messages
-├── src/                   # TypeScript source code
-│   ├── ai/                # AI engine module
-│   │   └── aiEngine.ts   # Local AI inference with Transformers.js
-│   ├── mcp/               # Model Context Protocol module
+│   ├── en.json
+│   ├── zh-tw.json
+│   └── zh-cn.json
+├── src/
+│   ├── ai/
+│   │   ├── aiEngine.ts       # Local AI inference (Transformers.js)
+│   │   ├── aiWorker.ts       # Async AI task worker
+│   │   └── openAIClient.ts   # OpenAI-compatible client wrapper
+│   ├── core/                 # Pure Node.js — no vscode dependency
+│   │   ├── types.ts          # Shared types (Prompt, PromptVersion, MaskType, …)
+│   │   ├── PromptManager.ts  # CRUD on prompts.json with optimistic locking
+│   │   ├── VersionManager.ts # Version history CRUD with smart retention
+│   │   ├── PathUtils.ts      # Path validation and JSON I/O helpers
+│   │   ├── PrivacyManager.ts # Privacy facade (used by MCP server, no vscode dep)
+│   │   └── index.ts
+│   ├── mcp/
 │   │   ├── SkillGenerator.ts # Generates AI Agent skill files (.mdc, etc.)
 │   │   └── McpConfigPanel.ts # Webview for MCP configuration
-│   ├── privacy/           # Privacy protection module
-│   │   ├── maskingEngine.ts  # Core masking orchestrator (pattern-based)
-│   │   ├── patternRegistry.ts # Unified pattern registry with priority-based matching
-│   │   ├── types.ts          # Shared privacy types (MaskingResult, MaskToken, etc.)
+│   ├── privacy/
+│   │   ├── maskingEngine.ts      # Core masking orchestrator
+│   │   ├── patternRegistry.ts    # Priority-based pattern registry
+│   │   ├── types.ts
 │   │   └── masking/
-│   │       ├── patternEngine.ts  # Regex-based sensitive data detection (18 patterns)
-│   │       └── secretStorage.ts  # OS-encrypted tokenMap store (VS Code SecretStorage)
+│   │       ├── patternEngine.ts  # Regex-based detection (18+ patterns)
+│   │       └── secretStorage.ts  # OS-encrypted tokenMap (VS Code SecretStorage)
+│   ├── services/
+│   │   ├── titleGenerationService.ts
+│   │   └── VersionHistoryService.ts
 │   ├── commands/
-│   │   └── versionCommands.ts # Version history command handlers
-│   ├── core/
-│   │   └── PrivacyManager.ts  # High-level privacy facade used by MCP server (core only)
-│   ├── extension.ts       # Extension entry (activate/deactivate)
-│   ├── promptProvider.ts  # TreeDataProvider implementation
-│   ├── promptFileSystem.ts # Virtual file system for editing prompts
-│   ├── commands.ts        # Command handlers
-│   ├── clipboardManager.ts # Clipboard history tracking (stores original content; masking is applied at prompt insertion layer)
-│   └── i18n.ts           # Internationalization utility
-├── mcp-server/            # MCP Server source code
-│   ├── src/
-│   │   ├── index.ts      # MCP Server entry point
-│   │   └── tools/        # Tool implementations (prompts, history, etc.)
-├── qp-entry.ts            # CLI Fallback entry point (bundled to dist/qp.bundle.js)
-├── package.json           # Extension manifest
-├── package.nls.json       # English localization (package.json)
-├── package.nls.zh-tw.json # Traditional Chinese localization
-├── package.nls.zh-cn.json # Simplified Chinese localization
-├── tsconfig.json          # TypeScript config
-├── README.md              # User guide
-├── DEVELOPMENT.md         # This file
-└── LICENSE                # MIT License
+│   │   └── versionCommands.ts
+│   ├── test/                 # All test code (excluded from VSIX and base tsc)
+│   │   ├── __mocks__/
+│   │   │   └── vscode.ts     # Hand-written VSCode API stub (injected via moduleNameMapper)
+│   │   ├── unit/             # Jest unit tests (pure Node.js, real tmp-dir I/O)
+│   │   │   ├── pathUtils.test.ts
+│   │   │   ├── promptManager.test.ts
+│   │   │   └── versionManager.test.ts
+│   │   └── ui/               # Mocha + vscode-extension-tester (real VSCode + Selenium)
+│   │       └── quickPrompt.ui.test.ts
+│   ├── extension.ts
+│   ├── promptProvider.ts
+│   ├── promptFileSystem.ts
+│   ├── commands.ts
+│   ├── clipboardManager.ts
+│   └── i18n.ts
+├── mcp-server/
+│   └── src/
+│       ├── index.ts
+│       └── tools/
+├── qp-entry.ts
+├── jest.config.js          # Jest + ts-jest configuration
+├── tsconfig.json           # Production TypeScript config (excludes src/test/)
+├── tsconfig.test.json      # Unit test TypeScript config (adds jest types)
+├── tsconfig.test.ui.json   # UI test TypeScript config (adds mocha types, outputs to out/)
+├── package.json
+├── package.nls.json
+├── package.nls.zh-tw.json
+├── package.nls.zh-cn.json
+├── README.md
+├── DEVELOPMENT.md
+└── LICENSE
 ```
 
 ### Module Responsibilities
@@ -165,6 +193,70 @@ flowchart TD
     K --> L[Trigger UI Refresh]
     L --> M[Sync FileSystem]
 ```
+
+---
+
+## 🧪 Testing
+
+### Architecture (Three Layers)
+
+| Layer | Framework | Location | When to run |
+| --- | --- | --- | --- |
+| **Unit** | Jest + ts-jest | `src/test/unit/` | Always — fast, no VSCode needed |
+| **Property** | Jest + fast-check | `src/test/properties/` | Drop `*.test.ts` files, runs with `npm test` |
+| **UI / E2E** | Mocha + vscode-extension-tester | `src/test/ui/` | Manually or in a headed CI runner |
+
+### Running Tests
+
+```bash
+# Run all unit tests
+npm test
+
+# Run with coverage report (enforces thresholds)
+npm run test:coverage
+
+# Watch mode for TDD
+npm run test:watch
+
+# UI tests — setup once, then run
+npm run test:ui:setup   # downloads VSCode + ChromeDriver (~230 MB, cached)
+npm run test:ui         # compiles UI tests and runs against real VSCode
+```
+
+### Coverage Thresholds
+
+Enforced in `jest.config.js`. Violations fail `npm run test:coverage` and the CI pipeline.
+
+| Metric | Threshold |
+| --- | --- |
+| Statements | 80 % |
+| Branches | 70 % |
+| Functions | 80 % |
+| Lines | 80 % |
+
+Current baseline (v0.5.0): ~95 % statements across `PromptManager`, `VersionManager`, `PathUtils`.
+
+### VSCode Mock
+
+`src/test/__mocks__/vscode.ts` is a hand-written stub injected at Jest's `moduleNameMapper` layer. Production files import from `'vscode'` normally; at test time Jest redirects to the mock with zero changes to source code.
+
+When a test exercises a code path that calls a VSCode API not yet in the mock, add the missing stub there.
+
+### TypeScript Compilation Contracts
+
+* `tsconfig.json` — production compilation, **excludes** `src/test/`. This is what `vscode:prepublish` runs.
+* `tsconfig.test.json` — unit test compilation, includes all `src/**/*`, adds `jest` to `types`.
+* `tsconfig.test.ui.json` — UI test compilation, includes only `src/test/ui/**/*`, adds `mocha` to `types`, outputs to `out/`.
+
+### CI
+
+**`validate.yml`** — runs on every non-master push and on PRs to master:
+
+1. Version bump check (PR only) — fails if release-relevant files changed without a version bump
+2. `tsc -p ./` — production type check
+3. `npm run test:coverage` — unit tests + coverage gate
+4. `vsce package` — confirms the extension builds into a valid VSIX
+5. Open VSX manifest display name check — catches encoding mismatches before publish
 
 ---
 
@@ -212,6 +304,22 @@ npm install --save-dev @types/vscode@^1.75.0
 
 * Make sure TypeScript has recompiled (check the `dist/` folder)
 * Reload the window in Extension Development Host (`Cmd+R`)
+
+### Q: `npm test` fails with "Cannot find name 'expect'"
+
+The unit test files are being compiled by the base `tsconfig.json` which has no `jest` types. Make sure `tsconfig.json` has `"exclude": ["src/test"]`. Run `npx tsc -p ./` to verify.
+
+### Q: `test:ui:setup` fails with TypeScript errors in `src/test/__mocks__/vscode.ts`
+
+The mock uses `jest.fn()` which requires jest types. The base tsconfig must exclude `src/test/`. See the fix above.
+
+### Q: `test:ui` fails with "cannot find module 'chai'"
+
+Run `npm install --save-dev @types/chai` to add the chai type declarations needed by the UI test compiler.
+
+### Q: Coverage report shows < threshold — CI fails
+
+Add more tests in `src/test/unit/` targeting the uncovered branches, or temporarily lower the threshold in `jest.config.js` with a comment explaining why.
 
 ### Q: i18n strings not showing correctly
 
@@ -310,8 +418,10 @@ npm version major  # Major version (0.0.1 → 1.0.0)
 
 ### Testing Checklist
 
-* [ ] TypeScript compiles without errors
-* [ ] All features work in Extension Development Host
+* [ ] `npm test` passes with zero failures
+* [ ] `npm run test:coverage` passes all thresholds (no red lines in report)
+* [ ] `npx tsc -p ./` compiles without errors
+* [ ] All features work in Extension Development Host (`F5`)
 * [ ] i18n strings work in all supported languages
 * [ ] Virtual file system editing works
 * [ ] Commands work from both sidebar and command palette

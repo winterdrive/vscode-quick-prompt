@@ -4,10 +4,21 @@ tsconfig.json
 *.map
 tools/**
 
+# 測試框架（不需打包進 VSIX）
+jest.config.js
+tsconfig.test.json
+tsconfig.test.ui.json
+coverage/**
+out/**
+dist-test/**
+.vscode-test/**
+
 # 開發設定
 .vscode/**
 .idea/**
 .kiro/**
+.claude/**
+.github/**
 .gitignore
 .git/**
 
