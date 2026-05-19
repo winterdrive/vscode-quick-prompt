@@ -4,6 +4,26 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ---
 
+## [0.4.3] - 2026-05-16
+
+### 🤖 Local AI Engine Overhaul
+
+**What changed:**
+
+- **Model library migrated**: Switched from deprecated `@xenova/transformers` to the official `@huggingface/transformers` v3 (HuggingFace now maintains the project).
+- **Model selector**: Users can now choose the local model via settings (`Quick Prompt > AI > Local Model`): SmolLM2-135M, SmolLM2-360M (default), or Qwen3-0.6B. Each option shows estimated download size.
+- **Qwen3 thinking mode toggle**: New `Quick Prompt > AI > Enable Thinking` setting. When off (default), the official Qwen3 empty-`<think>` technique is used to skip reasoning and respond faster. When on, uses Qwen3's full chain-of-thought with recommended sampling parameters.
+- **Improved prompt**: Switched to English system instructions (more reliable across small models) with proper generation parameters per thinking mode.
+- **Bug fixes**: Worker error messages now correctly update engine status (previously the popup could hang indefinitely on model failure). Inference timeout increased from 30 s to 90 s to accommodate slower CPU inference. Fallback title now extracts a full sentence instead of truncating to 10 characters.
+
+### 🛠 TypeScript & Build
+
+- **TypeScript upgraded** from 4.9.5 to 5.9.3.
+- **tsconfig**: Added `skipLibCheck`, `esModuleInterop`, and `ES2024` lib to support `@huggingface/transformers` v3 type definitions.
+- **File casing fix**: Five `src/` files imported `./clipboardManager` (lowercase) while the actual file is `ClipboardManager.ts` — harmless on Windows but would fail on Linux CI. Fixed all import paths.
+
+---
+
 ## [0.4.2] - 2026-05-14
 
 ### ⚡ Startup & Runtime Performance

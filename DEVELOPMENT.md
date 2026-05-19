@@ -140,7 +140,7 @@ QuickPrompt/
 | `qp-entry.ts` | CLI entry for direct DB access (fallback mechanism) | `QuickPromptCLI` |
 | `promptProvider.ts` | Implements `TreeDataProvider`, manages prompt data | `PromptProvider`, `PromptItem` |
 | `promptFileSystem.ts` | Virtual file system for editing prompts in native VSCode editor | `PromptFileSystemProvider` |
-| `ai/aiEngine.ts` | Local AI inference using Transformers.js and Qwen1.5-0.5B | `AIEngine` |
+| `ai/aiEngine.ts` | Local AI inference using `@huggingface/transformers` v3 (SmolLM2 / Qwen3) | `AIEngine` |
 | `commands.ts` | Command handlers for prompt and clipboard operations | Various handler functions |
 | `privacy/maskingEngine.ts` | Orchestrates pattern-based masking via PatternRegistry | `MaskingEngine` |
 | `privacy/masking/patternEngine.ts` | Regex-based detection for emails, API keys, IPs, phone numbers, etc. (18 patterns) | `PatternEngine` |

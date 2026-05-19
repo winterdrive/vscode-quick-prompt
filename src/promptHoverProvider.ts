@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Prompt } from './promptProvider';
-import { ClipboardHistoryItem } from './clipboardManager';
+import { ClipboardHistoryItem } from './ClipboardManager';
 import { I18n } from './i18n';
 import { formatRelativeTime, PROMPT_CONSTANTS } from './utils';
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { I18n } from './i18n';
-import { ClipboardManager, ClipboardHistoryItem } from './clipboardManager';
+import { ClipboardManager, ClipboardHistoryItem } from './ClipboardManager';
 import { getRelativeTime } from './utils';
 
 // 剪貼簿歷史項目（用於 TreeView）

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { PromptProvider } from './promptProvider';
 import { ClipboardProvider } from './clipboardProvider';
 import { PromptFileSystemProvider } from './promptFileSystem';
-import { ClipboardManager } from './clipboardManager';
+import { ClipboardManager } from './ClipboardManager';
 import { PromptHoverProvider } from './promptHoverProvider';
 import { I18n } from './i18n';
 import { registerPromptCommands, registerClipboardCommands, registerVersionCommands } from './commands';

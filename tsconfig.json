@@ -5,8 +5,11 @@
         "outDir": "dist",
         "rootDir": "src",
         "strict": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
         "lib": [
             "ES2020",
+            "ES2024",
             "DOM"
         ],
         "types": [

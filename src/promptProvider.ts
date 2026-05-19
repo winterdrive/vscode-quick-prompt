@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { I18n } from './i18n';
-import { ClipboardManager } from './clipboardManager';
+import { ClipboardManager } from './ClipboardManager';
 import { VersionHistoryService } from './services/VersionHistoryService';
 import { VersionItem } from './treeItems/VersionItem';
 import { PatternEngine } from './privacy/masking/patternEngine';

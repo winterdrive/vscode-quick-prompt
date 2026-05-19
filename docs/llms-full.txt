@@ -7,8 +7,11 @@
 
 # Quick Prompt – Capture Ideas & Queue Tasks While AI Works
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
-[![Installs](https://img.shields.io/visual-studio-marketplace/i/winterdrive.quick-prompt)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![Visual Studio Marketplace Version](https://vsmarketplacebadges.dev/version-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/QuickPrompt/llms.txt)
 
 [繁體中文](./README.zh-TW.md) | [English](./README.md)
@@ -63,7 +66,7 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ### 📚 Prompt Management
 
-- **🤖 AI-Powered Titles**: Automatic semantic title generation using local AI (Qwen1.5-0.5B).
+- **🤖 AI-Powered Titles**: Automatic semantic title generation using local AI (SmolLM2 / Qwen3, user-selectable).
 - **🎯 Lightning Fast Search**: Press `Alt+P` to search prompts, hit Enter to copy.
 - **🚀 Quick Add**: Right-click selected text → "Quick Add Prompt" (or press `Alt+Shift+S`).
 - **✏️ Native Editing**: Edit prompts like regular files with full VSCode support.

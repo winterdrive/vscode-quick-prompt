@@ -33,11 +33,16 @@
     "config.confirmBeforeDelete.description": "Show confirmation dialog before deleting prompts or versions",
     "config.ai.enabled.description": "Enable AI-powered features (disabled by default to keep the extension lightweight)",
     "config.ai.provider.description": "AI engine provider to use for features like title generation",
-    "config.ai.provider.localQwen": "Built-in Qwen 0.5B model (downloads ~400MB on first use)",
+    "config.ai.provider.localQwen": "Built-in local model (downloads on first use, see Local Model below)",
+    "config.ai.localModel.description": "Local model for AI features (applies when provider is Local)",
+    "config.ai.localModel.smollm2135m": "SmolLM2 135M (~137 MB) — Fastest, basic quality",
+    "config.ai.localModel.smollm2360m": "SmolLM2 360M (~365 MB) — Balanced (Recommended)",
+    "config.ai.localModel.qwen3": "Qwen3 0.6B (~618 MB) — Best multilingual & Chinese support",
     "config.ai.provider.openaiCompatible": "External LLM via OpenAI-compatible API (Ollama, LM Studio, etc.)",
     "config.ai.openaiCompatible.endpoint.description": "OpenAI-compatible API endpoint (e.g. Ollama: http://localhost:11434/v1)",
     "config.ai.openaiCompatible.model.description": "Model name to request from the API (e.g. qwen2.5:0.5b, llama3.2:latest)",
     "config.ai.openaiCompatible.apiKey.description": "API key (leave empty for local Ollama; required for OpenAI or cloud services)",
     "config.ai.openaiCompatible.timeout.description": "Request timeout in milliseconds (default 15000)",
+    "config.ai.enableThinking.description": "Enable Qwen3 thinking mode (deeper reasoning, slower). When off, uses /no_think for faster responses.",
     "config.ai.features.titleGeneration.description": "Use AI to automatically generate titles for new prompts"
 }

@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.4.2",
+    "version": "0.4.3",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -101,6 +101,22 @@
                     "description": "%config.ai.provider.description%",
                     "when": "config.quickPrompt.ai.enabled"
                 },
+                "quickPrompt.ai.localModel": {
+                    "type": "string",
+                    "enum": [
+                        "smollm2-135m",
+                        "smollm2-360m",
+                        "qwen3-0.6b"
+                    ],
+                    "default": "qwen3-0.6b",
+                    "enumDescriptions": [
+                        "%config.ai.localModel.smollm2135m%",
+                        "%config.ai.localModel.smollm2360m%",
+                        "%config.ai.localModel.qwen3%"
+                    ],
+                    "description": "%config.ai.localModel.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == local-qwen"
+                },
                 "quickPrompt.ai.openaiCompatible.endpoint": {
                     "type": "string",
                     "default": "http://localhost:11434/v1",
@@ -126,6 +142,12 @@
                     "maximum": 60000,
                     "description": "%config.ai.openaiCompatible.timeout.description%",
                     "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == openai-compatible"
+                },
+                "quickPrompt.ai.enableThinking": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "%config.ai.enableThinking.description%",
+                    "when": "config.quickPrompt.ai.enabled && config.quickPrompt.ai.provider == local-qwen"
                 },
                 "quickPrompt.ai.features.titleGeneration": {
                     "type": "boolean",
@@ -578,11 +600,11 @@
         "@types/node": "^16.x",
         "@types/vscode": "^1.75.0",
         "esbuild": "^0.25.0",
-        "typescript": "^4.9.5"
+        "typescript": "^5.9.3"
     },
     "dependencies": {
+        "@huggingface/transformers": "^3.0.0",
         "@modelcontextprotocol/sdk": "^1.27.1",
-        "@xenova/transformers": "^2.17.2",
         "zod": "^3.23.8"
     }
 }
