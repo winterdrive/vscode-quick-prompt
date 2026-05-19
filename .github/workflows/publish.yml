@@ -26,13 +26,6 @@ jobs:
       - name: Check if version changed
         id: check_version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            curr_version=$(node -p "require('./package.json').version")
-            echo "Manual publish requested for $curr_version. Proceeding with publish."
-            echo "changed=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
           # 取得前一個 commit 的版本號
           prev_version=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version" 2>/dev/null || echo "none")
           # 取得目前的版本號
