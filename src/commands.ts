@@ -49,42 +49,42 @@ export function registerPromptCommands(
 
     // 搜尋 Prompt（整合剪貼簿歷史）
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.search', async () => {
+        vscode.commands.registerCommand('quickPrompt.search', async () => {
             await handleSearch(promptProvider, clipboardManager);
         })
     );
 
     // 複製 Prompt
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.insert', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.insert', async (item: PromptItem) => {
             await handleInsertPrompt(item, promptProvider);
         })
     );
 
     // 新增 Prompt - 從 panel 建立空白內容並直接開啟編輯器
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.addPrompt', async () => {
+        vscode.commands.registerCommand('quickPrompt.addPrompt', async () => {
             await handleAddPrompt(promptProvider, fileSystemProvider);
         })
     );
 
     // 新增 Prompt - 自訂標題模式
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.addPromptWithTitle', async () => {
+        vscode.commands.registerCommand('quickPrompt.addPromptWithTitle', async () => {
             await handleAddPromptWithTitle(promptProvider, titleGenService);
         })
     );
 
     // 新增 Prompt - Silent Capture (無干擾捕捉)
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.silentAdd', async () => {
+        vscode.commands.registerCommand('quickPrompt.silentAdd', async () => {
             await handleSilentAdd(promptProvider, titleGenService);
         })
     );
 
     // 刪除 Prompt
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.deletePrompt', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.deletePrompt', async (item: PromptItem) => {
             const message = I18n.getMessage('confirm.deletePrompt', item.prompt.title);
             const confirmLabel = I18n.getMessage('confirm.yes');
 
@@ -100,7 +100,7 @@ export function registerPromptCommands(
 
     // 實體遮罩 (Mask)
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.maskPrompt', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.maskPrompt', async (item: PromptItem) => {
             if (!item?.prompt?.id) { return; }
             const engine = MaskingEngine.getInstance(context);
             const result = await engine.maskText(item.prompt.content, {
@@ -123,7 +123,7 @@ export function registerPromptCommands(
 
     // 實體還原 (Unmask)
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.unmaskPrompt', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.unmaskPrompt', async (item: PromptItem) => {
             if (!item?.prompt?.id) { return; }
             if (!item.prompt.privacyMeta) {
                 const hasLegacyMask = PatternEngine.hasMaskedTokens(item.prompt.content);
@@ -142,7 +142,7 @@ export function registerPromptCommands(
 
     // 忽略 Prompt 隱私警告
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.ignorePromptWarning', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.ignorePromptWarning', async (item: PromptItem) => {
             if (item?.prompt?.id) {
                 await promptProvider.ignorePromptWarning(item.prompt.id);
             }
@@ -151,7 +151,7 @@ export function registerPromptCommands(
 
     // 重新啟用 Prompt 隱私警告
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.restorePromptWarning', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.restorePromptWarning', async (item: PromptItem) => {
             if (item?.prompt?.id) {
                 await promptProvider.restorePromptWarning(item.prompt.id);
             }
@@ -160,14 +160,14 @@ export function registerPromptCommands(
 
     // 釘選/取消釘選 Prompt
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.togglePin', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.togglePin', async (item: PromptItem) => {
             await promptProvider.togglePin(item);
         })
     );
 
     // 重新整理
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.refresh', async () => {
+        vscode.commands.registerCommand('quickPrompt.refresh', async () => {
             await promptProvider.refresh();
             vscode.window.showInformationMessage(I18n.getMessage('message.refreshed'));
         })
@@ -175,28 +175,28 @@ export function registerPromptCommands(
 
     // 編輯 Prompt (使用虛擬檔案系統)
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.editPrompt', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.editPrompt', async (item: PromptItem) => {
             await handleEditPrompt(item, fileSystemProvider);
         })
     );
 
     // 重新命名 Prompt 標題
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.renamePrompt', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.renamePrompt', async (item: PromptItem) => {
             await handleRenamePrompt(item, promptProvider);
         })
     );
 
     // 上移 Prompt
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.moveUp', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.moveUp', async (item: PromptItem) => {
             await promptProvider.moveUp(item);
         })
     );
 
     // 下移 Prompt
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.moveDown', async (item: PromptItem) => {
+        vscode.commands.registerCommand('quickPrompt.moveDown', async (item: PromptItem) => {
             await promptProvider.moveDown(item);
         })
     );
@@ -216,14 +216,14 @@ export function registerClipboardCommands(
 ): void {
     // 複製剪貼簿歷史項目
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.copyClipboardItem', async (item: ClipboardTreeItem) => {
+        vscode.commands.registerCommand('quickPrompt.copyClipboardItem', async (item: ClipboardTreeItem) => {
             await handleCopyClipboardItem(item);
         })
     );
 
     // 固定剪貼簿項目到 Prompts（無需輸入標題，靜默模式）
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.pinClipboardItem', async (item: ClipboardTreeItem) => {
+        vscode.commands.registerCommand('quickPrompt.pinClipboardItem', async (item: ClipboardTreeItem) => {
             await handlePinClipboardItem(item, promptProvider, clipboardManager, titleGenService);
         })
     );
@@ -234,28 +234,28 @@ export function registerClipboardCommands(
         vscode.workspace.registerTextDocumentContentProvider(ClipboardPreviewProvider.scheme, previewProvider)
     );
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.viewClipboardItem', async (item: ClipboardTreeItem) => {
+        vscode.commands.registerCommand('quickPrompt.viewClipboardItem', async (item: ClipboardTreeItem) => {
             await handleViewClipboardItem(item, previewProvider);
         })
     );
 
     // 從歷史移除剪貼簿項目
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.removeClipboardItem', async (item: ClipboardTreeItem) => {
+        vscode.commands.registerCommand('quickPrompt.removeClipboardItem', async (item: ClipboardTreeItem) => {
             await handleRemoveClipboardItem(item, clipboardManager);
         })
     );
 
     // 清空剪貼簿歷史
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.clearClipboardHistory', async () => {
+        vscode.commands.registerCommand('quickPrompt.clearClipboardHistory', async () => {
             await handleClearClipboardHistory(clipboardManager);
         })
     );
 
     // 清除 AI 模型快取
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.clearModelCache', async () => {
+        vscode.commands.registerCommand('quickPrompt.clearModelCache', async () => {
             await handleClearModelCache(aiEngine);
         })
     );
@@ -278,49 +278,49 @@ export function registerVersionCommands(
 ): void {
     // Show version diff
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.showVersionDiff', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.showVersionDiff', async (item: VersionItem) => {
             await versionCommands.handleShowVersionDiff(item, versionHistoryService);
         })
     );
 
     // Apply Version Command (Soft Checkout)
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.applyVersion', (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.applyVersion', (item: VersionItem) => {
             versionCommands.handleApplyVersion(item, promptProvider);
         })
     );
 
     // Tag milestone
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.tagMilestone', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.tagMilestone', async (item: VersionItem) => {
             await versionCommands.handleTagMilestone(item, versionHistoryService, promptProvider);
         })
     );
 
     // Rename milestone
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.renameMilestone', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.renameMilestone', async (item: VersionItem) => {
             await versionCommands.handleRenameMilestone(item, versionHistoryService, promptProvider);
         })
     );
 
     // Remove milestone
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.removeMilestone', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.removeMilestone', async (item: VersionItem) => {
             await versionCommands.handleRemoveMilestone(item, versionHistoryService, promptProvider);
         })
     );
 
     // Delete version
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.deleteVersion', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.deleteVersion', async (item: VersionItem) => {
             await versionCommands.handleDeleteVersion(item, versionHistoryService, promptProvider);
         })
     );
 
     // Copy version content
     context.subscriptions.push(
-        vscode.commands.registerCommand('promptSniper.copyVersionContent', async (item: VersionItem) => {
+        vscode.commands.registerCommand('quickPrompt.copyVersionContent', async (item: VersionItem) => {
             await versionCommands.handleCopyVersionContent(item, promptProvider);
         })
     );

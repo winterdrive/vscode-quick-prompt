@@ -4,9 +4,9 @@
 It combines a persistent snippet library with clipboard history tracking, so the thoughts you have while AI is working are ready to hand off the moment it finishes.
 
 ## Documentation
-- [README](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/README.md): Key features, installation, and basic operations.
-- [Development Guide](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/DEVELOPMENT.md): Setup, architecture, and module structure.
-- [Full Context Documentation](https://winterdrive.github.io/QuickPrompt/llms-full.txt): A single file containing the full text of all critical documentation.
+- [README](https://raw.githubusercontent.com/winterdrive/vscode-quick-prompt/master/README.md): Key features, installation, basic operations, and v0.5.1 command ID migration notes.
+- [Development Guide](https://raw.githubusercontent.com/winterdrive/vscode-quick-prompt/master/DEVELOPMENT.md): Setup, architecture, command registration, and module structure.
+- [Full Context Documentation](https://winterdrive.github.io/vscode-quick-prompt/llms-full.txt): A single file containing the full text of all critical documentation.
 
 ## Optional
-- [License](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/LICENSE): MIT License details.
+- [License](https://raw.githubusercontent.com/winterdrive/vscode-quick-prompt/master/LICENSE): MIT License details.

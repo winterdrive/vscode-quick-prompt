@@ -2,478 +2,239 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
----
+## [0.5.1] - 2026-05-23
 
-## [0.5.0] - 2026-05-17
+### Command Naming Cleanup
+
+- Standardized contributed command IDs, keybindings, menus, tree item actions, and status bar command wiring under `quickPrompt.*`.
+- Renamed the activity bar container and prompt tree view IDs to `quickPromptContainer` and `quickPromptView`.
+- Replaced the legacy virtual prompt URI scheme with `quickprompt:`.
+- Added release-facing upgrade notes for users with custom keybindings, macros, tasks, or external automation.
+- Bumped the extension to `0.5.1` for the next release.
+
+**Upgrade note:** Command Palette names, default keyboard shortcuts, prompt data, clipboard history, and settings are unchanged. Custom automation should use the documented `quickPrompt.*` command IDs. Restored virtual prompt editor tabs may need to be reopened from the sidebar because virtual prompt tabs now use the `quickprompt:` URI scheme.
+
+## [0.5.0] - Unit Testing Framework & UI Test Scaffold - 2026-05-17
 
 ### 🧪 Unit Testing Framework
 
-**What changed:**
+- **Jest + ts-jest**: 77 tests covering `PromptManager`, `VersionManager`, and `PathUtils` using real file I/O against temporary directories — no mock filesystem, catches real regressions at the integration boundary.
+- **Coverage thresholds**: `npm run test:coverage` fails if statements < 80 %, branches < 70 %, functions < 80 %, or lines < 80 %. Current baseline is ~95 % across all three files.
+- **VSCode mock** (`src/test/__mocks__/vscode.ts`): Hand-written stub for `workspace`, `window`, `commands`, `ThemeIcon`, `ThemeColor`, `Uri`, `EventEmitter`, and `ExtensionContext`. Injected at Jest's `moduleNameMapper` layer — zero changes to production code.
+- **Property-based testing ready**: `fast-check` installed; drop a `*.test.ts` into `src/test/properties/` and use `fc.property()` + `fc.assert()`.
 
-- **Jest + ts-jest unit test suite introduced**: 77 tests covering the three core pure-Node.js modules — `PromptManager`, `VersionManager`, and `PathUtils`. All tests use real file I/O against temporary directories (no mock filesystem), so they catch real regression at the integration boundary without any VSCode runtime.
-- **Coverage thresholds enforced**: `npm run test:coverage` reports per-file coverage and fails the build if statements < 80 %, branches < 70 %, functions < 80 %, or lines < 80 %. Current baseline is ~95 % across all three files.
-- **VSCode mock infrastructure** (`src/test/__mocks__/vscode.ts`): A hand-written stub for the most commonly needed VSCode APIs (`workspace`, `window`, `commands`, `ThemeIcon`, `ThemeColor`, `Uri`, `EventEmitter`, `ExtensionContext`). The mock is injected at Jest's `moduleNameMapper` layer so source files that `import * as vscode from 'vscode'` get the stub at test time with zero changes to production code.
-- **Property-based testing ready** (`fast-check` installed): `npm run test` already includes `src/test/properties/` on the test-match pattern. Drop a `*.test.ts` file there and use `fc.property()` + `fc.assert()` to write invariant-based tests.
-- **UI test scaffold** (`vscode-extension-tester` + Mocha): A separate compilation target (`tsconfig.test.ui.json` → `out/test/ui/`) runs against a real downloaded VSCode instance via Selenium WebDriver. Initial tests cover Activity Bar icon presence, sidebar open, title verification, and toolbar action discovery. Run with `npm run test:ui:setup` (once) then `npm run test:ui`.
-- **New npm scripts**:
-  - `npm test` — unit tests (Jest, `--runInBand`)
-  - `npm run test:coverage` — unit tests with coverage report
-  - `npm run test:watch` — Jest watch mode for TDD
-  - `npm run test:ui:setup` — download VSCode and install extension under test
-  - `npm run test:ui` — compile + run UI tests against real VSCode
+### 🖥 VS Code UI Test Scaffold
 
----
+- **UI test scaffold** (`vscode-extension-tester` + Mocha): Separate compilation target (`tsconfig.test.ui.json` → `out/test/ui/`) runs against a real downloaded VS Code instance via Selenium WebDriver. Initial tests cover Activity Bar icon, sidebar open, title, and toolbar action discovery.
+- **New npm scripts**: `npm test` (unit), `npm run test:coverage`, `npm run test:watch`, `npm run test:ui:setup`, `npm run test:ui`.
 
-## [0.4.3] - 2026-05-16
+## [0.4.3] - Local AI Engine Migration to HuggingFace - 2026-05-16
 
-### 🤖 Local AI Engine Overhaul
+### 🤖 Local AI Engine — HuggingFace Transformers v3
 
-**What changed:**
+- **Library migrated**: Switched from deprecated `@xenova/transformers` to `@huggingface/transformers` v3 (now officially maintained by HuggingFace).
+- **Model selector**: Choose the local model via `Quick Prompt > AI > Local Model` — SmolLM2-135M, SmolLM2-360M (default), or Qwen3-0.6B. Each option shows estimated download size.
+- **Qwen3 thinking mode**: New `Quick Prompt > AI > Enable Thinking` toggle. Off (default) uses the official empty-`<think>` technique for faster responses; on enables full chain-of-thought.
+- **Bug fixes**: Worker error messages now correctly update engine status. Inference timeout increased from 30 s to 90 s for slower CPU inference. Fallback title now extracts a full sentence instead of truncating to 10 characters.
 
-- **Model library migrated**: Switched from deprecated `@xenova/transformers` to the official `@huggingface/transformers` v3 (HuggingFace now maintains the project).
-- **Model selector**: Users can now choose the local model via settings (`Quick Prompt > AI > Local Model`): SmolLM2-135M, SmolLM2-360M (default), or Qwen3-0.6B. Each option shows estimated download size.
-- **Qwen3 thinking mode toggle**: New `Quick Prompt > AI > Enable Thinking` setting. When off (default), the official Qwen3 empty-`<think>` technique is used to skip reasoning and respond faster. When on, uses Qwen3's full chain-of-thought with recommended sampling parameters.
-- **Improved prompt**: Switched to English system instructions (more reliable across small models) with proper generation parameters per thinking mode.
-- **Bug fixes**: Worker error messages now correctly update engine status (previously the popup could hang indefinitely on model failure). Inference timeout increased from 30 s to 90 s to accommodate slower CPU inference. Fallback title now extracts a full sentence instead of truncating to 10 characters.
-
-### 🛠 TypeScript & Build
+### 🛠 TypeScript & Build Updates
 
 - **TypeScript upgraded** from 4.9.5 to 5.9.3.
-- **tsconfig**: Added `skipLibCheck`, `esModuleInterop`, and `ES2024` lib to support `@huggingface/transformers` v3 type definitions.
-- **File casing fix**: Five `src/` files imported `./clipboardManager` (lowercase) while the actual file is `ClipboardManager.ts` — harmless on Windows but would fail on Linux CI. Fixed all import paths.
+- **tsconfig**: Added `skipLibCheck`, `esModuleInterop`, and `ES2024` lib for `@huggingface/transformers` v3 compatibility.
+- **Import casing fix**: Fixed five `src/` files importing `./clipboardManager` (lowercase) while the actual file is `ClipboardManager.ts` — harmless on Windows, would fail on Linux CI.
 
----
-
-## [0.4.2] - 2026-05-14
+## [0.4.2] - Startup & Runtime Performance - 2026-05-14
 
 ### ⚡ Startup & Runtime Performance
 
-**What changed:**
+- **Non-blocking activation**: Version history migration now runs in the background — the sidebar appears immediately without waiting for sequential file reads.
+- **Async clipboard history**: `clipboard-history.json` is read with non-blocking async I/O; the panel refreshes automatically once loading completes.
+- **Config caching**: Clipboard settings are cached at startup and updated only on user changes, eliminating 4–6 redundant `getConfiguration()` calls per poll cycle.
+- **Storage path cached**: Clipboard storage path computed once at startup instead of rechecking directory existence on every save.
+- **Faster deep clone**: Replaced `JSON.parse(JSON.stringify(...))` with `structuredClone()` in `PromptManager` — 3–5× faster.
+- **"View Full Content"**: The inline clipboard action renamed from "Edit as Prompt" to "View Full Content" — opens raw content in a read-only temporary editor without converting it to a permanent Prompt.
 
-- **Non-blocking version history init**: Version history migration no longer runs synchronously during extension activation. It now runs in the background, so the sidebar appears immediately without waiting for N sequential file reads.
-- **Clipboard history loads asynchronously**: `clipboard-history.json` is now read with non-blocking async I/O instead of `readFileSync`. The clipboard panel refreshes automatically once loading completes.
-- **Config caching in ClipboardManager**: Clipboard settings (`enabled`, `pollingInterval`, `maxItems`, `minLength`, etc.) are now cached at startup and updated only when the user changes settings — eliminating 4–6 redundant `getConfiguration()` deserializations per poll cycle. Polling restarts automatically when settings change.
-- **Storage path cached**: The clipboard storage path (`~/.quickprompt/clipboard-history.json`) is computed once at startup instead of rechecking directory existence on every save.
-- **Faster deep clone**: Replaced `JSON.parse(JSON.stringify(...))` with `structuredClone()` throughout `PromptManager`, which is 3–5× faster for the same operation.
-- **Clipboard item "View Full Content"**: The inline clipboard action previously labelled "Edit as Prompt" has been replaced with "View Full Content". The old behavior automatically converted the clipboard item into a permanent Prompt and opened it for editing. The new behavior opens the raw content in a read-only temporary editor — leaving the clipboard history untouched — so you can inspect the full text without committing it as a Prompt.
+## [0.4.0] - Frictionless Add Flow & Smart Sort - 2026-05-14
 
----
+### ✏️ Frictionless Add Flow & Rename
 
-## [0.4.0] - 2026-05-14
+- **Frictionless Add**: "Add Prompt" creates an empty prompt with a placeholder title and immediately opens the editor — no upfront input box. Start writing directly.
+- **Auto Title on First Save**: A fallback title is generated from content on first save; if AI is enabled, it refines the title in the background.
+- **Add Prompt (Custom Title)**: The original two-step flow (title → content) is preserved as a separate command for users who prefer explicit titles.
+- **Rename Prompt**: Right-click any prompt to rename its title inline without opening the full editor.
+- **Click to Edit**: Clicking a prompt opens the editor directly; the redundant inline Edit button has been removed.
 
-### ✨ Streamlined Add Flow & Sort Improvements
+### 📊 Smart Sort & Tooltip Improvements
 
-**What changed:**
+- **Smarter default sort**: Prompts without a manual order are sorted by creation time (newest first) for predictable placement.
+- **Lazy manual ordering**: Explicit `order` values are only assigned when first using Move Up / Move Down; existing sequential orders are migrated automatically.
+- **Precise `created_at`**: New prompts store a full ISO datetime instead of date-only, enabling accurate same-day ordering.
+- **Tooltip**: Metadata (usage count, last used, source) now appears at the top, followed by a 300-char content preview.
 
-- **Frictionless Add**: The "Add Prompt" command now creates an empty prompt with a placeholder title ("Untitled Prompt") and immediately opens the editor — no upfront input box required. Start writing directly.
-- **Auto Title on First Save**: When you save content in the editor for the first time, a fallback title is generated automatically from the content. If AI is enabled, the title is then refined in the background without blocking you.
-- **Add Prompt (Custom Title)**: The previous two-step input flow (title → content) is preserved as a separate command for users who prefer to set the title explicitly upfront.
-- **Smarter Default Sort**: Prompts without a manual order are now sorted by creation time (newest first) instead of last-used date, giving newly added items predictable placement.
-- **Lazy Manual Ordering**: Explicit `order` values are only assigned when you first use Move Up / Move Down. Existing data with auto-assigned sequential orders is migrated to the new sort automatically.
-- **Click to Edit**: Clicking a prompt in the sidebar now opens the editor directly. The redundant Edit button has been removed from the inline toolbar.
-- **Rename Prompt**: Right-click any prompt and choose "Rename Prompt" to edit its title inline without opening the full editor.
-- **Tooltip Improvement**: Prompt and clipboard tooltips now show metadata (usage count, last used, source) at the top, followed by a truncated content preview (300 chars), so key info is always visible without scrolling.
-- **Precise `created_at`**: New prompts store a full ISO datetime instead of a date-only string, enabling accurate same-day sort ordering.
+## [0.3.7] - Performance & Automated Publishing - 2026-05-08
 
----
+### 🚀 Performance & CI/CD
 
-## [0.3.7] - 2026-05-08
+- **State management**: Enhanced memory efficiency in `ClipboardManager` and `PromptProvider`.
+- **Automated publishing**: Added `publish.yml` GitHub Actions workflow for automated deployments to VS Code Marketplace and Open VSX.
 
-### ⚡ Performance & CI/CD Enhancements
+## [0.3.6] - Voice-Ready MCP & Global Clipboard Persistence - 2026-04-22
 
-**What changed:**
+### 🎙 Voice-Ready MCP Integration & Global Clipboard
 
-- **Performance Optimization**: Enhanced state management and memory efficiency in the core providers (`ClipboardManager` and `PromptProvider`).
-- **Automated Publishing**: Added GitHub Actions workflow (`publish.yml`) for automated deployments to the VS Code Marketplace and Open VSX.
+- **Voice-ready validation**: Completed E2E testing for Voice-Ready MCP architecture with semantic routing and phonetic error tolerance (e.g. mapping "Li-Ate" → "React").
+- **Global clipboard persistence**: Migrated clipboard history from VS Code's internal `globalState` (SQLite) to `~/.quickprompt/clipboard-history.json` — enables cross-IDE access and survives extension reloads.
+- **`get_clipboard_item` MCP tool**: Improved error handling, boundary checks, and descriptive indexing hints for AI agents.
+- **Smart Skill Generation**: `SkillGenerator.ts` now injects phonetic and typographical error-handling instructions into generated skill files.
 
----
+## [0.3.5] - Custom AI Endpoints & Strict Opt-In - 2026-04-15
 
-## [0.3.6] - 2026-04-22
+### 🔌 Custom AI Endpoints (Ollama / LM Studio)
 
-### 🚀 Voice‑Ready MCP Integration & Reliability
+- **OpenAI-compatible API**: Route AI tasks through external endpoints (Ollama, LM Studio) via `quickPrompt.ai.provider` and `quickPrompt.ai.openaiCompatible.*`.
+- **Test AI Connection command**: `Quick Prompt: Test AI Connection` instantly verifies endpoint configuration.
+- **Strict opt-in AI**: All AI features are disabled by default — no model loads into memory, no background processes start on install. Users must enable `quickPrompt.ai.enabled` explicitly.
+- **Worker thread leak fix**: Fixed a memory and thread leak when repeatedly toggling the AI provider. The Singleton AI engine now disposes worker threads efficiently.
 
-**What changed:**
+## [0.3.3] - Product Repositioning — In-IDE Scratch Pad - 2026-04-10
 
-- **Voice‑Ready Optimization**: Completed E2E testing for the Voice-Ready MCP architecture. Validated semantic routing and phonetic error tolerance (e.g., mapping "Li-Ate" to "React").
-- **Global Clipboard Persistence**: Migrated clipboard history storage from VS Code's internal `globalState` (SQLite) to a global JSON file (`~/.quickprompt/clipboard-history.json`). This enables cross-IDE access and persistence that survives extension reloads or external agent queries.
-- **Global Clipboard Tool**: Enhanced the `get_clipboard_item` MCP tool with better error handling, boundary checks, and descriptive indexing hints for AI agents.
-- **Smart Skill Generation**: Updated `SkillGenerator.ts` to inject phonetic and typographical error-handling instructions into generated Skill files, empowering agents to interpret ambiguous voice inputs.
-- **Documentation**: Synchronized all technical specifications, READMEs, and Release Notes to reflect the new capabilities.
+### 🔄 Repositioning: Prompt Manager → In-IDE Scratch Pad
 
-## [0.3.5] - 2026-04-15
+No functional changes. Documentation and marketplace metadata updated to reflect the extension's primary use case: capturing next tasks while your AI agent runs, without breaking flow.
 
-### 🤖 Custom AI Endpoints (Ollama / LM Studio) & Opt-in Framework
+- **Display name**: `Quick Prompt - AI Prompt Manager & Clipboard History` → `Quick Prompt - Capture Ideas & Queue Tasks While AI Works`
+- **README** (EN + zh-TW + zh-CN): Rewritten to lead with the cognitive offload use case.
+- **Why**: The original "prompt template library" framing was increasingly irrelevant as AI IDEs absorb context injection at the infrastructure level. The durable value is the **asynchronous cognitive handoff**: human thinks ahead, AI executes behind, Quick Prompt holds the queue.
 
-A major structural update addressing performance, security, and flexibility of the AI Engine.
+## [0.3.2] - Privacy v2 — Secure Storage Redesign - 2026-04-07
 
-**What changed:**
+### 🔒 Privacy v2 — Secure Storage Redesign
 
-- **OpenAI-Compatible API Support**: You can now route AI tasks (like title generation) through external endpoints (e.g., Ollama or LM Studio) instead of relying solely on the bundled Qwen model. Configure via `quickPrompt.ai.provider` and `quickPrompt.ai.openaiCompatible.*`.
-- **Command: Test AI Connection**: Added `Quick Prompt: Test AI Connection` to instantly verify your endpoint configurations.
-- **Strict Opt-In AI**: By default, **all AI features are now disabled**. The AI engine will not load into memory, nor will it start background processes on install. Users must intentionally enable `quickPrompt.ai.enabled` to use these features, providing a zero-overhead experience for users who only want to use the clipboard management and Prompt CRUD functions.
-- **Bug Fix**: Fixed a critical memory and thread leak that occurred when repeatedly toggling the AI provider in settings. The Singleton AI engine now scales and disposes underlying worker threads efficiently without losing its references.
+The token mapping needed to reverse a mask is now stored in VS Code's **SecretStorage** (OS-level encrypted: macOS Keychain, Windows Credential Manager, Linux libsecret) instead of `prompts.json`. Sensitive data no longer touches the file system in any form.
 
----
-
-## [0.3.3] - 2026-04-10
-
-### 🔄 Product Repositioning — From "Prompt Manager" to "In-IDE Scratch Pad"
-
-No functional changes. This release updates all documentation and marketplace metadata to reflect the tool's true primary use case.
-
-**What changed:**
-
-- **Display name** updated: `Quick Prompt - AI Prompt Manager & Clipboard History` → `Quick Prompt - Capture Ideas & Queue Tasks While AI Works`
-- **Marketplace description** rewritten to lead with the cognitive offload use case: capturing next tasks while your agent runs, without switching to Notepad++ or breaking flow
-- **README** (EN + zh-TW + zh-CN): rewritten `What is Quick Prompt?`, `Use Cases`, `Best Practices`, and `Recommended Companion` sections to reflect real-world usage
-- **Cross-promotion** with VirtualTabs updated from "AI instructions manager" framing to "in-IDE cognitive buffer" framing
-
-**Why:** The original "prompt template library" framing positioned the tool as a 2024-era static prompt manager — increasingly irrelevant as AI IDEs absorb context injection at the infrastructure level. The real, durable value is the **asynchronous cognitive handoff**: human thinks ahead, AI executes behind, Quick Prompt holds the queue.
-
----
-
-## [0.3.2] - 2026-04-07
-
-### 🔒 Privacy v2 – Secure Storage Redesign
-
-A fundamental redesign of the privacy masking architecture. The token mapping (the data needed to reverse a mask) is now stored in VS Code's **SecretStorage** — OS-level encrypted storage (macOS Keychain, Windows Credential Manager, Linux libsecret) — instead of `prompts.json`. Sensitive data no longer touches the file system in any form.
+- **`prompts.json`**: Masked entries now store only `maskedAt` and `types` in `privacyMeta` — the `tokenMap` field is gone from disk entirely.
+- **Prompt deletion**: Deleting a prompt now also cleans up its SecretStorage entry.
+- **Limitation**: Unmask is machine-local — a masked prompt cannot be unmasked on a different machine.
 
 **Breaking changes:**
 
-- `privacy-dictionary.json` and the custom dictionary feature have been removed. Pattern toggles are still available in Settings.
-- MCP tools `mask_text`, `unmask_text`, `list_dictionary`, `add_dictionary_entry`, `edit_dictionary_entry`, `delete_dictionary_entry`, and `toggle_dictionary_entry` have been **removed**. The MCP server now exposes 14 tools (prompt CRUD + version history only). Privacy masking is a VS Code-side operation and must not be exposed to external agents by design.
-- The "Preview Privacy Masking" WebView panel has been removed.
-- The Unmask right-click action no longer shows a confirmation dialog.
+- `privacy-dictionary.json` and the custom dictionary feature removed. Pattern toggles remain in Settings.
+- MCP tools `mask_text`, `unmask_text`, `list_dictionary`, `add_dictionary_entry`, `edit_dictionary_entry`, `delete_dictionary_entry`, `toggle_dictionary_entry` **removed**. Privacy masking is a VS Code-side operation and must not be exposed to external agents.
+- "Preview Privacy Masking" WebView panel removed.
+- Unmask right-click action no longer shows a confirmation dialog.
 
-**What changed:**
+## [0.3.1] - Clipboard Masking Scope Fix - 2026-04-06
 
-- `prompts.json` entries that are masked now store only `maskedAt` and `types` in `privacyMeta` — the `tokenMap` field is gone from disk entirely.
-- Deleting a prompt now also cleans up its SecretStorage entry (in addition to the history file fix from v0.3.1).
-- **Limitation**: Unmask is machine-local. If you open the same workspace on a different machine, a masked prompt cannot be unmasked (the OS keychain does not roam).
+### 🛡️ Clipboard Masking Scope Fix
 
----
+- **Masking scope corrected**: Sensitive data masking now applies only at the prompt insertion layer, not at clipboard capture time. Previously, captured clipboard content was silently overwritten with a masked version, making the original irretrievable. Clipboard history now always stores the original content; masking is applied on-demand at insertion.
 
-## [0.3.1] - 2026-04-06
+## [0.3.0] - AI Agent Integration (MCP) & Privacy Protection - 2026-03-19
 
-### 🛡️ Privacy Protection - Bug Fix
+### 🔌 AI Agent Integration via MCP
 
-- **Clipboard masking scope corrected**: Sensitive data masking now applies only at the prompt insertion layer, not at clipboard capture time. Previously, content copied to the clipboard was silently overwritten with a masked version, making the original irretrievable. The clipboard history now always stores the original content, and masking is applied on-demand when inserting into a prompt.
+- **MCP Server**: A bundled MCP server enables AI agents (Cursor, Claude, Antigravity) to manage prompts directly via 21 tools across prompt CRUD, version history, and privacy masking.
+- **4-Layer Safety Decision Tree**: Generated skills implement Layer 0–3 safety logic to ensure agents only take actions when the connection is secure.
+- **Skill Generator**: Generates tailored skill files for Cursor (`.mdc`), Copilot, Claude, Antigravity, Kiro, and Cline.
+- **CLI Fallback Bundle** (`qp.bundle.js`): Self-contained fallback if the MCP server is disconnected.
+- **MCP Config Panel**: Interactive WebView for easy setup with multi-root workspace support and dynamic folder variables.
 
----
+### 🔒 Privacy Protection — Sensitive Data Masking
 
-## [0.3.0] - 2026-03-19
+- **Mask Clipboard** (`Quick Prompt: Mask Clipboard`): Detects and replaces sensitive data with reversible tokens (e.g. `[EMAIL-1]`, `[API-KEY-1]`).
+- **Unmask Clipboard** (`Quick Prompt: Unmask Clipboard`): Restores original values from secure session storage.
+- **Preview Masking** (`Quick Prompt: Preview Masking`): Interactive WebView showing exactly what would be masked before you commit.
+- **Custom Dictionary** (`Quick Prompt: Manage Privacy Dictionary`): Add exact-match or regex patterns; select text and run `Add to Privacy Dictionary` to register instantly.
+- **Pattern coverage** (enabled by default): email, phone, API keys (AWS/GitHub/OpenAI), IP addresses, private keys/certificates. Credit cards off by default.
+- **NER Support** (optional): AI-powered named entity detection for names, orgs, and locations via `quickPrompt.privacy.ner.*`.
 
-### 🔌 AI Agent Integration (MCP) - Major Update
+### 🔧 Caching & Path Resolution Fixes
 
-This release brings full **Model Context Protocol (MCP)** support, allowing AI agents (like Cursor, Claude, Antigravity) to manage your prompts directly.
+- **VersionManager caching**: Improved caching for faster history loading.
+- **Windows path resolution**: Fixed path resolution for Windows in MCP environments.
 
-- **MCP Server Integration**: A bundled MCP server allows AI agents to perform 21 tools across prompt CRUD, version history, and privacy masking.
-- **Action Decision Tree**: Implements a 4-layer safety logic (Layer 0-3) in generated skills to ensure agents only take actions when the connection is secure.
-- **Skill Generator**: Easily generate tailored skill files for Cursor (.mdc), Copilot, Claude, Antigravity, Kiro, and Cline.
-- **CLI Fallback Bundle**: Includes a self-contained `qp.bundle.js` as a "Hard Fallback" mechanism if the MCP server is disconnected.
-- **Enhanced MCP Config Panel**: A new interactive Webview UI for easy setup with support for multi-root workspaces and dynamic folder variables.
+## [0.2.0] - Version History System - 2026-01-21
 
-### 🔒 Privacy Protection (New!)
+### 📜 Version History System
 
-Protect sensitive information before it leaves your machine — mask data in clipboard or editor text before feeding it to any AI model.
+- **Linear History**: Automatically tracks every change to your prompts.
+- **Soft Checkout**: Apply historical versions without overwriting until you save (with dirty check safety).
+- **Milestones**: Tag important versions (e.g. "Stable", "Draft v2").
+- **Diff View**: Compare any historical version with the current state in one click.
+- **Smart Retention**: Auto-prunes old versions for storage efficiency (keeps last 15 + milestones + restores).
+- **i18n**: Full English, Traditional Chinese, and Simplified Chinese support.
 
-- **Mask Clipboard** (`Quick Prompt: Mask Clipboard`): Detects and replaces sensitive data in the clipboard with reversible tokens (e.g., `[EMAIL-1]`, `[API-KEY-1]`).
-- **Unmask Clipboard** (`Quick Prompt: Unmask Clipboard`): Restores the original values from secure session storage.
-- **Preview Masking** (`Quick Prompt: Preview Masking`): Interactive WebView showing exactly what would be masked in the selected text before you commit.
-- **Custom Dictionary** (`Quick Prompt: Manage Privacy Dictionary`): Add your own exact-match or regex patterns. Select text and run `Quick Prompt: Add to Privacy Dictionary` to register it instantly.
-- **Masking Report** (`Quick Prompt: Show Masking Report`): Statistics on total masks, cache hit rate, and NER model state.
+### 🔧 Security & Reliability
 
-**Pattern Coverage (enabled by default):**
+- **Path traversal protection**: Added protection for prompt history file paths.
+- **Resource cleanup**: Improved AI engine resource cleanup on deactivation.
+- **Command naming**: Unified command naming conventions across the extension.
+- **History tree**: Optimized partial updates for history tree view performance.
 
-| Pattern | Setting Key |
-| ------- | ----------- |
-| Email addresses | `quickPrompt.privacy.patterns.email` |
-| Phone numbers | `quickPrompt.privacy.patterns.phone` |
-| API keys (AWS, GitHub, OpenAI…) | `quickPrompt.privacy.patterns.apiKeys` |
-| IP addresses | `quickPrompt.privacy.patterns.ipAddress` |
-| Private keys / certificates | `quickPrompt.privacy.patterns.privateKey` |
-| Credit card numbers | `quickPrompt.privacy.patterns.creditCard` (default: off) |
+## [0.1.1] - Non-blocking AI Title Generation - 2026-01-16
 
-**NER Support (Optional):** Enable AI-powered named entity detection for names, organizations, and locations via `quickPrompt.privacy.ner.*` settings (requires model download).
+### ⚡ Non-blocking AI Title Generation
 
-### 🛡️ Optimization & Bug Fixes
+- **Progressive title generation**: Prompts are added immediately with a fallback title; AI generates a better title in the background.
+- **Non-blocking UI**: Fixed AI title generation freezing the VS Code interface.
+- **Silent mode**: Pinned and auto-added prompts work silently without interrupting flow.
+- **Reversible AI titles**: A notification allows reverting to the original title when AI updates it.
 
-- **Performance**: Improved VersionManager caching for faster history loading.
-- **Reliability**: Improved path resolution for Windows systems in MCP environments.
-- **Consistency**: Unified UI text and icons for MCP and Skill generation commands.
+## [0.1.0] - AI-Powered Title Generation - 2026-01-16
 
-## [0.2.0] - 2026-01-21
+### 🤖 AI-Powered Title Generation
 
-### ✨ New Features
+- **Local AI title generation**: Automatically generates smart titles using local AI (Qwen1.5-0.5B). Works with `Alt+Shift+S` quick add and clipboard pinning.
+- **Privacy-first**: All processing runs on your machine, no internet required. First-time download: ~300 MB (cached for future use).
+- **Configuration**: `quickPrompt.ai.enabled` (default: true), `quickPrompt.ai.autoGenerateTitle` (default: true).
+- **Removed**: AI tag suggestion system (simplified to focus on title generation).
 
-**Version History System**
+## [0.0.3] - Clipboard History & Unified Search - 2025-12-04
 
-- **Linear History**: Automatically tracks every change to your prompts
-- **Soft Checkout**: Apply historical versions without overwriting until you save (with dirty check safety)
-- **Milestones**: Tag important versions (e.g., "Stable", "Draft v2")
-- **Diff View**: Compare any historical version with the current state with one click
-- **Smart Retention**: Automatically prunes old versions for storage efficiency (keeps last 15 versions + milestones + restores)
-- **Internationalization**: Full support for English, Traditional Chinese, and Simplified Chinese
+### 📋 Automatic Clipboard History
 
-### 🔧 Improvements
+- **Instant capture**: Automatically captures clipboard content from VS Code editor copies with no delay; polls every 5 s (configurable) for external app copies.
+- **Smart filtering**: Automatic deduplication, minimum length filter (default: 10 chars), excludes pure numbers.
 
-- **Security**: Added path traversal protection for prompt history files
-- **Reliability**: Improved resource cleanup for AI engine
-- **Consistency**: Unified command naming conventions across the extension
-- **Performance**: Optimized partial updates for history tree view
+### 🔍 Unified Search Interface (`Alt+P`)
 
----
+- **Single search box**: Search both prompts and clipboard history in one place — "My Prompts" section first, "Clipboard History" below.
+- **Quick actions**: Press Enter to copy the selected item directly.
 
-## [0.1.1] - 2026-01-16
+### ↕️ Manual Sorting & Enhanced Editing
 
-### ⚡ Performance & UX Improvements
+- **Manual sorting**: Move prompts up or down via right-click menu; order is saved automatically with a 2-second status bar confirmation.
+- **Clipboard item editing**: Edit button on clipboard items auto-converts to a permanent prompt and opens in the native editor.
+- **Hover preview**: Rich preview cards when hovering over virtual files.
 
-- **Progressive Title Generation**: Prompts are now added immediately with a fallback title, while AI generates a better title in the background.
-- **Non-blocking UI**: Solved the issue where AI generation would freeze the VSCode interface.
-- **Silent Mode**: Pinned and auto-added prompts now work silently without interrupting your flow.
-- **Reversible Updates**: When AI updates a title, a notification allows you to revert to the original if preferred.
+### 🎨 Inline Action Buttons & Status Bar
 
----
+- **Prompt items**: Copy, Pin/Unpin, Edit, Delete.
+- **Clipboard items**: Copy, Pin to Prompts, Edit as Prompt, Remove from History.
+- **Status bar**: Clipboard indicator with click-to-search and hover preview of latest item.
+- **Minimalist notifications**: Quick operations use 2–3 s status bar messages; no confirmation dialogs for delete.
 
-## [0.1.0] - 2026-01-16
+### ⚙️ Configuration & Technical
 
-### ✨ New Features
+- **New settings**: `quickPrompt.clipboardHistory.enabled`, `maxItems` (20), `enablePolling`, `pollingInterval` (5000 ms), `minLength` (10).
+- **Instant VS Code capture**: Selection listener with 200 ms delay for reliable clipboard sync.
+- **i18n**: All new features translated in English, Traditional Chinese, and Simplified Chinese.
 
-**AI-Powered Title Generation**
+## [0.0.2] - Sidebar UI & Stability Fixes - 2025-12-03
 
-- Automatically generates smart titles for your prompts using local AI (Qwen1.5-0.5B)
-- Works with `Alt+Shift+S` quick add and clipboard pinning
-- Privacy-first: all processing runs on your machine, no internet required
-- First-time download: ~300MB model (cached for future use)
+### 🎨 Sidebar UI & Stability Fixes
 
-**Configuration**
+- **UI improvements**: Enhanced sidebar icons, visual indicators, and prompt display formatting.
+- **Pin functionality**: Added pin support for important prompts.
+- **Bug fixes**: Fixed workspace isolation issues, improved file system provider stability, and better error handling for edge cases.
 
-- `quickPrompt.ai.enabled` - Enable/disable AI features (default: true)
-- `quickPrompt.ai.autoGenerateTitle` - Auto-generate titles (default: true)
-
-### 🗑️ Removed
-
-- AI tag suggestion system (simplified to focus on title generation)
-
----
-
-## [0.0.3] - 2025-12-04
-
-### 🎉 Major Update: Clipboard History & UX Refinements
-
-This release focuses on significantly reducing interaction cost and improving the overall user experience with automatic clipboard tracking and streamlined workflows.
-
-### ✨ New Features
-
-#### 📋 Automatic Clipboard History
-
-- **Instant Capture**: Automatically captures clipboard content from VSCode editor copies (no delay)
-- **External App Support**: Captures content from external applications when switching back to VSCode
-- **Background Polling**: Lightweight polling every 5 seconds (configurable)
-- **Smart Filtering**:
-  - Automatic deduplication
-  - Minimum length filter (default: 10 characters)
-  - Excludes pure numbers
-
-#### 🔍 Unified Search Interface (`Alt+P`)
-
-- **Single Search Box**: Search both prompts and clipboard history in one place
-- **Organized Display**:
-  - "My Prompts" section shown first
-  - "Clipboard History" section shown below
-- **Consistent Format**:
-  - Prompts: Show usage count and character count
-  - Clipboard: Show relative time and character count
-- **Quick Actions**: Press Enter to copy selected item
-
-#### ⬆️⬇️ Manual Sorting
-
-- **Right-Click Menu**: Move prompts up or down
-- **Persistent Order**: Order is saved automatically
-- **Status Feedback**: Shows confirmation in status bar (2 seconds)
-
-#### ✏️ Enhanced Editing
-
-- **Clipboard Item Editing**: Click edit button on clipboard items to:
-  - Automatically convert to permanent prompt
-  - Open in native editor
-  - No manual title input needed
-- **Virtual File System**: Full VSCode editing experience
-- **Hover Preview**: Rich preview cards when hovering over virtual files
-
-### 🎨 UI/UX Improvements
-
-#### Inline Action Buttons
-
-**Prompt Items** (4 buttons):
-
-1. 📋 Copy
-2. 📌 Pin/Unpin
-3. ✏️ Edit
-4. 🗑️ Delete
-
-**Clipboard Items** (4 buttons):
-
-1. 📋 Copy
-2. 📌 Pin to Prompts
-3. ✏️ Edit as Prompt
-4. 🗑️ Remove from History
-
-#### Notification Strategy
-
-- **Minimalist Approach**: Reduced notification noise
-- **Status Bar Messages**: Quick operations show brief status bar messages (2-3 seconds)
-- **No Confirmation Dialogs**: Streamlined delete operations
-- **Silent Mode**: Pin and edit operations use status bar instead of popups
-
-#### Status Bar Integration
-
-- **Clipboard Indicator**: Shows clipboard icon in status bar
-- **Quick Access**: Click to open unified search
-- **Tooltip Preview**: Hover to see latest clipboard content
-
-### 🔧 Technical Improvements
-
-#### Instant Clipboard Capture
-
-- **Selection Listener**: Monitors text selection in VSCode
-- **200ms Delay**: Waits for clipboard to update after selection
-- **Automatic Detection**: Captures when clipboard matches selection
-- **No Polling Delay**: Instant capture for VSCode operations
-
-#### Data Structure
-
-- **Order Field**: Added `order` field to Prompt interface for manual sorting
-- **Clipboard Metadata**: Tracks timestamp, length, and preview for each item
-
-#### Performance
-
-- **Optimized Polling**: Only polls when VSCode window is active
-- **Configurable Intervals**: Adjustable polling frequency
-- **Smart Deduplication**: Efficient duplicate detection
-
-### ⚙️ New Configuration Options
-
-```json
-{
-  "quickPrompt.clipboardHistory.enabled": true,
-  "quickPrompt.clipboardHistory.maxItems": 20,
-  "quickPrompt.clipboardHistory.enablePolling": true,
-  "quickPrompt.clipboardHistory.pollingInterval": 5000,
-  "quickPrompt.clipboardHistory.minLength": 10
-}
-```
-
-### 🌐 Internationalization
-
-- Added translations for all new features
-- Supported languages: English, 繁體中文, 简体中文
-
-### 📊 Interaction Cost Reduction
-
-| Operation | Before | After | Improvement |
-|-----------|--------|-------|-------------|
-| View Clipboard | 4 steps | **1 click** (status bar) | ⬇️ 75% |
-| Pin Clipboard | 5 steps | **1 click** | ⬇️ 80% |
-| Delete Prompt | 3 steps | **1 click** | ⬇️ 67% |
-| Search All | Separate | **Alt+P unified** | ✅ Simplified |
-
-### 🐛 Bug Fixes
-
-- Fixed TreeView order to show Prompts before Clipboard History
-- Fixed notification spam by using status bar messages
-- Improved clipboard capture reliability
-
-### 📝 Documentation
-
-- Updated README with comprehensive feature descriptions
-- Added best practices for clipboard history usage
-- Included configuration examples
-
----
-
-## [0.0.2] - 2025-12-03
-
-### 🎨 UI Improvements
-
-- Enhanced sidebar icons and visual indicators
-- Improved prompt display with better formatting
-- Added pin functionality for important prompts
-
-### 🔧 Bug Fixes
-
-- Fixed workspace isolation issues
-- Improved file system provider stability
-- Better error handling for edge cases
-
----
-
-## [0.0.1] - 2025-12-02
+## [0.0.1] - Initial Release - 2025-12-02
 
 ### 🎉 Initial Release
 
-Quick Prompt is a lightweight VSCode extension designed for quick AI prompt management and usage.
-
-### ✨ Core Features
-
-#### Quick Search & Copy
-
-- **Keyboard Search**: Press `Alt+P` to open search box
-- **One-Click Copy**: Select a prompt and press Enter to copy directly to clipboard
-- **Smart Filters**:
-  - `@hot`: Show hot prompts (used >= 10 times)
-  - `@recent`: Show prompts used in the last 7 days
-  - `@unused`: Show never-used prompts
-
-#### Quick Add
-
-- **Add from Selection**: Select text and press `Alt+Shift+S` to instantly add
-- **Smart Syntax**: Supports `Title::Content` format for one-step completion
-- **Auto Title**: Automatically generates title from content
-
-#### Virtual File System
-
-- **Native Editing Experience**: Each prompt is a virtual file (`prompt-sniper:/001.md`)
-- **Direct Save**: Press `Ctrl+S` to save directly, no "Save As" needed
-- **Full Support**: Undo/Redo, Auto Save, Format Document
-
-#### Smart Tracking
-
-- **Usage Statistics**: Automatically tracks usage count for each prompt
-- **Last Used Time**: Tracks recent usage time
-- **Visual Indicators**:
-  - 🔥 Hot (>= 10 times)
-  - ⭐ Frequent (>= 5 times)
-  - 📝 Normal (> 0 times)
-  - ⚪ Unused
-
-#### Other Features
-
-- **Pin Function**: Important prompts can be pinned to the top
-- **Sidebar Management**: Dedicated Activity Bar icon
-- **Workspace Isolation**: Each project has its own `.vscode/prompts.json`
-
-### 🎯 Design Philosophy
-
-- **Lightweight**: Minimize complexity, focus on core features
-- **Speed**: Keyboard-driven, lightning-fast operations
-- **State Management**: Smart tracking of usage states to identify golden prompts
-
-### 📋 Keyboard Shortcuts
-
-| Function | Windows/Linux | Mac |
-|----------|---------------|-----|
-| Search Prompt | `Alt+P` | `Opt+P` |
-| Add from Selection | `Alt+Shift+S` | `Opt+Shift+S` |
-
-### 🚀 Getting Started
-
-1. Install the extension
-2. Open any project folder in VSCode
-3. Press `Alt+P` to start using
-
-The extension will automatically create a default file at `.vscode/prompts.json`.
-
----
-
-**Enjoy efficient prompt management!** 🚀
+- **Quick search & copy** (`Alt+P`): Search prompts with smart filters (`@hot`, `@recent`, `@unused`); press Enter to copy directly to clipboard.
+- **Quick add** (`Alt+Shift+S`): Add from text selection with `Title::Content` syntax and auto-title generation.
+- **Virtual file system**: Each prompt is a virtual file (`quickprompt:/001.md`) with full VS Code editing (Ctrl+S to save, Undo/Redo, Auto Save).
+- **Smart tracking**: Usage count, last-used time, and visual indicators (🔥 Hot, ⭐ Frequent, 📝 Normal, ⚪ Unused).
+- **Pin function**: Important prompts pinned to the top.
+- **Workspace isolation**: Each project has its own `.vscode/prompts.json`.

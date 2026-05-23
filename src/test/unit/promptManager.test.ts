@@ -263,6 +263,8 @@ describe('PromptManager', () => {
             // Simulate external modification
             const promptsPath = path.join(tmpDir, '.vscode', 'prompts.json');
             fs.appendFileSync(promptsPath, ' ');
+            const future = new Date(Date.now() + 2000);
+            fs.utimesSync(promptsPath, future, future);
 
             expect(() =>
                 manager.savePrompts([p], version),

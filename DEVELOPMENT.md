@@ -18,8 +18,8 @@ This document provides a complete guide for setting up the development environme
 
 ```bash
 # Clone the project and enter the directory
-git clone https://github.com/winterdrive/QuickPrompt.git
-cd QuickPrompt
+git clone https://github.com/winterdrive/vscode-quick-prompt.git
+cd vscode-quick-prompt
 
 # Install dependencies
 npm install
@@ -359,9 +359,9 @@ interface Prompt {
 
 ### Virtual File System
 
-Quick Prompt uses a custom file system provider (`prompt-sniper://`) to allow editing prompts in the native VSCode editor:
+Quick Prompt uses a custom file system provider (`quickprompt:`) to allow editing prompts in the native VSCode editor:
 
-* **URI Format**: `prompt-sniper://prompt/{id}.txt`
+* **URI Format**: `quickprompt:/{id}.md`
 * **Two-way Sync**: Changes in the editor automatically update `prompts.json`
 * **Native Experience**: Full VSCode editing features (syntax highlighting, undo/redo, etc.)
 

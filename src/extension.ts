@@ -145,7 +145,7 @@ export function deactivate() { }
 function initializeProviders(context: vscode.ExtensionContext, versionHistoryService: VersionHistoryService) {
     // 初始化 PromptProvider
     const promptProvider = new PromptProvider(context, versionHistoryService);
-    vscode.window.registerTreeDataProvider('promptSniperView', promptProvider);
+    vscode.window.registerTreeDataProvider('quickPromptView', promptProvider);
 
     // 初始化 ClipboardManager
     const clipboardManager = new ClipboardManager(context);
@@ -173,7 +173,7 @@ function initializeFileSystem(
     const fileSystemProvider = new PromptFileSystemProvider();
 
     context.subscriptions.push(
-        vscode.workspace.registerFileSystemProvider('prompt-sniper', fileSystemProvider, {
+        vscode.workspace.registerFileSystemProvider('quickprompt', fileSystemProvider, {
             isCaseSensitive: true,
             isReadonly: false
         })
@@ -225,7 +225,7 @@ function initializeHoverProvider(
 
     context.subscriptions.push(
         vscode.languages.registerHoverProvider(
-            { scheme: 'prompt-sniper', language: 'markdown' },
+            { scheme: 'quickprompt', language: 'markdown' },
             hoverProvider
         )
     );
@@ -255,7 +255,7 @@ function initializeStatusBar(
         vscode.StatusBarAlignment.Right,
         100
     );
-    clipboardStatusBar.command = 'promptSniper.search'; // 點擊狀態列開啟搜尋
+    clipboardStatusBar.command = 'quickPrompt.search'; // 點擊狀態列開啟搜尋
     clipboardStatusBar.text = '$(clippy)'; // 使用剪貼簿圖示
     context.subscriptions.push(clipboardStatusBar);
 

@@ -24,13 +24,13 @@ export class VersionItem extends vscode.TreeItem {
         // Click behavior
         if (isCurrent) {
             this.command = {
-                command: 'promptSniper.editPrompt',
+                command: 'quickPrompt.editPrompt',
                 title: 'Edit Prompt',
                 arguments: [this]
             };
         } else {
             this.command = {
-                command: 'promptSniper.showVersionDiff',
+                command: 'quickPrompt.showVersionDiff',
                 title: 'Compare with Current Version',
                 arguments: [this]
             };

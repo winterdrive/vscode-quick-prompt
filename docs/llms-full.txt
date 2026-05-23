@@ -3,20 +3,20 @@
 
 ---
 # README
-[Quick Prompt README](https://raw.githubusercontent.com/winterdrive/QuickPrompt/master/README.md)
+[Quick Prompt README](https://raw.githubusercontent.com/winterdrive/vscode-quick-prompt/master/README.md)
 
 # Quick Prompt – Capture Ideas & Queue Tasks While AI Works
 
 [![Visual Studio Marketplace Version](https://vsmarketplacebadges.dev/version-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
-[![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
-[![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt)
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
-[![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/QuickPrompt/llms.txt)
+[![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+<!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
+<!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
 [繁體中文](./README.zh-TW.md) | [English](./README.md)
 
-![Quick Prompt - VS Code AI Prompt Manager & Clipboard History Interface](docs/assets/hero_banner.png)
+![Quick Prompt - The in-IDE Scratch Pad for AI Agent Workflows](docs/assets/hero_banner.png)
 
 ---
 
@@ -28,7 +28,7 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 
 ---
 
-![Feature Highlights](docs/assets/feature_highlights_v0003.png)
+![Feature Highlights](docs/assets/feature_highlights.png)
 
 ---
 
@@ -85,17 +85,17 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ## 📸 Screenshots (AI Generated)
 
+### Interface Overview
+
+![Interface Overview](docs/assets/bottom_panel_overview.png)
+
+*The authentic unified view: Clipboard History (left) and Prompts with linear history (right)*
+
 ### Quick Search in Action
 
 ![Quick Search Demo](docs/assets/quick_search_demo.png)
 
-*Unified search interface for both prompts and clipboard history*
-
-### Sidebar Management
-
-![Sidebar View](docs/assets/sidebar_view.png)
-
-*Organized view with prompts and clipboard history*
+*Unified search interface for both capture queue and clipboard history*
 
 ## 🚀 Quick Start
 
@@ -269,6 +269,26 @@ Open VSCode Settings and search for "Quick Prompt":
 |--------------------|---------------|---------------|
 | Search Prompt      | `Alt+P`       | `Opt+P`       |
 | Add from Selection | `Alt+Shift+S` | `Opt+Shift+S` |
+
+### Command IDs for Automation
+
+Quick Prompt v0.5.1 standardizes extension command IDs under the `quickPrompt.*` namespace. The visible Command Palette names and default keyboard shortcuts stay the same, but custom `keybindings.json`, macro extensions, tasks, or external automation should call the command IDs below.
+
+| Action | Command ID |
+|--------|------------|
+| Search prompts and clipboard history | `quickPrompt.search` |
+| Add prompt | `quickPrompt.addPrompt` |
+| Add prompt with custom title | `quickPrompt.addPromptWithTitle` |
+| Quick add selected text | `quickPrompt.silentAdd` |
+| Edit prompt | `quickPrompt.editPrompt` |
+| Rename prompt | `quickPrompt.renamePrompt` |
+| Delete prompt | `quickPrompt.deletePrompt` |
+| Toggle pin | `quickPrompt.togglePin` |
+| Show MCP config | `quickPrompt.showMcpConfig` |
+| Generate skill file | `quickPrompt.generateSkill` |
+| Test AI connection | `quickPrompt.testAIConnection` |
+
+Virtual prompt editor tabs now use the `quickprompt:` URI scheme. Existing prompt data and settings are unchanged, but previously restored editor tabs or external links using the old virtual URI scheme may need to be reopened from the Quick Prompt sidebar.
 
 ## 💡 Best Practices
 
