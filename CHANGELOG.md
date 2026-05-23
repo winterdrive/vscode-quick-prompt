@@ -16,6 +16,7 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 
 ## [0.5.1] - 2026-05-23
 
+
 ### Command Naming Cleanup
 
 - Standardized contributed command IDs, keybindings, menus, tree item actions, and status bar command wiring under `quickPrompt.*`.
