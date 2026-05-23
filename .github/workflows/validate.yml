@@ -1,0 +1,71 @@
+name: Validate Extension
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches-ignore:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate version bump
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+        run: |
+          git fetch origin "${{ github.base_ref }}"
+          changed_files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          release_files=$(echo "$changed_files" | grep -E '^(src/|mcp-server/src/|package\.nls.*\.json|README\.md|CHANGELOG\.md|docs/README|docs/assets/|\.vscodeignore)' || true)
+          if [ -z "$release_files" ]; then
+            echo "No release-relevant files changed; version bump is not required."
+            exit 0
+          fi
+
+          base_version=$(git show "origin/${{ github.base_ref }}:package.json" | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")
+          head_version=$(node -p "require('./package.json').version")
+          if [ "$base_version" = "$head_version" ]; then
+            echo "Release-relevant files changed, but package.json version is still $head_version."
+            echo "Changed release-relevant files:"
+            echo "$release_files"
+            echo "Please bump package.json and package-lock.json before merging."
+            exit 1
+          fi
+
+      - name: Type check
+        run: tsc -p ./
+
+      - name: Run unit and property tests with coverage
+        run: npm run test:coverage
+
+      - name: Package extension
+        run: npx @vscode/vsce package --out quick-prompt.vsix
+
+      - name: Validate Open VSX manifest compatibility
+        run: |
+          manifest_display_name=$(unzip -p quick-prompt.vsix extension.vsixmanifest | sed -n 's/.*<DisplayName>\(.*\)<\/DisplayName>.*/\1/p' | sed 's/\&amp;/\&/g')
+          package_display_name=$(node -p "require('./package.json').displayName")
+          if [ "$manifest_display_name" != "$package_display_name" ]; then
+            echo "Display name mismatch: extension.vsixmanifest has '$manifest_display_name', package.json has '$package_display_name'."
+            exit 1
+          fi
