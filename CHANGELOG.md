@@ -2,6 +2,18 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.5.2] - 2026-05-24
+
+### 🧠 Agent Skill (npx skills add)
+
+- Added `skills/quickprompt/SKILL.md` as SSOT for `npx skills add winterdrive/QuickPrompt`
+- Refactored `SkillGenerator.ts`: button-generated skill now reads from bundled `SKILL.md` instead of hardcoded inline template, keeping it always in sync
+
+### 🔧 Internal
+
+- Added `build:skills` script to copy SKILL.md and `qp.bundle.js` into `dist/skills/quickprompt/`
+- `vscode:prepublish` now runs `build:skills` automatically
+
 ## [0.5.1] - 2026-05-23
 
 ### Command Naming Cleanup
