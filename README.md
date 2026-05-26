@@ -56,6 +56,11 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
 - **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
+- **🧠 Agent Skill**: Install the canonical skill directly:
+
+  ```bash
+  npx skills add winterdrive/QuickPrompt
+  ```
 
 ### 📚 Prompt Management
 

@@ -56,6 +56,11 @@
 - **🛡️ 行動決策樹**：確保 Agent 只在連線安全且邏輯通順時執行變更。
 - **📦 CLI 後備腳本**：斷線時的終極保險，內置於 generated skill 資料夾內。
 - **⚙️ 互動式設定面板**：輕鬆完成各類 AI 工具的環境配置。
+- **🧠 Agent Skill**：直接安裝正式 skill：
+
+  ```bash
+  npx skills add winterdrive/QuickPrompt
+  ```
 
 ### 📚 提示詞管理 (Prompt Management)
 

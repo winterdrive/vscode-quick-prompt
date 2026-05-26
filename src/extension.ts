@@ -113,7 +113,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register all commands (pass aiEngine and title services)
     registerPromptCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine);
-    registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService, maskingEngine);
+    registerClipboardCommands(context, promptProvider, clipboardManager, fileSystemProvider, aiEngine, titleGenService, maskingEngine, clipboardProvider);
     registerVersionCommands(context, promptProvider, versionHistoryService);
 
     // Register MCP commands

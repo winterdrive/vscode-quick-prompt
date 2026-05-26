@@ -84,5 +84,7 @@
     "tooltip.changeType.create": "Create",
     "tooltip.changeType.edit": "Edit",
     "tooltip.changeType.restore": "Restore",
-    "tooltip.preview": "**Content Preview:**"
+    "tooltip.preview": "**Content Preview:**",
+    "message.clipboardRefreshed": "🔄 Clipboard history refreshed",
+    "message.clipboardRefreshFailed": "❌ Failed to read clipboard: {0}"
 }

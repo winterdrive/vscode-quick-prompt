@@ -56,6 +56,11 @@
 - **🛡️ 액션 의사결정 트리**: 에이전트가 연결되고 안전한 경우에만 작동.
 - **📦 CLI 폴백 번들**: 오프라인 시나리오를 위한 내장 보험.
 - **⚙️ 인터랙티브 설정 패널**: Cursor, Copilot, Cline, Claude 등 주요 도구의 쉬운 설정.
+- **🧠 Agent Skill**: 공식 skill 직접 설치:
+
+  ```bash
+  npx skills add winterdrive/QuickPrompt
+  ```
 
 ### 📚 프롬프트 관리
 

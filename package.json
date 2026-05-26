@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -323,6 +323,11 @@
                 "icon": "$(clear-all)"
             },
             {
+                "command": "quickPrompt.refreshClipboard",
+                "title": "%command.refreshClipboard.title%",
+                "icon": "$(refresh)"
+            },
+            {
                 "command": "quickPrompt.moveUp",
                 "title": "%command.moveUp.title%",
                 "icon": "$(arrow-up)"
@@ -450,6 +455,11 @@
                     "command": "quickPrompt.refresh",
                     "when": "view == quickPromptView",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "quickPrompt.refreshClipboard",
+                    "when": "view == clipboardHistoryView",
+                    "group": "navigation@0"
                 },
                 {
                     "command": "quickPrompt.clearClipboardHistory",

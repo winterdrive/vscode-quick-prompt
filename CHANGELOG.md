@@ -2,6 +2,12 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.5.3] - 2026-05-27
+
+### 📋 Clipboard History
+
+- Added a manual "Refresh" button to the Clipboard History panel to force re-fetch the system clipboard content, resolving potential latency or display delays.
+
 ## [0.5.2] - 2026-05-24
 
 ### 🧠 Agent Skill (npx skills add)
