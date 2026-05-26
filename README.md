@@ -263,6 +263,26 @@ Open VSCode Settings and search for "Quick Prompt":
 | Search Prompt      | `Alt+P`       | `Opt+P`       |
 | Add from Selection | `Alt+Shift+S` | `Opt+Shift+S` |
 
+### Command IDs for Automation
+
+Quick Prompt v0.5.1 standardizes extension command IDs under the `quickPrompt.*` namespace. The visible Command Palette names and default keyboard shortcuts stay the same, but custom `keybindings.json`, macro extensions, tasks, or external automation should call the command IDs below.
+
+| Action | Command ID |
+|--------|------------|
+| Search prompts and clipboard history | `quickPrompt.search` |
+| Add prompt | `quickPrompt.addPrompt` |
+| Add prompt with custom title | `quickPrompt.addPromptWithTitle` |
+| Quick add selected text | `quickPrompt.silentAdd` |
+| Edit prompt | `quickPrompt.editPrompt` |
+| Rename prompt | `quickPrompt.renamePrompt` |
+| Delete prompt | `quickPrompt.deletePrompt` |
+| Toggle pin | `quickPrompt.togglePin` |
+| Show MCP config | `quickPrompt.showMcpConfig` |
+| Generate skill file | `quickPrompt.generateSkill` |
+| Test AI connection | `quickPrompt.testAIConnection` |
+
+Virtual prompt editor tabs now use the `quickprompt:` URI scheme. Existing prompt data and settings are unchanged, but previously restored editor tabs or external links using the old virtual URI scheme may need to be reopened from the Quick Prompt sidebar.
+
 ## 💡 Best Practices
 
 1. **Queue while waiting**: When AI starts a long task, immediately open Quick Prompt and jot down what comes next — don't lose that thought

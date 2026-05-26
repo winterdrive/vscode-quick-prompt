@@ -224,6 +224,26 @@
 | 搜尋 Prompt | `Alt+P`       | `Opt+P`       |
 | 從選取新增     | `Alt+Shift+S` | `Opt+Shift+S` |
 
+### 給自動化使用的 Command ID
+
+Quick Prompt v0.5.1 將擴充功能命令統一到 `quickPrompt.*` namespace。Command Palette 顯示名稱與預設快捷鍵不變，但如果你有自訂 `keybindings.json`、macro extension、task，或外部 automation，請改用下列表格中的命令 ID。
+
+| 動作 | Command ID |
+|------|------------|
+| 搜尋 Prompt 與剪貼簿歷史 | `quickPrompt.search` |
+| 新增 Prompt | `quickPrompt.addPrompt` |
+| 以自訂標題新增 Prompt | `quickPrompt.addPromptWithTitle` |
+| 從選取文字快速新增 | `quickPrompt.silentAdd` |
+| 編輯 Prompt | `quickPrompt.editPrompt` |
+| 重新命名 Prompt | `quickPrompt.renamePrompt` |
+| 刪除 Prompt | `quickPrompt.deletePrompt` |
+| 釘選 / 取消釘選 | `quickPrompt.togglePin` |
+| 顯示 MCP 設定 | `quickPrompt.showMcpConfig` |
+| 產生 Skill 檔案 | `quickPrompt.generateSkill` |
+| 測試 AI 連線 | `quickPrompt.testAIConnection` |
+
+虛擬 Prompt 編輯器分頁現在使用 `quickprompt:` URI scheme。既有 Prompt 資料與設定不會被改動，但先前由 VS Code session restore 還原的舊虛擬編輯器分頁，或外部連到舊虛擬 URI 的連結，可能需要從 Quick Prompt 側邊欄重新開啟。
+
 ## 💡 最佳實踐
 
 1. **等待時排隊**：AI 開始跑長任務時，立刻打開 Quick Prompt，把接下來的想法記下來——別讓靈感溜走
