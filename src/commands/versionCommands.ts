@@ -72,8 +72,8 @@ export async function handleApplyVersion(
         // No confirmation needed for soft checkout as it is non-destructive until saved
 
         // Use the virtual file system URI
-        // Pattern: prompt-sniper:/<promptId>.md
-        const uri = vscode.Uri.parse(`prompt-sniper:/${item.promptId}.md`);
+        // Pattern: quickprompt:/<promptId>.md
+        const uri = vscode.Uri.parse(`quickprompt:/${item.promptId}.md`);
 
         // Open the document
         const document = await vscode.workspace.openTextDocument(uri);

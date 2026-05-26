@@ -37,7 +37,7 @@ export class PromptHoverProvider implements vscode.HoverProvider {
         token: vscode.CancellationToken
     ): vscode.ProviderResult<vscode.Hover> {
         // 檢查是否為虛擬檔案系統
-        if (document.uri.scheme !== 'prompt-sniper') {
+        if (document.uri.scheme !== 'quickprompt') {
             return null;
         }
 

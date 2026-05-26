@@ -479,7 +479,7 @@ export class PromptItem extends vscode.TreeItem {
 
         // 點擊 item 直接開啟編輯畫面
         this.command = {
-            command: 'promptSniper.editPrompt',
+            command: 'quickPrompt.editPrompt',
             title: 'Edit Prompt',
             arguments: [this]
         };

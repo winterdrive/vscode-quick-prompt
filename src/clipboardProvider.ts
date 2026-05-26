@@ -23,7 +23,7 @@ export class ClipboardTreeItem extends vscode.TreeItem {
 
         // 點擊時複製
         this.command = {
-            command: 'promptSniper.copyClipboardItem',
+            command: 'quickPrompt.copyClipboardItem',
             title: 'Copy',
             arguments: [this]
         };

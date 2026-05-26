@@ -2,18 +2,18 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/winterdrive/QuickPrompt"
+        "url": "https://github.com/winterdrive/vscode-quick-prompt"
     },
     "bugs": {
-        "url": "https://github.com/winterdrive/QuickPrompt/issues"
+        "url": "https://github.com/winterdrive/vscode-quick-prompt/issues"
     },
-    "homepage": "https://github.com/winterdrive/QuickPrompt#readme",
+    "homepage": "https://github.com/winterdrive/vscode-quick-prompt#readme",
     "categories": [
         "Other",
         "Snippets"
@@ -225,16 +225,16 @@
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "promptSniperContainer",
+                    "id": "quickPromptContainer",
                     "title": "%view.container.title%",
                     "icon": "docs/assets/quickprompt_icon_gray.svg"
                 }
             ]
         },
         "views": {
-            "promptSniperContainer": [
+            "quickPromptContainer": [
                 {
-                    "id": "promptSniperView",
+                    "id": "quickPromptView",
                     "name": "%view.prompts.name%",
                     "icon": "$(list-unordered)"
                 },
@@ -248,92 +248,92 @@
         },
         "commands": [
             {
-                "command": "promptSniper.search",
+                "command": "quickPrompt.search",
                 "title": "%command.search.title%",
                 "icon": "$(search)"
             },
             {
-                "command": "promptSniper.insert",
+                "command": "quickPrompt.insert",
                 "title": "%command.insert.title%",
                 "icon": "$(copy)"
             },
             {
-                "command": "promptSniper.addPrompt",
+                "command": "quickPrompt.addPrompt",
                 "title": "%command.addPrompt.title%",
                 "icon": "$(add)"
             },
             {
-                "command": "promptSniper.addPromptWithTitle",
+                "command": "quickPrompt.addPromptWithTitle",
                 "title": "%command.addPromptWithTitle.title%",
                 "icon": "$(add)"
             },
             {
-                "command": "promptSniper.silentAdd",
+                "command": "quickPrompt.silentAdd",
                 "title": "%command.silentAdd.title%",
                 "icon": "$(zap)"
             },
             {
-                "command": "promptSniper.deletePrompt",
+                "command": "quickPrompt.deletePrompt",
                 "title": "%command.deletePrompt.title%",
                 "icon": "$(trash)"
             },
             {
-                "command": "promptSniper.togglePin",
+                "command": "quickPrompt.togglePin",
                 "title": "%command.togglePin.title%",
                 "icon": "$(pin)"
             },
             {
-                "command": "promptSniper.refresh",
+                "command": "quickPrompt.refresh",
                 "title": "%command.refresh.title%",
                 "icon": "$(refresh)"
             },
             {
-                "command": "promptSniper.editPrompt",
+                "command": "quickPrompt.editPrompt",
                 "title": "%command.editPrompt.title%",
                 "icon": "$(edit)"
             },
             {
-                "command": "promptSniper.renamePrompt",
+                "command": "quickPrompt.renamePrompt",
                 "title": "%command.renamePrompt.title%",
                 "icon": "$(tag)"
             },
             {
-                "command": "promptSniper.copyClipboardItem",
+                "command": "quickPrompt.copyClipboardItem",
                 "title": "%command.copyClipboardItem.title%",
                 "icon": "$(copy)"
             },
             {
-                "command": "promptSniper.pinClipboardItem",
+                "command": "quickPrompt.pinClipboardItem",
                 "title": "%command.pinClipboardItem.title%",
                 "icon": "$(pin)"
             },
             {
-                "command": "promptSniper.viewClipboardItem",
+                "command": "quickPrompt.viewClipboardItem",
                 "title": "%command.viewClipboardItem.title%",
                 "icon": "$(open-preview)"
             },
             {
-                "command": "promptSniper.removeClipboardItem",
+                "command": "quickPrompt.removeClipboardItem",
                 "title": "%command.removeClipboardItem.title%",
                 "icon": "$(trash)"
             },
             {
-                "command": "promptSniper.clearClipboardHistory",
+                "command": "quickPrompt.clearClipboardHistory",
                 "title": "%command.clearClipboardHistory.title%",
                 "icon": "$(clear-all)"
             },
             {
-                "command": "promptSniper.moveUp",
+                "command": "quickPrompt.moveUp",
                 "title": "%command.moveUp.title%",
                 "icon": "$(arrow-up)"
             },
             {
-                "command": "promptSniper.moveDown",
+                "command": "quickPrompt.moveDown",
                 "title": "%command.moveDown.title%",
                 "icon": "$(arrow-down)"
             },
             {
-                "command": "promptSniper.clearModelCache",
+                "command": "quickPrompt.clearModelCache",
                 "title": "%command.clearModelCache.title%",
                 "category": "Quick Prompt",
                 "icon": "$(trash)"
@@ -345,37 +345,37 @@
                 "icon": "$(plug)"
             },
             {
-                "command": "promptSniper.showVersionDiff",
+                "command": "quickPrompt.showVersionDiff",
                 "title": "%command.showVersionDiff.title%",
                 "icon": "$(diff)"
             },
             {
-                "command": "promptSniper.applyVersion",
+                "command": "quickPrompt.applyVersion",
                 "title": "%command.applyVersion.title%",
                 "icon": "$(history)"
             },
             {
-                "command": "promptSniper.tagMilestone",
+                "command": "quickPrompt.tagMilestone",
                 "title": "%command.tagMilestone.title%",
                 "icon": "$(tag)"
             },
             {
-                "command": "promptSniper.renameMilestone",
+                "command": "quickPrompt.renameMilestone",
                 "title": "%command.renameMilestone.title%",
                 "icon": "$(edit)"
             },
             {
-                "command": "promptSniper.removeMilestone",
+                "command": "quickPrompt.removeMilestone",
                 "title": "%command.removeMilestone.title%",
                 "icon": "$(close)"
             },
             {
-                "command": "promptSniper.deleteVersion",
+                "command": "quickPrompt.deleteVersion",
                 "title": "%command.deleteVersion.title%",
                 "icon": "$(trash)"
             },
             {
-                "command": "promptSniper.copyVersionContent",
+                "command": "quickPrompt.copyVersionContent",
                 "title": "%command.copyVersionContent.title%",
                 "icon": "$(copy)"
             },
@@ -392,34 +392,34 @@
                 "icon": "$(file-code)"
             },
             {
-                "command": "promptSniper.maskPrompt",
+                "command": "quickPrompt.maskPrompt",
                 "title": "Mask Prompt",
                 "icon": "$(shield)"
             },
             {
-                "command": "promptSniper.unmaskPrompt",
+                "command": "quickPrompt.unmaskPrompt",
                 "title": "Unmask Prompt",
                 "icon": "$(unlock)"
             },
             {
-                "command": "promptSniper.ignorePromptWarning",
+                "command": "quickPrompt.ignorePromptWarning",
                 "title": "Ignore Privacy Warning",
                 "icon": "$(close)"
             },
             {
-                "command": "promptSniper.restorePromptWarning",
+                "command": "quickPrompt.restorePromptWarning",
                 "title": "Restore Privacy Warning",
                 "icon": "$(eye)"
             }
         ],
         "keybindings": [
             {
-                "command": "promptSniper.search",
+                "command": "quickPrompt.search",
                 "key": "alt+p",
                 "mac": "opt+p"
             },
             {
-                "command": "promptSniper.silentAdd",
+                "command": "quickPrompt.silentAdd",
                 "key": "alt+shift+s",
                 "mac": "opt+shift+s"
             }
@@ -427,163 +427,163 @@
         "menus": {
             "view/title": [
                 {
-                    "command": "promptSniper.search",
-                    "when": "view == promptSniperView",
+                    "command": "quickPrompt.search",
+                    "when": "view == quickPromptView",
                     "group": "navigation@0"
                 },
                 {
-                    "command": "promptSniper.addPrompt",
-                    "when": "view == promptSniperView",
+                    "command": "quickPrompt.addPrompt",
+                    "when": "view == quickPromptView",
                     "group": "navigation@1"
                 },
                 {
                     "command": "quickPrompt.showMcpConfig",
-                    "when": "view == promptSniperView",
+                    "when": "view == quickPromptView",
                     "group": "navigation@2"
                 },
                 {
                     "command": "quickPrompt.generateSkill",
-                    "when": "view == promptSniperView",
+                    "when": "view == quickPromptView",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "promptSniper.refresh",
-                    "when": "view == promptSniperView",
+                    "command": "quickPrompt.refresh",
+                    "when": "view == quickPromptView",
                     "group": "navigation@4"
                 },
                 {
-                    "command": "promptSniper.clearClipboardHistory",
+                    "command": "quickPrompt.clearClipboardHistory",
                     "when": "view == clipboardHistoryView",
                     "group": "navigation@1"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "promptSniper.insert",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.insert",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "promptSniper.togglePin",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.togglePin",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "inline@2"
                 },
                 {
-                    "command": "promptSniper.deletePrompt",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.deletePrompt",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "inline@3"
                 },
                 {
-                    "command": "promptSniper.renamePrompt",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.renamePrompt",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "1_actions@1"
                 },
                 {
-                    "command": "promptSniper.moveUp",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.moveUp",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "navigation@1"
                 },
                 {
-                    "command": "promptSniper.moveDown",
-                    "when": "view == promptSniperView && viewItem =~ /^promptItem/",
+                    "command": "quickPrompt.moveDown",
+                    "when": "view == quickPromptView && viewItem =~ /^promptItem/",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "promptSniper.copyClipboardItem",
+                    "command": "quickPrompt.copyClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
                     "group": "inline@1"
                 },
                 {
-                    "command": "promptSniper.pinClipboardItem",
+                    "command": "quickPrompt.pinClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
                     "group": "inline@2"
                 },
                 {
-                    "command": "promptSniper.removeClipboardItem",
+                    "command": "quickPrompt.removeClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
                     "group": "inline@3"
                 },
                 {
-                    "command": "promptSniper.viewClipboardItem",
+                    "command": "quickPrompt.viewClipboardItem",
                     "when": "view == clipboardHistoryView && viewItem == clipboardItem",
                     "group": "1_actions@1"
                 },
                 {
-                    "command": "promptSniper.tagMilestone",
-                    "when": "view == promptSniperView && viewItem == versionItem:current",
+                    "command": "quickPrompt.tagMilestone",
+                    "when": "view == quickPromptView && viewItem == versionItem:current",
                     "group": "inline@1"
                 },
                 {
-                    "command": "promptSniper.renameMilestone",
-                    "when": "view == promptSniperView && viewItem == versionItem:milestone",
+                    "command": "quickPrompt.renameMilestone",
+                    "when": "view == quickPromptView && viewItem == versionItem:milestone",
                     "group": "inline@2"
                 },
                 {
-                    "command": "promptSniper.copyVersionContent",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(current|history|milestone)/",
+                    "command": "quickPrompt.copyVersionContent",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(current|history|milestone)/",
                     "group": "inline@3"
                 },
                 {
-                    "command": "promptSniper.applyVersion",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(history|milestone)/",
+                    "command": "quickPrompt.applyVersion",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(history|milestone)/",
                     "group": "1_actions@1"
                 },
                 {
-                    "command": "promptSniper.tagMilestone",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(history|current)/",
+                    "command": "quickPrompt.tagMilestone",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(history|current)/",
                     "group": "1_actions@2"
                 },
                 {
-                    "command": "promptSniper.renameMilestone",
-                    "when": "view == promptSniperView && viewItem == versionItem:milestone",
+                    "command": "quickPrompt.renameMilestone",
+                    "when": "view == quickPromptView && viewItem == versionItem:milestone",
                     "group": "1_actions@2"
                 },
                 {
-                    "command": "promptSniper.copyVersionContent",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(current|history|milestone)/",
+                    "command": "quickPrompt.copyVersionContent",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(current|history|milestone)/",
                     "group": "1_actions@3"
                 },
                 {
-                    "command": "promptSniper.showVersionDiff",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(history|milestone)/",
+                    "command": "quickPrompt.showVersionDiff",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(history|milestone)/",
                     "group": "2_view@1"
                 },
                 {
-                    "command": "promptSniper.removeMilestone",
-                    "when": "view == promptSniperView && viewItem == versionItem:milestone",
+                    "command": "quickPrompt.removeMilestone",
+                    "when": "view == quickPromptView && viewItem == versionItem:milestone",
                     "group": "2_view@2"
                 },
                 {
-                    "command": "promptSniper.deleteVersion",
-                    "when": "view == promptSniperView && viewItem =~ /versionItem:(history|milestone)/",
+                    "command": "quickPrompt.deleteVersion",
+                    "when": "view == quickPromptView && viewItem =~ /versionItem:(history|milestone)/",
                     "group": "9_danger@1"
                 },
                 {
-                    "command": "promptSniper.maskPrompt",
-                    "when": "view == promptSniperView && viewItem == promptItem_maskable",
+                    "command": "quickPrompt.maskPrompt",
+                    "when": "view == quickPromptView && viewItem == promptItem_maskable",
                     "group": "3_privacy@1"
                 },
                 {
-                    "command": "promptSniper.ignorePromptWarning",
-                    "when": "view == promptSniperView && viewItem == promptItem_maskable",
+                    "command": "quickPrompt.ignorePromptWarning",
+                    "when": "view == quickPromptView && viewItem == promptItem_maskable",
                     "group": "3_privacy@2"
                 },
                 {
-                    "command": "promptSniper.restorePromptWarning",
-                    "when": "view == promptSniperView && viewItem == promptItem_ignored",
+                    "command": "quickPrompt.restorePromptWarning",
+                    "when": "view == quickPromptView && viewItem == promptItem_ignored",
                     "group": "3_privacy@2"
                 },
                 {
-                    "command": "promptSniper.unmaskPrompt",
-                    "when": "view == promptSniperView && viewItem == promptItem_protected",
+                    "command": "quickPrompt.unmaskPrompt",
+                    "when": "view == quickPromptView && viewItem == promptItem_protected",
                     "group": "3_privacy@1"
                 }
             ],
             "editor/context": [
                 {
-                    "command": "promptSniper.silentAdd",
+                    "command": "quickPrompt.silentAdd",
                     "when": "editorHasSelection",
-                    "group": "promptSniper@1"
+                    "group": "quickPrompt@1"
                 }
             ]
         }

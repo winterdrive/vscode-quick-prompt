@@ -3,7 +3,7 @@ import { Prompt } from './promptProvider';
 
 /**
  * 虛擬檔案系統提供者
- * 將每個 Prompt 映射為一個虛擬檔案 (prompt-sniper:/xxx.md)
+ * 將每個 Prompt 映射為一個虛擬檔案 (quickprompt:/xxx.md)
  * 讓使用者可以像編輯真實檔案一樣編輯 Prompt
  */
 export class PromptFileSystemProvider implements vscode.FileSystemProvider {
@@ -51,7 +51,7 @@ export class PromptFileSystemProvider implements vscode.FileSystemProvider {
      * 根據 Prompt ID 生成虛擬 URI
      */
     getUriForPrompt(promptId: string): vscode.Uri {
-        return vscode.Uri.parse(`prompt-sniper:/${promptId}.md`);
+        return vscode.Uri.parse(`quickprompt:/${promptId}.md`);
     }
 
     /**
