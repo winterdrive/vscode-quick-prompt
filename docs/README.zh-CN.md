@@ -9,7 +9,7 @@
 
 [繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
 
-![Quick Prompt - AI 协作时的 IDE 内建便签纸与任务排队接口](./assets/hero_banner.png)
+![Quick Prompt - AI 协作时的 IDE 内建便签纸与任务排队界面](./assets/hero_banner.png)
 
 ---
 
@@ -17,7 +17,7 @@
 
 **AI Agent 在执行任务的时候，你的大脑不会停下来。** Quick Prompt 是你的 **IDE 内建便签纸** — 随手记下下一步任务、暂存可重用代码、追踪剪贴板历史 — 不用切换到 Notepad++，不打断你的思维流。
 
-它结合了**持久化代码库**与**剪贴板历史追踪**，让你*在 AI 工作时*产生的想法，在它完成的那一刻就能立即派上用场。
+它结合了**持久化片段库**与**剪贴板历史追踪**，让你*在 AI 工作时*产生的想法，在它完成的那一刻就能立即派上用场。
 
 ---
 
@@ -33,14 +33,14 @@
 
 每一个生成的 Skill 都内置了防呆与安全逻辑，确保 AI 在执行时稳定可靠：
 
-1. **Layer 0: 连线闸门 (Connection Gate)** — 自动通过 `list_prompts` 测试连线。若 MCP 断线，Agent 会立即触发 HALT 刹车并询问用户是否降级处理。
+1. **Layer 0: 连接网关 (Connection Gate)** — 自动通过 `list_prompts` 测试连接。若 MCP 断开连接，Agent 会立即触发 HALT 刹车并询问用户是否降级处理。
 2. **Layer 1: 标准 MCP 工具** — 提供 14 个优化过的工具，涵盖 Prompt 的增删改查与版本历史。
 3. **Layer 2: 安全验证** — 在执行敏感操作前进行二次逻辑检查，确保数据一致性。
 4. **Layer 3: CLI 硬核后备 (Hard Fallback)** — 当 MCP server 无法使用时，Agent 可切换调用内置的 `qp.bundle.js` 脚本直接操作数据库。
 
 ### ⚙️ 多客户端一键设置
 
-针对主流 AI 工具提供一键生成设置。执行指令：`Quick Prompt: Show MCP Config` 即可打开交互式面板。
+针对主流 AI 工具提供一键生成设置。执行命令：`Quick Prompt: Show MCP Config` 即可打开交互式面板。
 
 | Cursor / Antigravity | GitHub Copilot / Cline | Kiro IDE / Claude Code |
 | :------------------- | :--------------------- | :--------------------- |
@@ -52,29 +52,29 @@
 
 ### 🔌 AI Agent 强大武装 (新功能!)
 
-- **🔌 14 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
-- **🛡️ 行动决策树**：确保 Agent 只在连线安全且逻辑通顺时执行变更。
+- **🔌 21 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
+- **🛡️ 行动决策树**：确保 Agent 只在连接安全且逻辑通顺时执行变更。
 - **📦 CLI 后备脚本**：断线时的终极保险，内置于 generated skill 文件夹内。
 - **⚙️ 交互式设置面板**：轻松完成各类 AI 工具的环境配置。
 
 ### 📚 提示词管理 (Prompt Management)
 
-- **🤖 AI 智慧标题**：使用本地 AI 模型（SmolLM2 / Qwen3，可自选）自动生成语义化标题。
+- **🤖 AI 智能标题**：使用本地 AI 模型（SmolLM2 / Qwen3，可自选）自动生成语义化标题。
 - **🎯 极速搜索**：按 `Alt+P` 搜索 Prompt，按 Enter 直接复制。
-- **🚀 快速新增**：选取文字按 `Alt+Shift+S` 立即新增。
+- **🚀 快速添加**：选中文本按 `Alt+Shift+S` 立即新建。
 - **✏️ 原生编辑**：像编辑一般文件一样编辑 Prompt，完整支持 VSCode 功能。
 
 ### 🕒 版本控制 (Version Control)
 
 - **🕒 线性历史**：每次保存自动创建新版本。
 - **📌 里程碑**：标记稳定版本或重要草稿。
-- **⚖️ 差异比对**：视觉化查看修改内容。
+- **⚖️ 差异对比**：可视化查看修改内容。
 
 ### 🔒 隐私保护 (Privacy Protection)
 
-- **🔒 遮罩 Prompt**：右键点击任一 Prompt → `Mask Prompt`，敏感数据立即替换为 Token（`[EMAIL-1]`、`[API-KEY-1]`…）。
-- **🔓 解除遮罩**：右键 → `Unmask Prompt` 即时还原原始内容。
-- **🔑 OS 加密储存**：还原对照表存入 VS Code SecretStorage（OS Keychain），以系统加密形式持久保存，不以明文写入任何文件。
+- **🔒 提示词脱敏 (Mask Prompt)**：右键点击任一 Prompt → `Mask Prompt`，敏感数据立即替换为 Token（`[EMAIL-1]`、`[API-KEY-1]`…）。
+- **🔓 解除脱敏 (Unmask Prompt)**：右键 → `Unmask Prompt` 即时还原原始内容。
+- **🔑 OS 加密存储**：还原对照表存入 VS Code SecretStorage（OS Keychain），以系统加密形式持久保存，不以明文写入任何文件。
 
 ## 📸 操作截图 (AI 生成)
 
@@ -165,9 +165,9 @@
 3. **还原**：右键点击版本并选择 **套用版本** 来还原。
 4. **里程碑**：将重要版本标记为里程碑（如 "v1.0 正式版"）。
 
-## 🔒 隐私保护 – 使用指南
+## 🔒 隐私保护 - 使用指南
 
-在内容送往任何 AI 模型前，先遮罩敏感数据。
+在内容送往任何 AI 模型前，先进行脱敏处理。
 
 ### 操作流程
 
@@ -177,14 +177,14 @@
 4. 复制或插入 Prompt — Agent 只会收到 Token，永远看不到原始值
 5. 右键 → **`Unmask Prompt`** 即时还原
 
-> **安全模型**：还原对照表（Token → 原始值）存入 VS Code **SecretStorage**（macOS Keychain / Windows Credential Manager），永远不写入 `prompts.json` 或任何磁盘文件。Unmask 仅限本机，切换电脑后无法还原已遮罩的 Prompt。
+> **安全模型**：还原对照表（Token → 原始值）存入 VS Code **SecretStorage**（macOS Keychain / Windows Credential Manager），永远不写入 `prompts.json` 或任何磁盘文件。Unmask 仅限本机，切换电脑后无法还原脱敏后的 Prompt。
 
 ### 预设侦测规则
 
-- Email 地址 → `[EMAIL-1]`
+- 邮箱地址 → `[EMAIL-1]`
 - 电话号码 → `[PHONE-1]`
 - API 密钥（AWS、GitHub、OpenAI 等）→ `[API-KEY-1]`
-- IP 位址 → `[IP-ADDRESS-1]`
+- IP 地址 → `[IP-ADDRESS-1]`
 - 私钥 / 证书 → `[PRIVATE-KEY-1]`
 - 信用卡号 → `[CREDIT-CARD-1]` *(预设关闭)*
 
@@ -194,7 +194,7 @@
 - `quickPrompt.privacy.patterns.email`：遮罩 Email（预设：`true`）
 - `quickPrompt.privacy.patterns.phone`：遮罩电话（预设：`true`）
 - `quickPrompt.privacy.patterns.apiKeys`：遮罩 API 密钥（预设：`true`）
-- `quickPrompt.privacy.patterns.ipAddress`：遮罩 IP 位址（预设：`true`）
+- `quickPrompt.privacy.patterns.ipAddress`：遮罩 IP 地址（预设：`true`）
 - `quickPrompt.privacy.patterns.privateKey`：遮罩私钥（预设：`true`）
 - `quickPrompt.privacy.patterns.creditCard`：遮罩信用卡号（预设：`false`）
 
@@ -241,9 +241,9 @@ Quick Prompt v0.5.1 将扩展功能命令统一到 `quickPrompt.*` namespace。C
 | 钉选 / 取消钉选 | `quickPrompt.togglePin` |
 | 显示 MCP 设置 | `quickPrompt.showMcpConfig` |
 | 生成 Skill 文件 | `quickPrompt.generateSkill` |
-| 测试 AI 连线 | `quickPrompt.testAIConnection` |
+| 测试 AI 连接 | `quickPrompt.testAIConnection` |
 
-虚拟 Prompt 编辑器分页现在使用 `quickprompt:` URI scheme。既有 Prompt 数据与设置不会被改动，但先前由 VS Code session restore 还原的旧虚拟编辑器分页，或外部连到旧虚拟 URI 的链接，可能需要从 Quick Prompt 侧边栏重新打开。
+虚拟 Prompt 编辑器标签页现在使用 `quickprompt:` URI scheme。既有 Prompt 数据与设置不会被改动，但先前由 VS Code 会话恢复 (session restore) 还原的旧虚拟编辑器标签页，或外部连接到旧虚拟 URI 的链接，可能需要从 Quick Prompt 侧边栏重新打开。
 
 ## 💡 最佳实践
 
