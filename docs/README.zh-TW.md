@@ -7,9 +7,9 @@
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-繁體中文 | **[English](README.md)**
+[繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
 
-![Quick Prompt - AI 協作時的 IDE 內建便條紙與任務排隊介面](docs/assets/hero_banner.png)
+![Quick Prompt - AI 協作時的 IDE 內建便條紙與任務排隊介面](./assets/hero_banner.png)
 
 ---
 
@@ -21,7 +21,7 @@
 
 ---
 
-![功能亮點](docs/assets/feature_highlights.png)
+![功能亮點](./assets/feature_highlights.png)
 
 ---
 
@@ -80,13 +80,13 @@
 
 ### 介面總覽
 
-![介面總覽](docs/assets/bottom_panel_overview.png)
+![介面總覽](./assets/bottom_panel_overview.png)
 
 *真實的底部控制面板視圖：剪貼簿歷史（左）與支援線性歷史紀錄的 Prompt 列表（右）*
 
 ### 快速搜尋功能
 
-![快速搜尋](docs/assets/quick_search_demo.png)
+![快速搜尋](./assets/quick_search_demo.png)
 
 *整合式的 Quick Pick 介面，一鍵搜尋你的暫存區與剪貼簿歷史*
 
