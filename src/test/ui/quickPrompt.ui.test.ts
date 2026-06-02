@@ -301,6 +301,9 @@ describe('Quick Prompt - UI / E2E', function () {
         const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
         const driver = VSBrowser.instance.driver;
 
+        // Dismiss any "Save?" modal left over from previous tests
+        await dismissSaveDialog(driver);
+
         // Write unique content to a new editor and copy it to system clipboard
         await new EditorView().closeAllEditors();
         await driver.sleep(500);
@@ -404,6 +407,29 @@ async function dismissOnboardingOverlay(): Promise<void> {
 
 async function runCommandViaKeyboard(commandLabel: string): Promise<void> {
     await new Workbench().executeCommand(commandLabel);
+}
+
+async function dismissSaveDialog(driver: import('selenium-webdriver').WebDriver): Promise<void> {
+    try {
+        const modal = await driver.findElement(By.css('.monaco-dialog-modal-block'));
+        if (await modal.isDisplayed()) {
+            // Click "Don't Save" button
+            const buttons = await driver.findElements(By.css('.dialog-buttons-row .monaco-button'));
+            for (const btn of buttons) {
+                const text = (await btn.getText()).toLowerCase();
+                if (text.includes("don't save") || text.includes('revert') || text.includes('discard')) {
+                    await btn.click();
+                    await driver.sleep(300);
+                    return;
+                }
+            }
+            // Fallback: press Escape to dismiss
+            await driver.actions().sendKeys(Key.ESCAPE).perform();
+            await driver.sleep(300);
+        }
+    } catch {
+        // No modal present
+    }
 }
 
 async function retryCommand(commandLabel: string, retries = 3): Promise<void> {
@@ -543,7 +569,12 @@ async function resetKeyboardState(): Promise<void> {
 }
 
 function readPromptsFile(): PromptRecord[] {
-    return JSON.parse(fs.readFileSync(promptsPath, 'utf8')) as PromptRecord[];
+    try {
+        return JSON.parse(fs.readFileSync(promptsPath, 'utf8')) as PromptRecord[];
+    } catch {
+        // File may be mid-write; return empty so the poller retries
+        return [];
+    }
 }
 
 async function waitForPromptRecord(
