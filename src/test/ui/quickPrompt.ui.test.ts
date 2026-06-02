@@ -228,12 +228,10 @@ describe('Quick Prompt - UI / E2E', function () {
         const driver = VSBrowser.instance.driver;
 
         await runCommandViaKeyboard('Add Prompt (Custom Title)');
-        // CP and showInputBox share the same widget — wait for CP animation to finish
-        await driver.sleep(600);
+        await waitForQuickInputText('Set title for this prompt');
         await replaceQuickInputText(title);
         await acceptQuickInput();
-        // VS Code transitions the same widget to the content input without closing it
-        await driver.sleep(600);
+        await waitForQuickInputText('Enter Prompt content');
         await replaceQuickInputText(content);
         await acceptQuickInput();
 
@@ -284,7 +282,7 @@ describe('Quick Prompt - UI / E2E', function () {
     });
 
     it('Refresh Clipboard History command shows a toast notification', async function () {
-        await runCommandViaKeyboard('Refresh Clipboard History');
+        await retryCommand('Refresh Clipboard History');
 
         const driver = VSBrowser.instance.driver;
         await driver.wait(async () => {
@@ -482,20 +480,65 @@ async function waitForQuickInput(): Promise<WebElement> {
 async function replaceQuickInputText(text: string): Promise<void> {
     const driver = VSBrowser.instance.driver;
     const widget = await waitForQuickInput();
-    // Click the input element directly to guarantee focus before typing
-    try {
-        const inputEl = await widget.findElement(By.css('.input'));
-        await inputEl.click();
-    } catch { /* widget may not have an .input child in some states */ }
+    const inputEl = await getQuickInputField(widget);
     await resetKeyboardState();
-    await driver.actions()
-        .keyDown(Key.CONTROL)
-        .sendKeys('a')
-        .keyUp(Key.CONTROL)
-        .perform();
-    await driver.sleep(50);
-    await driver.actions().sendKeys(text).perform();
-    await resetKeyboardState();
+
+    await driver.executeScript(
+        `
+        const input = arguments[0];
+        const value = arguments[1];
+        input.focus();
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        setter.call(input, value);
+        input.dispatchEvent(new InputEvent('input', {
+            bubbles: true,
+            cancelable: true,
+            inputType: 'insertText',
+            data: value
+        }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        `,
+        inputEl,
+        text
+    );
+
+    await driver.wait(async () => {
+        try {
+            const currentInput = await getQuickInputField(await waitForQuickInput());
+            return (await currentInput.getAttribute('value')) === text;
+        } catch {
+            return false;
+        }
+    }, 5_000, `Quick input value was not replaced with "${text}"`);
+}
+
+async function getQuickInputField(widget: WebElement): Promise<WebElement> {
+    for (const selector of ['input.quick-input-box', 'input.input', 'input']) {
+        const fields = await widget.findElements(By.css(selector));
+        if (fields.length > 0) {
+            return fields[0];
+        }
+    }
+
+    throw new Error('Quick input field was not found');
+}
+
+async function waitForQuickInputText(expectedText: string): Promise<string> {
+    const driver = VSBrowser.instance.driver;
+
+    const matchedText = await driver.wait(async () => {
+        try {
+            const widget = await waitForQuickInput();
+            const text = (await widget.getText()).trim();
+            return text.toLowerCase().includes(expectedText.toLowerCase())
+                ? text
+                : false;
+        } catch {
+            return false;
+        }
+    }, 10_000, `Quick input text "${expectedText}" did not appear`);
+
+    return matchedText as string;
 }
 
 async function waitForQuickPickRow(expectedText: string): Promise<string> {
