@@ -271,10 +271,19 @@ describe('Quick Prompt - UI / E2E', function () {
 
     it('Refresh Clipboard History adds copied editor text to the history panel', async function () {
         const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
+        const driver = VSBrowser.instance.driver;
 
         // Write unique content to a new editor and copy it to system clipboard
         await new EditorView().closeAllEditors();
+        await driver.sleep(500);
         await new Workbench().executeCommand('File: New Text File');
+        await driver.sleep(1000);
+
+        // Click into the editor area to ensure focus before setText
+        const editorArea = await driver.findElement(By.css('.editor-container .monaco-editor .view-lines'));
+        await editorArea.click();
+        await driver.sleep(200);
+
         const editor = new TextEditor();
         await editor.setText(uniqueContent);
         await new Workbench().executeCommand('Select All');
