@@ -230,8 +230,13 @@ describe('Quick Prompt - UI / E2E', function () {
         await runCommandViaKeyboard('Add Prompt (Custom Title)');
         await replaceQuickInputText(title);
         await acceptQuickInput();
-        // Wait for the second input box to appear before typing content
-        await driver.sleep(800);
+        // Wait for the title input to close, then wait for the content input to appear
+        await driver.wait(async () => {
+            try {
+                const w = await driver.findElement(By.css('.quick-input-widget'));
+                return !(await w.isDisplayed());
+            } catch { return true; }
+        }, 5_000, 'Title input did not close');
         await replaceQuickInputText(content);
         await acceptQuickInput();
 
@@ -301,8 +306,9 @@ describe('Quick Prompt - UI / E2E', function () {
         const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
         const driver = VSBrowser.instance.driver;
 
-        // Dismiss any "Save?" modal left over from previous tests
-        await dismissSaveDialog(driver);
+        // Revert all unsaved changes to prevent "Save?" dialogs during closeAllEditors
+        try { await new Workbench().executeCommand('Revert All Files'); } catch { /* no files to revert */ }
+        await driver.sleep(300);
 
         // Write unique content to a new editor and copy it to system clipboard
         await new EditorView().closeAllEditors();
