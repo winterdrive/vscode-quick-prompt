@@ -225,10 +225,13 @@ describe('Quick Prompt - UI / E2E', function () {
     it('Add Prompt (Custom Title) creates a prompt from the two input boxes', async function () {
         const title = uniqueMarker('custom-title');
         const content = uniqueMarker('custom-content');
+        const driver = VSBrowser.instance.driver;
 
         await runCommandViaKeyboard('Add Prompt (Custom Title)');
         await replaceQuickInputText(title);
         await acceptQuickInput();
+        // Wait for the second input box to appear before typing content
+        await driver.sleep(800);
         await replaceQuickInputText(content);
         await acceptQuickInput();
 
@@ -241,9 +244,17 @@ describe('Quick Prompt - UI / E2E', function () {
 
     it('Quick Add Prompt (Selection) saves the active editor selection', async function () {
         const selectedText = uniqueMarker('selection-capture-content');
+        const driver = VSBrowser.instance.driver;
 
         await new EditorView().closeAllEditors();
+        await driver.sleep(500);
         await new Workbench().executeCommand('File: New Text File');
+        await driver.sleep(1000);
+
+        const editorArea = await driver.findElement(By.css('.editor-container .monaco-editor .view-lines'));
+        await editorArea.click();
+        await driver.sleep(200);
+
         const editor = new TextEditor();
         await editor.setText(selectedText);
         await new Workbench().executeCommand('Select All');
