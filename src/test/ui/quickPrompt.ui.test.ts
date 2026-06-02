@@ -105,8 +105,25 @@ describe('Quick Prompt - UI / E2E', function () {
         await VSBrowser.instance.openResources(workspaceRoot);
         await dismissOnboardingOverlay();
 
+        // Wait for the extension host to fully stabilize before interacting
+        const driver = VSBrowser.instance.driver;
+        await driver.wait(async () => {
+            try {
+                const wb = await driver.findElement(By.css('.monaco-workbench'));
+                return await wb.isDisplayed();
+            } catch { return false; }
+        }, 30_000, 'Monaco workbench did not appear');
+        await driver.sleep(2000);
+
         const activityBar = new ActivityBar();
-        const foundControl = await activityBar.getViewControl('Quick Prompt');
+        let foundControl: ViewControl | undefined;
+        for (let i = 0; i < 5; i++) {
+            try {
+                foundControl = await activityBar.getViewControl('Quick Prompt');
+                if (foundControl) { break; }
+            } catch { /* retry */ }
+            await driver.sleep(1500);
+        }
         expect(foundControl, 'Quick Prompt icon not found in Activity Bar').to.not.be.undefined;
         viewControl = foundControl!;
         await retryCommand('Refresh Prompts');
