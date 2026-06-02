@@ -307,16 +307,11 @@ describe('Quick Prompt - UI / E2E', function () {
         const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
         const driver = VSBrowser.instance.driver;
 
-        // Close any input/modal left open by previous tests
+        // Dismiss any leftover modal from previous tests
         await closeQuickInput();
         await driver.sleep(300);
-        // Revert all unsaved changes to prevent "Save?" dialogs during closeAllEditors
-        try { await new Workbench().executeCommand('Revert All Files'); } catch { /* no files to revert */ }
-        await driver.sleep(300);
 
-        // Write unique content to a new editor and copy it to system clipboard
-        await new EditorView().closeAllEditors();
-        await driver.sleep(500);
+        // Open a new editor on top of whatever is open — no closeAllEditors needed
         await new Workbench().executeCommand('File: New Text File');
         await driver.sleep(1000);
 
@@ -486,7 +481,12 @@ async function waitForQuickInput(): Promise<WebElement> {
 
 async function replaceQuickInputText(text: string): Promise<void> {
     const driver = VSBrowser.instance.driver;
-    await waitForQuickInput();
+    const widget = await waitForQuickInput();
+    // Click the input element directly to guarantee focus before typing
+    try {
+        const inputEl = await widget.findElement(By.css('.input'));
+        await inputEl.click();
+    } catch { /* widget may not have an .input child in some states */ }
     await resetKeyboardState();
     await driver.actions()
         .keyDown(Key.CONTROL)
