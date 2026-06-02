@@ -228,15 +228,12 @@ describe('Quick Prompt - UI / E2E', function () {
         const driver = VSBrowser.instance.driver;
 
         await runCommandViaKeyboard('Add Prompt (Custom Title)');
+        // CP and showInputBox share the same widget — wait for CP animation to finish
+        await driver.sleep(600);
         await replaceQuickInputText(title);
         await acceptQuickInput();
-        // Wait for the title input to close, then wait for the content input to appear
-        await driver.wait(async () => {
-            try {
-                const w = await driver.findElement(By.css('.quick-input-widget'));
-                return !(await w.isDisplayed());
-            } catch { return true; }
-        }, 5_000, 'Title input did not close');
+        // VS Code transitions the same widget to the content input without closing it
+        await driver.sleep(600);
         await replaceQuickInputText(content);
         await acceptQuickInput();
 
@@ -250,6 +247,10 @@ describe('Quick Prompt - UI / E2E', function () {
     it('Quick Add Prompt (Selection) saves the active editor selection', async function () {
         const selectedText = uniqueMarker('selection-capture-content');
         const driver = VSBrowser.instance.driver;
+
+        // Close any input/modal left open by previous test
+        await closeQuickInput();
+        await driver.sleep(300);
 
         await new EditorView().closeAllEditors();
         await driver.sleep(500);
@@ -306,6 +307,9 @@ describe('Quick Prompt - UI / E2E', function () {
         const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
         const driver = VSBrowser.instance.driver;
 
+        // Close any input/modal left open by previous tests
+        await closeQuickInput();
+        await driver.sleep(300);
         // Revert all unsaved changes to prevent "Save?" dialogs during closeAllEditors
         try { await new Workbench().executeCommand('Revert All Files'); } catch { /* no files to revert */ }
         await driver.sleep(300);
