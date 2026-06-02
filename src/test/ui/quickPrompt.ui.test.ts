@@ -109,7 +109,7 @@ describe('Quick Prompt - UI / E2E', function () {
         const foundControl = await activityBar.getViewControl('Quick Prompt');
         expect(foundControl, 'Quick Prompt icon not found in Activity Bar').to.not.be.undefined;
         viewControl = foundControl!;
-        await runCommandViaKeyboard('Refresh Prompts');
+        await retryCommand('Refresh Prompts');
     });
 
     after(async function () {
@@ -367,6 +367,19 @@ async function dismissOnboardingOverlay(): Promise<void> {
 
 async function runCommandViaKeyboard(commandLabel: string): Promise<void> {
     await new Workbench().executeCommand(commandLabel);
+}
+
+async function retryCommand(commandLabel: string, retries = 3): Promise<void> {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await closeQuickInput();
+            await runCommandViaKeyboard(commandLabel);
+            return;
+        } catch {
+            await VSBrowser.instance.driver.sleep(1500);
+        }
+    }
+    await runCommandViaKeyboard(commandLabel);
 }
 
 async function openCommandPalette(): Promise<void> {

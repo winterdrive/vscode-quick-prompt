@@ -609,8 +609,8 @@
         "test": "jest --runInBand",
         "test:coverage": "jest --runInBand --coverage",
         "test:watch": "jest --watch",
-        "test:ui:setup": "extest setup-tests -c 1.96.0",
-        "test:ui": "tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\" -c 1.96.0"
+        "test:ui:setup": "extest setup-tests",
+        "test:ui": "tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\""
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",
