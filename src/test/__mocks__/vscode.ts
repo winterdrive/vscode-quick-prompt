@@ -92,6 +92,8 @@ export const window = {
     showErrorMessage: jest.fn(),
     showInputBox: jest.fn(),
     showQuickPick: jest.fn(),
+    onDidChangeWindowState: jest.fn(() => ({ dispose: () => undefined })),
+    onDidChangeTextEditorSelection: jest.fn(() => ({ dispose: () => undefined })),
     createOutputChannel: jest.fn(() => ({
         appendLine: jest.fn(),
         append: jest.fn(),
