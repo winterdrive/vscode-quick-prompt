@@ -248,6 +248,45 @@ describe('Quick Prompt - UI / E2E', function () {
             return titles.some(title => title.includes('QuickPrompt MCP Config'));
         }, 10_000, 'MCP config editor did not open');
     });
+
+    it('Refresh Clipboard History command shows a toast notification', async function () {
+        await runCommandViaKeyboard('Refresh Clipboard History');
+
+        const driver = VSBrowser.instance.driver;
+        await driver.wait(async () => {
+            try {
+                const toasts = await driver.findElements(By.css('.notification-toast'));
+                for (const toast of toasts) {
+                    const text = (await toast.getText()).toLowerCase();
+                    if (text.includes('clipboard')) {
+                        return true;
+                    }
+                }
+            } catch {
+                // DOM may be re-rendering
+            }
+            return false;
+        }, 10_000, 'Clipboard refresh toast notification did not appear');
+    });
+
+    it('Refresh Clipboard History adds copied editor text to the history panel', async function () {
+        const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
+
+        // Write unique content to a new editor and copy it to system clipboard
+        await new EditorView().closeAllEditors();
+        await new Workbench().executeCommand('File: New Text File');
+        const editor = new TextEditor();
+        await editor.setText(uniqueContent);
+        await new Workbench().executeCommand('Select All');
+        await new Workbench().executeCommand('Copy');
+
+        // Trigger refresh so the extension picks up the new clipboard content
+        await runCommandViaKeyboard('Refresh Clipboard History');
+
+        // Verify the content appears in the Clipboard History panel
+        const rowText = await waitForWorkbenchText(uniqueContent.substring(0, 20));
+        expect(rowText).to.include(uniqueContent.substring(0, 20));
+    });
 });
 
 function backupWorkspaceData(): void {
