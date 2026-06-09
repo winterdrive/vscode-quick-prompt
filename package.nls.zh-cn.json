@@ -19,6 +19,7 @@
     "command.viewClipboardItem.title": "查看完整内容",
     "command.removeClipboardItem.title": "从历史移除",
     "command.clearClipboardHistory.title": "清空剪贴板历史",
+    "command.refreshClipboard.title": "刷新剪贴板",
     "command.moveUp.title": "上移",
     "command.moveDown.title": "下移",
     "command.clearModelCache.title": "清除 AI 模型缓存",

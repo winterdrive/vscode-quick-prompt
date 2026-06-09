@@ -84,5 +84,7 @@
     "tooltip.changeType.create": "建立",
     "tooltip.changeType.edit": "編輯",
     "tooltip.changeType.restore": "復原",
-    "tooltip.preview": "**內容預覽:**"
+    "tooltip.preview": "**內容預覽:**",
+    "message.clipboardRefreshed": "🔄 剪貼簿歷史已重新整理",
+    "message.clipboardRefreshFailed": "❌ 無法讀取剪貼簿: {0}"
 }

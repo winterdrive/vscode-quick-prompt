@@ -20,7 +20,7 @@ class ClipboardPreviewProvider implements vscode.TextDocumentContentProvider {
 }
 
 import { PromptProvider, PromptItem } from './promptProvider';
-import { ClipboardTreeItem } from './clipboardProvider';
+import { ClipboardProvider, ClipboardTreeItem } from './clipboardProvider';
 import { ClipboardManager } from './ClipboardManager';
 import { PromptFileSystemProvider } from './promptFileSystem';
 import { I18n } from './i18n';
@@ -212,7 +212,8 @@ export function registerClipboardCommands(
     fileSystemProvider: PromptFileSystemProvider,
     aiEngine: AIEngine,
     titleGenService: TitleGenerationService,
-    maskingEngine?: MaskingEngine
+    maskingEngine?: MaskingEngine,
+    clipboardProvider?: ClipboardProvider
 ): void {
     // 複製剪貼簿歷史項目
     context.subscriptions.push(
@@ -264,6 +265,30 @@ export function registerClipboardCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('quickPrompt.testAIConnection', async () => {
             await handleTestAIConnection(aiEngine);
+        })
+    );
+
+    // 重新整理剪貼簿歷史
+    context.subscriptions.push(
+        vscode.commands.registerCommand('quickPrompt.refreshClipboard', async () => {
+            try {
+                let isNew = false;
+                if (clipboardManager) {
+                    isNew = await clipboardManager.checkClipboard('external', true);
+                }
+                
+                if (clipboardProvider) {
+                    clipboardProvider.refresh();
+                }
+
+                vscode.window.showInformationMessage(
+                    I18n.getMessage('message.clipboardRefreshed')
+                );
+            } catch (error: any) {
+                vscode.window.showErrorMessage(
+                    I18n.getMessage('message.clipboardRefreshFailed', error?.message || String(error))
+                );
+            }
         })
     );
 }

@@ -169,20 +169,25 @@ export class ClipboardManager {
     /**
      * 檢查剪貼簿是否有新內容
      */
-    async checkClipboard(source: 'vscode' | 'external' = 'external') {
+    async checkClipboard(source: 'vscode' | 'external' = 'external', throwOnError: boolean = false): Promise<boolean> {
         if (!this.cfg.enabled || !this.historyLoaded) {
-            return;
+            return false;
         }
 
         try {
             const current = await vscode.env.clipboard.readText();
             if (this.shouldAddToHistory(current)) {
                 await this.addToHistory(current, source);
+                return true;
             }
         } catch (error) {
-            // 剪貼簿讀取失敗（可能是權限問題），靜默忽略
+            // 剪貼簿讀取失敗（可能是權限問題），靜默忽略或拋出
             console.error('Failed to read clipboard:', error);
+            if (throwOnError) {
+                throw error;
+            }
         }
+        return false;
     }
 
     /**

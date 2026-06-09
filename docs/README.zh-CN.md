@@ -56,6 +56,11 @@
 - **🛡️ 行动决策树**：确保 Agent 只在连接安全且逻辑通顺时执行变更。
 - **📦 CLI 后备脚本**：断线时的终极保险，内置于 generated skill 文件夹内。
 - **⚙️ 交互式设置面板**：轻松完成各类 AI 工具的环境配置。
+- **🧠 Agent Skill**：直接安装正式 skill：
+
+  ```bash
+  npx skills add winterdrive/QuickPrompt
+  ```
 
 ### 📚 提示词管理 (Prompt Management)
 

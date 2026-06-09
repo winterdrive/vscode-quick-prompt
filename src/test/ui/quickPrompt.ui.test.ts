@@ -105,11 +105,28 @@ describe('Quick Prompt - UI / E2E', function () {
         await VSBrowser.instance.openResources(workspaceRoot);
         await dismissOnboardingOverlay();
 
+        // Wait for the extension host to fully stabilize before interacting
+        const driver = VSBrowser.instance.driver;
+        await driver.wait(async () => {
+            try {
+                const wb = await driver.findElement(By.css('.monaco-workbench'));
+                return await wb.isDisplayed();
+            } catch { return false; }
+        }, 30_000, 'Monaco workbench did not appear');
+        await driver.sleep(2000);
+
         const activityBar = new ActivityBar();
-        const foundControl = await activityBar.getViewControl('Quick Prompt');
+        let foundControl: ViewControl | undefined;
+        for (let i = 0; i < 5; i++) {
+            try {
+                foundControl = await activityBar.getViewControl('Quick Prompt');
+                if (foundControl) { break; }
+            } catch { /* retry */ }
+            await driver.sleep(1500);
+        }
         expect(foundControl, 'Quick Prompt icon not found in Activity Bar').to.not.be.undefined;
         viewControl = foundControl!;
-        await runCommandViaKeyboard('Refresh Prompts');
+        await retryCommand('Refresh Prompts');
     });
 
     after(async function () {
@@ -208,10 +225,13 @@ describe('Quick Prompt - UI / E2E', function () {
     it('Add Prompt (Custom Title) creates a prompt from the two input boxes', async function () {
         const title = uniqueMarker('custom-title');
         const content = uniqueMarker('custom-content');
+        const driver = VSBrowser.instance.driver;
 
         await runCommandViaKeyboard('Add Prompt (Custom Title)');
+        await waitForQuickInputText('Set title for this prompt');
         await replaceQuickInputText(title);
         await acceptQuickInput();
+        await waitForQuickInputText('Enter Prompt content');
         await replaceQuickInputText(content);
         await acceptQuickInput();
 
@@ -224,9 +244,21 @@ describe('Quick Prompt - UI / E2E', function () {
 
     it('Quick Add Prompt (Selection) saves the active editor selection', async function () {
         const selectedText = uniqueMarker('selection-capture-content');
+        const driver = VSBrowser.instance.driver;
+
+        // Close any input/modal left open by previous test
+        await closeQuickInput();
+        await driver.sleep(300);
 
         await new EditorView().closeAllEditors();
+        await driver.sleep(500);
         await new Workbench().executeCommand('File: New Text File');
+        await driver.sleep(1000);
+
+        const editorArea = await driver.findElement(By.css('.editor-container .monaco-editor .view-lines'));
+        await editorArea.click();
+        await driver.sleep(200);
+
         const editor = new TextEditor();
         await editor.setText(selectedText);
         await new Workbench().executeCommand('Select All');
@@ -247,6 +279,56 @@ describe('Quick Prompt - UI / E2E', function () {
             const titles = await new EditorView().getOpenEditorTitles();
             return titles.some(title => title.includes('QuickPrompt MCP Config'));
         }, 10_000, 'MCP config editor did not open');
+    });
+
+    it('Refresh Clipboard History command shows a toast notification', async function () {
+        await retryCommand('Refresh Clipboard History');
+
+        const driver = VSBrowser.instance.driver;
+        await driver.wait(async () => {
+            try {
+                const toasts = await driver.findElements(By.css('.notification-toast'));
+                for (const toast of toasts) {
+                    const text = (await toast.getText()).toLowerCase();
+                    if (text.includes('clipboard')) {
+                        return true;
+                    }
+                }
+            } catch {
+                // DOM may be re-rendering
+            }
+            return false;
+        }, 10_000, 'Clipboard refresh toast notification did not appear');
+    });
+
+    it('Refresh Clipboard History adds copied editor text to the history panel', async function () {
+        const uniqueContent = `ui-test-clipboard-refresh-${Date.now()}`;
+        const driver = VSBrowser.instance.driver;
+
+        // Dismiss any leftover modal from previous tests
+        await closeQuickInput();
+        await driver.sleep(300);
+
+        // Open a new editor on top of whatever is open — no closeAllEditors needed
+        await new Workbench().executeCommand('File: New Text File');
+        await driver.sleep(1000);
+
+        // Click into the editor area to ensure focus before setText
+        const editorArea = await driver.findElement(By.css('.editor-container .monaco-editor .view-lines'));
+        await editorArea.click();
+        await driver.sleep(200);
+
+        const editor = new TextEditor();
+        await editor.setText(uniqueContent);
+        await new Workbench().executeCommand('Select All');
+        await new Workbench().executeCommand('Copy');
+
+        // Trigger refresh so the extension picks up the new clipboard content
+        await runCommandViaKeyboard('Refresh Clipboard History');
+
+        // Verify the content appears in the Clipboard History panel
+        const rowText = await waitForWorkbenchText(uniqueContent.substring(0, 20));
+        expect(rowText).to.include(uniqueContent.substring(0, 20));
     });
 });
 
@@ -330,6 +412,42 @@ async function runCommandViaKeyboard(commandLabel: string): Promise<void> {
     await new Workbench().executeCommand(commandLabel);
 }
 
+async function dismissSaveDialog(driver: import('selenium-webdriver').WebDriver): Promise<void> {
+    try {
+        const modal = await driver.findElement(By.css('.monaco-dialog-modal-block'));
+        if (await modal.isDisplayed()) {
+            // Click "Don't Save" button
+            const buttons = await driver.findElements(By.css('.dialog-buttons-row .monaco-button'));
+            for (const btn of buttons) {
+                const text = (await btn.getText()).toLowerCase();
+                if (text.includes("don't save") || text.includes('revert') || text.includes('discard')) {
+                    await btn.click();
+                    await driver.sleep(300);
+                    return;
+                }
+            }
+            // Fallback: press Escape to dismiss
+            await driver.actions().sendKeys(Key.ESCAPE).perform();
+            await driver.sleep(300);
+        }
+    } catch {
+        // No modal present
+    }
+}
+
+async function retryCommand(commandLabel: string, retries = 3): Promise<void> {
+    for (let i = 0; i < retries; i++) {
+        try {
+            await closeQuickInput();
+            await runCommandViaKeyboard(commandLabel);
+            return;
+        } catch {
+            await VSBrowser.instance.driver.sleep(1500);
+        }
+    }
+    await runCommandViaKeyboard(commandLabel);
+}
+
 async function openCommandPalette(): Promise<void> {
     const driver = VSBrowser.instance.driver;
 
@@ -361,16 +479,66 @@ async function waitForQuickInput(): Promise<WebElement> {
 
 async function replaceQuickInputText(text: string): Promise<void> {
     const driver = VSBrowser.instance.driver;
-    await waitForQuickInput();
+    const widget = await waitForQuickInput();
+    const inputEl = await getQuickInputField(widget);
     await resetKeyboardState();
-    await driver.actions()
-        .keyDown(Key.CONTROL)
-        .sendKeys('a')
-        .keyUp(Key.CONTROL)
-        .perform();
-    await driver.sleep(50);
-    await driver.actions().sendKeys(text).perform();
-    await resetKeyboardState();
+
+    await driver.executeScript(
+        `
+        const input = arguments[0];
+        const value = arguments[1];
+        input.focus();
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+        setter.call(input, value);
+        input.dispatchEvent(new InputEvent('input', {
+            bubbles: true,
+            cancelable: true,
+            inputType: 'insertText',
+            data: value
+        }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        `,
+        inputEl,
+        text
+    );
+
+    await driver.wait(async () => {
+        try {
+            const currentInput = await getQuickInputField(await waitForQuickInput());
+            return (await currentInput.getAttribute('value')) === text;
+        } catch {
+            return false;
+        }
+    }, 5_000, `Quick input value was not replaced with "${text}"`);
+}
+
+async function getQuickInputField(widget: WebElement): Promise<WebElement> {
+    for (const selector of ['input.quick-input-box', 'input.input', 'input']) {
+        const fields = await widget.findElements(By.css(selector));
+        if (fields.length > 0) {
+            return fields[0];
+        }
+    }
+
+    throw new Error('Quick input field was not found');
+}
+
+async function waitForQuickInputText(expectedText: string): Promise<string> {
+    const driver = VSBrowser.instance.driver;
+
+    const matchedText = await driver.wait(async () => {
+        try {
+            const widget = await waitForQuickInput();
+            const text = (await widget.getText()).trim();
+            return text.toLowerCase().includes(expectedText.toLowerCase())
+                ? text
+                : false;
+        } catch {
+            return false;
+        }
+    }, 10_000, `Quick input text "${expectedText}" did not appear`);
+
+    return matchedText as string;
 }
 
 async function waitForQuickPickRow(expectedText: string): Promise<string> {
@@ -454,7 +622,12 @@ async function resetKeyboardState(): Promise<void> {
 }
 
 function readPromptsFile(): PromptRecord[] {
-    return JSON.parse(fs.readFileSync(promptsPath, 'utf8')) as PromptRecord[];
+    try {
+        return JSON.parse(fs.readFileSync(promptsPath, 'utf8')) as PromptRecord[];
+    } catch {
+        // File may be mid-write; return empty so the poller retries
+        return [];
+    }
 }
 
 async function waitForPromptRecord(

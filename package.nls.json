@@ -19,6 +19,7 @@
     "command.viewClipboardItem.title": "View Full Content",
     "command.removeClipboardItem.title": "Remove from History",
     "command.clearClipboardHistory.title": "Clear Clipboard History",
+    "command.refreshClipboard.title": "Refresh Clipboard History",
     "command.moveUp.title": "Move Up",
     "command.moveDown.title": "Move Down",
     "command.clearModelCache.title": "Clear AI Model Cache",

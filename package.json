@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -323,6 +323,11 @@
                 "icon": "$(clear-all)"
             },
             {
+                "command": "quickPrompt.refreshClipboard",
+                "title": "%command.refreshClipboard.title%",
+                "icon": "$(refresh)"
+            },
+            {
                 "command": "quickPrompt.moveUp",
                 "title": "%command.moveUp.title%",
                 "icon": "$(arrow-up)"
@@ -450,6 +455,11 @@
                     "command": "quickPrompt.refresh",
                     "when": "view == quickPromptView",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "quickPrompt.refreshClipboard",
+                    "when": "view == clipboardHistoryView",
+                    "group": "navigation@0"
                 },
                 {
                     "command": "quickPrompt.clearClipboardHistory",
@@ -599,8 +609,8 @@
         "test": "jest --runInBand",
         "test:coverage": "jest --runInBand --coverage",
         "test:watch": "jest --watch",
-        "test:ui:setup": "extest setup-tests -c 1.96.0",
-        "test:ui": "tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\" -c 1.96.0"
+        "test:ui:setup": "extest setup-tests",
+        "test:ui": "tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\""
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",
@@ -621,5 +631,8 @@
         "@huggingface/transformers": "^3.0.0",
         "@modelcontextprotocol/sdk": "^1.27.1",
         "zod": "^3.23.8"
+    },
+    "overrides": {
+        "serialize-javascript": "^7.0.5"
     }
 }

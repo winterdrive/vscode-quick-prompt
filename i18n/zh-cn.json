@@ -84,5 +84,7 @@
     "tooltip.changeType.create": "创建",
     "tooltip.changeType.edit": "编辑",
     "tooltip.changeType.restore": "恢复",
-    "tooltip.preview": "**内容预览:**"
+    "tooltip.preview": "**内容预览:**",
+    "message.clipboardRefreshed": "🔄 剪贴板历史已刷新",
+    "message.clipboardRefreshFailed": "❌ 无法读取剪贴板: {0}"
 }

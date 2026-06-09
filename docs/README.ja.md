@@ -56,6 +56,11 @@
 - **🛡️ アクション判定ツリー**：エージェントは接続状態が安全で実行可能な場合にのみ動作。
 - **📦 CLI フォールバック バンドル**：オフラインシナリオ向けの組み込みバックアップ。
 - **⚙️ インタラクティブ設定パネル**：Cursor、Copilot、Cline、Claude など主要ツールの簡単セットアップ。
+- **🧠 Agent Skill**：公式 skill を直接インストール：
+
+  ```bash
+  npx skills add winterdrive/QuickPrompt
+  ```
 
 ### 📚 プロンプト管理
 
