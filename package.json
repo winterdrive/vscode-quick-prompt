@@ -619,7 +619,7 @@
         "@types/node": "^16.x",
         "@types/vscode": "^1.75.0",
         "chai": "^4.5.0",
-        "esbuild": "^0.25.0",
+        "esbuild": "^0.28.1",
         "fast-check": "^4.8.0",
         "jest": "^29.7.0",
         "mocha": "^10.8.2",
