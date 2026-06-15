@@ -323,4 +323,3 @@ async function initializeVersionHistory(
         // Don't block extension activation on version history initialization failure
     }
 }
-

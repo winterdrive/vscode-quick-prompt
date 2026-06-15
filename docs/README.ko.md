@@ -29,9 +29,9 @@
 
 **완전한 Model Context Protocol (MCP) 지원이 출시되었습니다.** 수동 복사 붙여넣기를 완벽히 제거 — Cursor, Copilot, Claude 등의 AI 어시스턴트가 네이티브 도구를 통해 프롬프트를 직접 관리할 수 있습니다.
 
-### 🛡️ 4층 안전 의사결정 트리
+### 🛡️ 공식 Skill 안전 로직
 
-생성되는 각 Skill에는 안정적인 운영을 보장하는 내장 안전 로직이 포함되어 있습니다:
+QuickPrompt 공식 Skill에는 안정적인 운영을 보장하는 내장 안전 로직이 포함되어 있습니다:
 
 1. **Layer 0: 연결 게이트** — `list_prompts`를 통한 자동 연결 확인. MCP가 끊기면 에이전트는 즉시 HALT를 트리거하고 폴백 처리를 제시합니다.
 2. **Layer 1: 표준 MCP 도구** — 프롬프트의 CRUD 작업과 버전 관리를 다루는 14개의 최적화된 도구.
@@ -56,7 +56,7 @@
 - **🛡️ 액션 의사결정 트리**: 에이전트가 연결되고 안전한 경우에만 작동.
 - **📦 CLI 폴백 번들**: 오프라인 시나리오를 위한 내장 보험.
 - **⚙️ 인터랙티브 설정 패널**: Cursor, Copilot, Cline, Claude 등 주요 도구의 쉬운 설정.
-- **🧠 Agent Skill**: 공식 skill 직접 설치:
+- **🧠 Agent Skill**: 표준 Agent Skills CLI로 공식 skill 설치:
 
   ```bash
   npx skills add winterdrive/QuickPrompt
@@ -246,7 +246,6 @@ Quick Prompt v0.5.1은 확장 명령을 `quickPrompt.*` 네임스페이스로 �
 | 프롬프트 삭제 | `quickPrompt.deletePrompt` |
 | 고정 토글 | `quickPrompt.togglePin` |
 | MCP 설정 표시 | `quickPrompt.showMcpConfig` |
-| Skill 파일 생성 | `quickPrompt.generateSkill` |
 | AI 연결 테스트 | `quickPrompt.testAIConnection` |
 
 가상 프롬프트 편집기 탭은 이제 `quickprompt:` URI 스키마를 사용. 기존 프롬프트 데이터 및 설정에는 변경 사항이 없지만, 이전에 VS Code 세션 복원으로 복원된 이전 가상 편집기 탭이나 이전 가상 URI로의 외부 링크는 Quick Prompt 사이드바에서 다시 열어야 할 수 있습니다.

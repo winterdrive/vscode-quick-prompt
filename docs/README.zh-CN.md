@@ -29,9 +29,9 @@
 
 **全方位的 Model Context Protocol (MCP) 支持正式登场。** 彻底摆脱手动复制粘贴 — 让您的 AI 助手（Cursor, Copilot, Claude 等）通过原生工具直接管理您的提示词。
 
-### 🛡️ 四层安全行动决策树 (Safety Decision Tree)
+### 🛡️ 正式 Skill 安全逻辑
 
-每一个生成的 Skill 都内置了防呆与安全逻辑，确保 AI 在执行时稳定可靠：
+QuickPrompt 正式 Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可靠：
 
 1. **Layer 0: 连接网关 (Connection Gate)** — 自动通过 `list_prompts` 测试连接。若 MCP 断开连接，Agent 会立即触发 HALT 刹车并询问用户是否降级处理。
 2. **Layer 1: 标准 MCP 工具** — 提供 14 个优化过的工具，涵盖 Prompt 的增删改查与版本历史。
@@ -54,9 +54,9 @@
 
 - **🔌 21 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
 - **🛡️ 行动决策树**：确保 Agent 只在连接安全且逻辑通顺时执行变更。
-- **📦 CLI 后备脚本**：断线时的终极保险，内置于 generated skill 文件夹内。
+- **📦 CLI 后备脚本**：断线时的终极保险，内置于正式 skill 文件夹内。
 - **⚙️ 交互式设置面板**：轻松完成各类 AI 工具的环境配置。
-- **🧠 Agent Skill**：直接安装正式 skill：
+- **🧠 Agent Skill**：使用标准 Agent Skills CLI 安装正式 skill：
 
   ```bash
   npx skills add winterdrive/QuickPrompt
@@ -245,7 +245,6 @@ Quick Prompt v0.5.1 将扩展功能命令统一到 `quickPrompt.*` namespace。C
 | 删除 Prompt | `quickPrompt.deletePrompt` |
 | 钉选 / 取消钉选 | `quickPrompt.togglePin` |
 | 显示 MCP 设置 | `quickPrompt.showMcpConfig` |
-| 生成 Skill 文件 | `quickPrompt.generateSkill` |
 | 测试 AI 连接 | `quickPrompt.testAIConnection` |
 
 虚拟 Prompt 编辑器标签页现在使用 `quickprompt:` URI scheme。既有 Prompt 数据与设置不会被改动，但先前由 VS Code 会话恢复 (session restore) 还原的旧虚拟编辑器标签页，或外部连接到旧虚拟 URI 的链接，可能需要从 Quick Prompt 侧边栏重新打开。

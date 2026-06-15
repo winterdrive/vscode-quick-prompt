@@ -29,9 +29,9 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 
 **Full Model Context Protocol (MCP) support is now here.** Stop copy-pasting—let your AI assistant (Cursor, Copilot, Claude, etc.) manage your prompts directly with native tools.
 
-### 🛡️ 4-Layer Safety Decision Tree
+### 🛡️ Canonical Skill Safety Logic
 
-Every generated skill includes a built-in safety logic to ensure stable operation:
+The canonical QuickPrompt skill includes built-in safety logic to ensure stable operation:
 
 1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
 2. **Layer 1: Standard MCP Tools** — Use 14 optimized tools for CRUD and versioning.
@@ -56,7 +56,7 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
 - **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
-- **🧠 Agent Skill**: Install the canonical skill directly:
+- **🧠 Agent Skill**: Install the canonical skill with the standard Agent Skills CLI:
 
   ```bash
   npx skills add winterdrive/QuickPrompt

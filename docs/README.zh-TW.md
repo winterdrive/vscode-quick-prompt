@@ -29,9 +29,9 @@
 
 **全方位的 Model Context Protocol (MCP) 支援正式登場。** 徹底擺脫手動複製貼上——讓您的 AI 助手（Cursor, Copilot, Claude 等）透過原生工具直接管理您的提示詞。
 
-### 🛡️ 四層安全行動決策樹 (Safety Decision Tree)
+### 🛡️ 正式 Skill 安全邏輯
 
-每一個產生的 Skill 都內建了防呆與安全邏輯，確保 AI 在執行時穩定可靠：
+QuickPrompt 正式 Skill 內建防呆與安全邏輯，確保 AI 在執行時穩定可靠：
 
 1. **Layer 0: 連線閘門 (Connection Gate)** — 自動透過 `list_prompts` 測試連線。若 MCP 斷線，Agent 會立即觸發 HALT 煞車並詢問用戶是否降級處理。
 2. **Layer 1: 標準 MCP 工具** — 提供 14 個優化過的工具，涵蓋 Prompt 的增刪改查與版本歷史。
@@ -54,9 +54,9 @@
 
 - **🔌 21 個 MCP 工具**：為 AI Agent 提供完整的 Prompt 管理工具箱。
 - **🛡️ 行動決策樹**：確保 Agent 只在連線安全且邏輯通順時執行變更。
-- **📦 CLI 後備腳本**：斷線時的終極保險，內置於 generated skill 資料夾內。
+- **📦 CLI 後備腳本**：斷線時的終極保險，內置於正式 skill 資料夾內。
 - **⚙️ 互動式設定面板**：輕鬆完成各類 AI 工具的環境配置。
-- **🧠 Agent Skill**：直接安裝正式 skill：
+- **🧠 Agent Skill**：使用標準 Agent Skills CLI 安裝正式 skill：
 
   ```bash
   npx skills add winterdrive/QuickPrompt

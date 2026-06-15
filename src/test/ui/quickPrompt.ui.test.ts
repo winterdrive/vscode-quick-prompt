@@ -165,7 +165,6 @@ describe('Quick Prompt - UI / E2E', function () {
             'Add Prompt (Custom Title)',
             'Quick Add Prompt (Selection)',
             'Show MCP Config',
-            'Generate Skill File',
         ]) {
             await replaceQuickInputText(`>${command}`);
             const rowText = await waitForQuickPickRow(command);

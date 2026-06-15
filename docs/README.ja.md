@@ -29,9 +29,9 @@
 
 **完全な Model Context Protocol (MCP) サポートが登場しました。** 手動コピペを完全に廃止 — Cursor、Copilot、Claude などの AI アシスタントが、ネイティブツールを通じてプロンプトを直接管理できます。
 
-### 🛡️ 4層セーフティ判定ツリー
+### 🛡️ 公式 Skill の安全ロジック
 
-生成される各 Skill には、安全で安定した動作を保証する組み込みロジックが含まれています：
+QuickPrompt の公式 Skill には、安全で安定した動作を保証する組み込みロジックが含まれています：
 
 1. **Layer 0: 接続ゲート** — `list_prompts` による自動接続確認。MCP が切断された場合、エージェントは即座に HALT と判定し、フォールバック処理をユーザーに提示します。
 2. **Layer 1: 標準 MCP ツール** — プロンプトの CRUD 操作とバージョン管理を網羅した 14 個の最適化ツール。
@@ -56,7 +56,7 @@
 - **🛡️ アクション判定ツリー**：エージェントは接続状態が安全で実行可能な場合にのみ動作。
 - **📦 CLI フォールバック バンドル**：オフラインシナリオ向けの組み込みバックアップ。
 - **⚙️ インタラクティブ設定パネル**：Cursor、Copilot、Cline、Claude など主要ツールの簡単セットアップ。
-- **🧠 Agent Skill**：公式 skill を直接インストール：
+- **🧠 Agent Skill**：標準 Agent Skills CLI で公式 skill をインストール：
 
   ```bash
   npx skills add winterdrive/QuickPrompt
@@ -246,7 +246,6 @@ Quick Prompt v0.5.1 は拡張コマンドを `quickPrompt.*` namespace に統一
 | プロンプト削除 | `quickPrompt.deletePrompt` |
 | ピン トグル | `quickPrompt.togglePin` |
 | MCP 設定表示 | `quickPrompt.showMcpConfig` |
-| Skill ファイル生成 | `quickPrompt.generateSkill` |
 | AI 接続テスト | `quickPrompt.testAIConnection` |
 
 仮想プロンプトエディタタブは `quickprompt:` URI スキームを使用。既存のプロンプトデータと設定は変更されません。ただし、以前の VS Code セッションから復元された古い仮想エディタタブ、または古い仮想 URI へのリンクはサイドバーから開き直す必要があります。

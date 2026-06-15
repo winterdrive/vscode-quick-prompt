@@ -36,9 +36,9 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 
 **Full Model Context Protocol (MCP) support is now here.** Stop copy-pasting—let your AI assistant (Cursor, Copilot, Claude, etc.) manage your prompts directly with native tools.
 
-### 🛡️ 4-Layer Safety Decision Tree
+### 🛡️ Canonical Skill Safety Logic
 
-Every generated skill includes a built-in safety logic to ensure stable operation:
+The canonical QuickPrompt skill includes built-in safety logic to ensure stable operation:
 
 1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
 2. **Layer 1: Standard MCP Tools** — Use 14 optimized tools for CRUD and versioning.
@@ -63,6 +63,7 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
 - **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
+- **🧠 Agent Skill**: Install the canonical skill with `npx skills add winterdrive/QuickPrompt`.
 
 ### 📚 Prompt Management
 
@@ -285,7 +286,6 @@ Quick Prompt v0.5.1 standardizes extension command IDs under the `quickPrompt.*`
 | Delete prompt | `quickPrompt.deletePrompt` |
 | Toggle pin | `quickPrompt.togglePin` |
 | Show MCP config | `quickPrompt.showMcpConfig` |
-| Generate skill file | `quickPrompt.generateSkill` |
 | Test AI connection | `quickPrompt.testAIConnection` |
 
 Virtual prompt editor tabs now use the `quickprompt:` URI scheme. Existing prompt data and settings are unchanged, but previously restored editor tabs or external links using the old virtual URI scheme may need to be reopened from the Quick Prompt sidebar.
