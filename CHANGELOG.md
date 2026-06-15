@@ -2,7 +2,7 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
-## [0.5.4] - Skill Installer UX - 2026-06-16
+## [0.5.5] - Skill Installer UX - 2026-06-16
 
 ### 🧠 Skill Installer UX (closes #25)
 
@@ -31,7 +31,6 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 - `vscode:prepublish` now runs `build:skills` automatically
 
 ## [0.5.1] - 2026-05-23
-
 
 ### Command Naming Cleanup
 
