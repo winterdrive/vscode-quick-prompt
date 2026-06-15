@@ -1,335 +1,324 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <!-- ========================================
-         Quick Prompt Landing Page - Complete Meta Tags
-         ======================================== -->
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Quick Prompt - Capture Ideas & Queue Tasks While AI Works | VS Code Extension</title>
+<meta name="description" content="Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, track clipboard history — without switching windows or breaking flow.">
+<link rel="canonical" href="https://winterdrive.github.io/vscode-quick-prompt/">
+<meta property="og:image" content="https://winterdrive.github.io/vscode-quick-prompt/assets/hero_banner1024X512.png">
+<meta name="theme-color" content="#f8f5f0">
+<link rel="icon" type="image/png" href="assets/quickprompt_icon_128.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-H67YNJGX19"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-H67YNJGX19');</script>
+<style>
+:root{
+  --accent:#6d28d9; --accent-dim:#5b21b6; --accent-glow:rgba(109,40,217,.12);
+  --p:#f8f5f0; --p2:#f0ece4; --p3:#e6e0d6;
+  --ink:#13100c; --ink2:#2b2620; --ink3:#564e43; --ink4:#908578; --ink5:#c5beb4;
+  --r:rgba(19,16,12,.07); --rs:rgba(19,16,12,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Geist',sans-serif;background:var(--p);color:var(--ink3);line-height:1.65;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle at 50% 6%,var(--accent-glow),transparent 31%),radial-gradient(circle at 18% 20%,rgba(255,255,255,.62),transparent 25%),linear-gradient(115deg,transparent 0 46%,rgba(19,16,12,.024) 46% 46.45%,transparent 46.45% 100%);}
+a{color:inherit;text-decoration:none}
+.skip{position:absolute;top:-40px;left:0;background:var(--ink);color:var(--p);padding:8px 16px;z-index:999;transition:top .2s}.skip:focus{top:0}
 
-    <!-- Basic Meta Tags -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+/* NAV */
+nav{position:sticky;top:16px;z-index:100;background:rgba(248,245,240,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--r);border-radius:14px;padding:0 18px 0 16px;display:flex;align-items:center;justify-content:space-between;height:58px;width:calc(100% - 48px);max-width:1180px;margin:16px auto 0;box-shadow:0 8px 28px rgba(19,16,12,.045)}
+.nav-brand{display:flex;align-items:center;gap:11px}
+.nav-brand img{width:26px;height:26px;border-radius:6px}
+.nav-name{font-family:'Instrument Serif',serif;font-size:1.08rem;color:var(--ink);letter-spacing:-.01em}
+.nav-links{display:flex;align-items:center;gap:18px;font-size:.82rem;color:var(--ink4)}
+.nav-links a{transition:color .15s,background .15s,transform .15s;letter-spacing:.01em}.nav-links a:hover{color:var(--ink)}
+.nav-github{background:var(--ink);color:var(--p)!important;padding:9px 16px;border-radius:8px;font-weight:500;line-height:1}.nav-github:hover{background:#2b2620;transform:translateY(-1px)}
 
-    <!-- Primary Meta Tags -->
-    <title>Quick Prompt - Capture Ideas & Queue Tasks While AI Works | VS Code Extension</title>
-    <meta name="title" content="Quick Prompt - Capture Ideas & Queue Tasks While AI Works | VS Code Extension">
-    <meta name="description"
-        content="Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, track clipboard history — without switching windows or breaking flow.">
-    <meta name="keywords"
-        content="VS Code extension, in-IDE notepad, clipboard history, AI workflow, task queue, cognitive offload, developer scratch pad, snippet manager, ai agent, copilot, claude, productivity">
-    <meta name="author" content="winterdrive">
-    <meta name="robots" content="index, follow">
-    <meta name="language" content="English">
-    <meta name="revisit-after" content="7 days">
+/* HERO — centered, Quick Prompt is about immediacy */
+.hero{padding:104px 52px 86px;text-align:center;border:1px solid var(--r);border-radius:20px;position:relative;overflow:hidden;max-width:1180px;margin:24px auto 0;background:rgba(255,255,255,.3);box-shadow:0 24px 80px rgba(19,16,12,.075)}
+/* Soft violet radial gradient behind headline */
+.hero::before{content:'';position:absolute;top:-90px;left:50%;transform:translateX(-50%);width:860px;height:620px;background:radial-gradient(ellipse at center,var(--accent-glow) 0%,transparent 64%);pointer-events:none}
+.hero-inner{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:32px}
+.eyebrow::before,.eyebrow::after{content:'';display:block;width:32px;height:1px;background:var(--accent)}
+h1{font-family:'Instrument Serif',serif;font-size:clamp(3rem,5.5vw,4.8rem);line-height:1.03;letter-spacing:-.03em;color:var(--ink);margin-bottom:24px;text-wrap:balance}
+h1 em{font-style:italic;color:var(--accent)}
+.sub{font-size:1.05rem;font-weight:300;color:var(--ink3);max-width:520px;margin:0 auto 44px;line-height:1.8;text-wrap:pretty}
+.actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:52px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 24px;font-family:'Geist',sans-serif;font-size:.88rem;font-weight:500;border-radius:8px;transition:transform .15s,box-shadow .15s,opacity .15s;cursor:pointer;letter-spacing:.01em}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.98)}
+.btn-p{background:var(--ink);color:var(--p);box-shadow:0 2px 14px rgba(19,16,12,.18)}
+.btn-p:hover{box-shadow:0 5px 26px rgba(19,16,12,.26)}
+.btn-o{background:transparent;color:var(--ink3);border:1px solid var(--rs)}
+.btn-o:hover{background:var(--p2);color:var(--ink)}
+.btn-vsx{background:transparent;color:var(--ink4);border:1px solid var(--r);font-size:.82rem}
+.btn-vsx:hover{color:var(--ink);border-color:var(--rs)}
+.source-link{display:block;width:max-content;margin:12px auto 0;font-size:.86rem;color:var(--ink4);transition:color .15s}.source-link:hover{color:var(--ink)}
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://winterdrive.github.io/vscode-quick-prompt/">
+/* Hero image: full-width VS Code screenshot — use bottom_panel_overview for rich context */
+.hero-img-wrap{width:100%;max-width:940px;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--r);box-shadow:0 24px 72px rgba(19,16,12,.13)}
+.hero-img-wrap img{width:100%;height:auto;display:block}
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://winterdrive.github.io/vscode-quick-prompt/">
-    <meta property="og:title" content="Quick Prompt - Capture Ideas & Queue Tasks While AI Works">
-    <meta property="og:description"
-        content="Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, track clipboard history — without switching windows or breaking flow.">
-    <meta property="og:image" content="https://winterdrive.github.io/vscode-quick-prompt/assets/hero_banner1024X512.png">
-    <meta property="og:image:width" content="1024">
-    <meta property="og:image:height" content="512">
-    <meta property="og:image:alt" content="Quick Prompt VS Code Extension - AI Prompt Manager Interface">
-    <meta property="og:site_name" content="Quick Prompt">
-    <meta property="og:locale" content="en_US">
+/* SHORTCUT PILLS */
+.pills{display:flex;justify-content:center;gap:10px;padding:34px 52px 0;flex-wrap:wrap;max-width:1180px;margin:0 auto}
+.pill{display:inline-flex;align-items:center;gap:9px;background:var(--p2);border:1px solid var(--r);border-radius:8px;padding:10px 18px;font-size:.82rem;color:var(--ink3);transition:border-color .15s,background .15s}
+.pill:hover{border-color:var(--rs);background:var(--p3)}
+.pill kbd{font-family:'Geist Mono',monospace;font-size:.78em;background:var(--p);border:1px solid var(--rs);border-radius:4px;padding:2px 7px;color:var(--accent);font-weight:500}
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://winterdrive.github.io/vscode-quick-prompt/">
-    <meta property="twitter:title" content="Quick Prompt - Capture Ideas & Queue Tasks While AI Works">
-    <meta property="twitter:description"
-        content="Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs — without switching windows or breaking flow.">
-    <meta property="twitter:image" content="https://winterdrive.github.io/vscode-quick-prompt/assets/hero_banner1024X512.png">
-    <meta property="twitter:image:alt" content="Quick Prompt VS Code Extension - AI Prompt Manager Interface">
-    <meta property="twitter:creator" content="@winterdrive">
-    <meta property="twitter:site" content="@winterdrive">
+/* FEATURES */
+.sec{padding:116px 52px;max-width:1180px;margin:0 auto}
+.sec-hd{text-align:center;margin-bottom:52px}
+.sec-label{font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px;display:block}
+.sec-title{font-family:'Instrument Serif',serif;font-size:clamp(2rem,3.5vw,2.8rem);line-height:1.1;letter-spacing:-.03em;color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch}
+.card{background:rgba(255,255,255,.5);border:1px solid var(--r);border-radius:14px;overflow:hidden;transition:background .35s cubic-bezier(.32,.72,0,1),transform .35s cubic-bezier(.32,.72,0,1),box-shadow .35s cubic-bezier(.32,.72,0,1);min-height:216px}
+.card:hover{background:rgba(255,255,255,.68);transform:translateY(-3px);box-shadow:0 12px 38px rgba(19,16,12,.055)}
+/* Featured card: wide UI screenshots need the full card width */
+.card.featured{grid-column:span 2;display:grid;grid-template-columns:1fr;gap:0;height:auto}
+.card.featured img{width:100%;height:auto;aspect-ratio:2 / 1;object-fit:contain;object-position:center top;display:block;background:#0b1118;border-bottom:1px solid var(--r)}
+.card.featured .card-body{padding:30px 36px 34px;max-width:760px}
+.card-body{padding:36px}
+.card-num{font-family:'Geist Mono',monospace;font-size:.66rem;color:var(--ink5);letter-spacing:.1em;margin-bottom:14px;display:block}
+.card h3{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--ink);margin-bottom:9px;line-height:1.25}
+.card p{font-size:.85rem;font-weight:300;color:var(--ink3);line-height:1.72;text-wrap:pretty}
+.card code{font-family:'Geist Mono',monospace;font-size:.82em;color:var(--accent);background:rgba(109,40,217,.07);padding:1px 5px;border-radius:3px}
+/* Simple cards: text only, uniform padding */
+.card:not(.featured) .card-body{padding:34px 36px;min-height:216px;display:flex;flex-direction:column;justify-content:center}
+.scope-note{grid-column:span 2;display:flex;align-items:center;justify-content:space-between;gap:24px;background:rgba(255,255,255,.34);border:1px solid var(--r);border-radius:14px;padding:22px 28px;color:var(--ink4);font-size:.84rem;line-height:1.65}
+.scope-note strong{font-family:'Instrument Serif',serif;font-size:1.08rem;color:var(--ink);font-weight:400;white-space:nowrap}
 
-    <!-- Additional SEO Meta Tags -->
-    <meta name="theme-color" content="#007ACC">
-    <meta name="msapplication-TileColor" content="#007ACC">
-    <meta name="application-name" content="Quick Prompt">
+/* AI AGENT CALLOUT */
+.callout{background:var(--ink);margin:0}
+.callout-inner{max-width:1100px;margin:0 auto;padding:0 52px;display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:stretch;min-height:420px}
+.callout-copy{padding:76px 64px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid rgba(255,255,255,.07)}
+.callout-copy .tag{font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#c4b5fd;margin-bottom:14px;display:block}
+.callout-copy h2{font-family:'Instrument Serif',serif;font-size:clamp(1.9rem,3vw,2.6rem);line-height:1.1;letter-spacing:-.03em;color:var(--p);margin-bottom:14px}
+.callout-copy p{font-size:.9rem;font-weight:300;color:rgba(248,245,240,.52);line-height:1.78;text-wrap:pretty}
+.callout-img{display:flex;align-items:center;overflow:hidden}
+.callout-img img{width:100%;height:100%;object-fit:cover;object-position:top;opacity:.88}
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="assets/quickprompt_icon_64.png">
-    <link rel="icon" type="image/png" sizes="64x64" href="assets/quickprompt_icon_64.png">
-    <link rel="icon" type="image/png" sizes="128x128" href="assets/quickprompt_icon_128.png">
-    <link rel="icon" type="image/png" sizes="256x256" href="assets/quickprompt_icon_256.png">
-    <link rel="apple-touch-icon" sizes="128x128" href="assets/quickprompt_icon_128.png">
+/* INSTALL */
+.install{background:var(--p2);border-top:1px solid var(--r);padding:96px 52px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;max-width:none}
+.install h2{font-family:'Instrument Serif',serif;font-size:clamp(2rem,3.5vw,2.8rem);line-height:1.08;letter-spacing:-.03em;color:var(--ink);margin-bottom:16px}
+.install>div>p{font-size:.9rem;font-weight:300;color:var(--ink3);line-height:1.75;margin-bottom:24px}
+.install kbd{font-family:'Geist Mono',monospace;font-size:.82em;background:var(--p);border:1px solid var(--rs);border-radius:3px;padding:1px 6px;color:var(--accent)}
+.codeline{font-family:'Geist Mono',monospace;font-size:.9rem;color:#5b21b6;background:var(--p);border:1px solid var(--r);padding:14px 20px;border-radius:7px;margin-bottom:24px;letter-spacing:.02em}
+.btn-install{display:inline-flex;align-items:center;background:var(--ink);color:var(--p);padding:13px 24px;border-radius:8px;font-size:.88rem;font-weight:500;transition:opacity .15s,transform .15s;cursor:pointer}
+.btn-install:hover{opacity:.85;transform:translateY(-1px)}
+.install-wrap{max-width:1180px;margin:0 auto;padding:112px 52px 56px;display:grid;grid-template-columns:.86fr 1.14fr;gap:88px;align-items:center}
+.install-panel{display:grid;gap:16px}
+.registry-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.registry-card{background:rgba(255,255,255,.5);border:1px solid var(--r);border-radius:14px;padding:30px 32px;min-height:210px;display:flex;flex-direction:column;align-items:flex-start;box-shadow:0 14px 42px rgba(19,16,12,.045)}
+.registry-label{font-family:'Geist Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.registry-card h3{font-family:'Instrument Serif',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:10px}.registry-card p{font-size:.86rem;font-weight:300;color:var(--ink3);line-height:1.7;margin-bottom:18px;text-wrap:pretty}
+.registry-card .btn{margin-top:auto;font-size:.84rem;padding:11px 18px}
+.agent-setup{max-width:1180px;margin:0 auto;padding:0 52px 104px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.agent-card{background:rgba(255,255,255,.42);border:1px solid var(--r);border-radius:14px;padding:30px 32px;min-height:190px}
+.agent-label{font-family:'Geist Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:12px}
+.agent-card h3{font-family:'Instrument Serif',serif;font-size:1.28rem;color:var(--ink);font-weight:400;margin-bottom:10px}
+.agent-card p{font-size:.86rem;font-weight:300;color:var(--ink3);line-height:1.7;margin-bottom:18px;text-wrap:pretty}
+.agent-card .codeline{margin-bottom:0;font-size:.84rem;overflow-wrap:anywhere}
 
-    <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Quick Prompt",
-        "alternateName": "Quick Prompt for VS Code",
-        "description": "Your in-IDE scratch pad for AI-assisted development. Capture next tasks while your agent runs, store reusable snippets, track clipboard history — without switching windows or breaking flow.",
-        "url": "https://winterdrive.github.io/vscode-quick-prompt/",
-        "downloadUrl": "https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt",
-        "installUrl": "https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt",
-        "softwareVersion": "0.5.1",
-        "datePublished": "2024-01-01",
-        "dateModified": "2026-05-23",
-        "author": {
-            "@type": "Person",
-            "name": "winterdrive",
-            "url": "https://github.com/winterdrive"
-        },
-        "publisher": {
-            "@type": "Organization",
-            "name": "winterdrive"
-        },
-        "applicationCategory": "DeveloperApplication",
-        "applicationSubCategory": "Code Editor Extension",
-        "operatingSystem": "VS Code",
-        "softwareRequirements": "Visual Studio Code ^1.75.0",
-        "keywords": "VS Code extension, in-IDE notepad, clipboard history, AI workflow, task queue, cognitive offload, snippet manager, developer scratch pad",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "USD",
-            "availability": "https://schema.org/InStock"
-        },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.5",
-            "ratingCount": "50",
-            "bestRating": "5",
-            "worstRating": "1"
-        },
-        "screenshot": [
-            "https://winterdrive.github.io/vscode-quick-prompt/assets/hero_banner.png",
-            "https://winterdrive.github.io/vscode-quick-prompt/assets/quick_search_demo.png",
-            "https://winterdrive.github.io/vscode-quick-prompt/assets/bottom_panel_overview.png"
-        ],
-        "featureList": [
-            "AI-powered automatic title generation using local models",
-            "AI prompt management and organization",
-            "Automatic clipboard history tracking",
-            "Quick search and insert functionality",
-            "Standardized quickPrompt command IDs for keybindings and automation",
-            "Workspace isolation for prompts",
-            "Integration with ChatGPT, Copilot, Claude",
-            "Privacy-first local AI inference"
-        ]
-    }
-    </script>
+/* COMPANION */
+.companion{padding:112px 52px;border-top:1px solid var(--r)}
+.comp-hd{margin-bottom:48px}
+.comp-hd h2{font-family:'Instrument Serif',serif;font-size:clamp(1.9rem,3vw,2.5rem);letter-spacing:-.03em;color:var(--ink);margin-bottom:10px}
+.comp-hd p{font-size:.9rem;font-weight:300;color:var(--ink3);line-height:1.75;max-width:520px;text-wrap:pretty}
+.comp-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1180px;margin:0 auto}
+.comp-card{border:1px solid var(--r);border-radius:14px;overflow:hidden;transition:border-color .35s cubic-bezier(.32,.72,0,1),transform .35s cubic-bezier(.32,.72,0,1),box-shadow .35s cubic-bezier(.32,.72,0,1);background:rgba(255,255,255,.42)}
+.comp-card:hover{border-color:var(--rs);transform:translateY(-3px);box-shadow:0 12px 38px rgba(19,16,12,.065)}
+.comp-thumb{aspect-ratio:2/1;border-bottom:1px solid var(--r);background:var(--ink);overflow:hidden}
+.comp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.comp-body{padding:28px 30px 30px}
+.comp-card h3{font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--ink);margin-bottom:10px}
+.comp-card p{font-size:.86rem;font-weight:300;color:var(--ink3);line-height:1.68;margin-bottom:20px;text-wrap:pretty}
 
-    <!-- LLMs.txt for AI Context -->
-    <link rel="llms-txt" type="text/markdown" href="/vscode-quick-prompt/llms.txt" />
+/* FOOTER */
+footer{border-top:1px solid var(--r);padding:28px 52px;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;color:var(--ink5);flex-wrap:wrap;gap:12px}
+footer a{color:var(--ink5);transition:color .15s}footer a:hover{color:var(--ink)}
+.flinks{display:flex;gap:22px}
 
-    <!-- Preconnect for Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://marketplace.visualstudio.com">
-    <link rel="preconnect" href="https://github.com">
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1)}
+.reveal.visible{opacity:1;transform:none}
+.grid .card:nth-child(2){transition-delay:.06s}
+.grid .card:nth-child(3){transition-delay:.11s}
+.grid .card:nth-child(4){transition-delay:.16s}
+.grid .card:nth-child(5){transition-delay:.21s}
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-H67YNJGX19"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-H67YNJGX19');
-    </script>
-
-    <style>
-        :root {
-            --primary: #007acc;
-            --dark: #1e1e1e;
-            --text: #d4d4d4;
-            --bg: #252526;
-        }
-
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 60px 20px;
-            border-bottom: 1px solid #333;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            color: #fff;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: #9cdcfe;
-            margin-bottom: 30px;
-        }
-
-        .btn {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 4px;
-            transition: 0.2s;
-            font-size: 1.1rem;
-        }
-
-        .btn:hover {
-            background: #005f9e;
-        }
-
-        .btn-github {
-            background: #333;
-            margin-left: 10px;
-        }
-
-        .btn-openvsx {
-            background: #7C2D99;
-            /* Open VSX Purple */
-            margin-left: 10px;
-        }
-
-        .hero-img {
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 40px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            border: 1px solid #444;
-        }
-
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 30px;
-            padding: 60px 0;
-        }
-
-        .feature-card {
-            background: #333;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #444;
-        }
-
-        .feature-card h3 {
-            color: #fff;
-            margin-top: 0;
-        }
-
-        footer {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            font-size: 0.9rem;
-            border-top: 1px solid #333;
-        }
-
-        code {
-            background: #101010;
-            padding: 2px 5px;
-            border-radius: 3px;
-            font-family: 'Consolas', monospace;
-            color: #ce9178;
-        }
-    </style>
+@media(max-width:960px){
+  nav{top:8px;width:calc(100% - 24px);margin-top:8px;padding:0 14px}.nav-links a:not(.nav-github){display:none}.nav-github{padding:10px 16px}
+  .hero{padding:72px 22px 56px;width:calc(100% - 24px);margin-top:14px}
+  .pills{padding:44px 22px 0}
+  .sec{padding:64px 22px}
+  .grid,.card.featured{grid-template-columns:1fr}
+  .card.featured{grid-column:span 1;height:auto}
+  .card.featured img{height:auto;aspect-ratio:2 / 1}
+  .card.featured .card-body{padding:26px 24px 30px}
+  .scope-note{grid-column:span 1;display:block;padding:22px}
+  .scope-note strong{display:block;margin-bottom:6px;white-space:normal}
+  .hero-img-wrap img{height:360px}
+  .callout{padding:0 22px}
+  .callout-inner{grid-template-columns:1fr;min-height:auto}
+  .callout-copy{border-right:none;border-bottom:1px solid rgba(255,255,255,.07);padding:56px 28px}
+  .callout-img{display:none}
+  .install{padding:64px 22px}
+  .install-wrap,.registry-grid{grid-template-columns:1fr}.install-wrap{gap:40px;padding:64px 22px 36px}.registry-card{padding:26px 24px;min-height:auto}
+  .agent-setup{grid-template-columns:1fr;padding:0 22px 64px}
+  .agent-card{padding:26px 24px;min-height:auto}
+  .companion{padding:64px 22px}
+  .comp-cards{grid-template-columns:1fr}
+  footer{padding:24px 22px;flex-direction:column;text-align:center}
+}
+</style>
 </head>
-
 <body>
-
-    <header>
-        <div class="container">
-            <h1>Quick Prompt</h1>
-            <p class="subtitle">Capture Ideas & Queue Tasks While AI Works</p>
-
-            <div style="margin-bottom: 20px;">
-                <a href="https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt" class="btn"
-                    onclick="gtag('event', 'click', { 'event_category': 'CTA', 'event_label': 'Install Extension' })">⬇
-                    Install Extension</a>
-                <a href="https://github.com/winterdrive/vscode-quick-prompt" class="btn btn-github"
-                    onclick="gtag('event', 'click', { 'event_category': 'Navigation', 'event_label': 'GitHub' })">View
-                    on GitHub</a>
-                <a href="https://open-vsx.org/extension/winterdrive/quick-prompt" class="btn btn-openvsx"
-                    onclick="gtag('event', 'click', { 'event_category': 'CTA', 'event_label': 'Open VSX' })">Open
-                    VSX</a>
-            </div>
-
-            <img src="assets/hero_banner.png" alt="Quick Prompt VS Code Interface"
-                class="hero-img">
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="features">
-            <div class="feature-card">
-                <h3>🤖 AI-Powered Titles</h3>
-                <p>Automatic semantic title generation using local AI (Qwen1.5-0.5B). Privacy-first - all processing
-                    runs on your machine.</p>
-            </div>
-            <div class="feature-card">
-                <h3>📋 Clipboard History</h3>
-                <p>Never lose a snippet again. Automatically track your clipboard history and perform one-click inserts.
-                </p>
-            </div>
-            <div class="feature-card">
-                <h3>📝 In-IDE Task Queue</h3>
-                <p>Agent running a long task? Queue your next ideas here without switching windows. When it finishes, your thoughts are ready to hand off.</p>
-            </div>
-            <div class="feature-card">
-                <h3>⚡ Instant Recall</h3>
-                <p>Press <code>Alt+P</code> to search everything you've stored. Hit Enter to copy. Back to work in under two seconds.</p>
-            </div>
-        </div>
-
-        <div style="text-align: center; margin: 40px 0;">
-            <h2>Installation</h2>
-            <p>Open VS Code Quick Open (<code>Ctrl+P</code>) and paste:</p>
-            <p><code>ext install winterdrive.quick-prompt</code></p>
-        </div>
+<a href="#main" class="skip">Skip to content</a>
+<nav>
+  <div class="nav-brand"><img src="assets/quickprompt_icon_128.png" alt="Quick Prompt"><span class="nav-name">Quick Prompt</span></div>
+  <div class="nav-links">
+    <a href="#features">Features</a><a href="#install">Install</a>
+    <a href="https://github.com/winterdrive/vscode-quick-prompt" class="nav-github">GitHub</a>
+  </div>
+</nav>
+<main id="main">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">VS Code Extension</div>
+      <h1>Think while<br><em>AI works.</em></h1>
+      <p class="sub">Your in-IDE scratch pad for AI-assisted development. Capture next tasks, store reusable snippets, track clipboard history — without switching windows or breaking flow.
+        <a href="https://github.com/winterdrive/vscode-quick-prompt" class="source-link">View source on GitHub →</a>
+      </p>
+      <div class="actions">
+        <a href="https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt" class="btn btn-p" onclick="gtag('event','click',{'event_category':'CTA','event_label':'Marketplace'})">VS Code Marketplace</a>
+        <a href="https://open-vsx.org/extension/winterdrive/quick-prompt" class="btn btn-o" onclick="gtag('event','click',{'event_category':'CTA','event_label':'OpenVSX'})">Open VSX Registry</a>
+      </div>
+      <!-- bottom_panel_overview: full VS Code with Quick Prompt tab open + callout bubbles — much richer than hero_banner -->
+      <div class="hero-img-wrap">
+        <img src="assets/bottom_panel_overview.png" alt="Quick Prompt VS Code extension — bottom panel with Task Queueing, Instant Capture, and Linear History">
+      </div>
     </div>
+  </section>
 
-    <div style="background: #2d2d2d; padding: 40px 0; margin-top: 60px; border-top: 1px solid #444;">
-        <div class="container" style="text-align: center;">
-            <h2 style="color: #fff; margin-bottom: 15px;">🤝 Perfect Companion</h2>
-            <p style="color: #ccc; max-width: 600px; margin: 0 auto 30px; font-size: 1.1rem;">
-                <strong>Quick Prompt</strong> keeps your thoughts organized inside the IDE. Pair it with
-                <strong>VirtualTabs</strong> to keep your workspace organized too.
-            </p>
-            <div
-                style="display: inline-block; background: #333; padding: 25px; border-radius: 8px; border: 1px solid #555; max-width: 400px;">
-                <h3 style="margin-top: 0; color: #fff; margin-bottom: 10px;">🗂️ VirtualTabs</h3>
-                <p style="color: #bbb; font-size: 0.95rem; margin-bottom: 20px;">Group files by task across any directory — persisted across sessions, visible at a glance.</p>
-                <a href="https://winterdrive.github.io/vscode-virtual-tabs/?utm_source=quickprompt&utm_medium=landing&utm_campaign=cross_promotion"
-                    class="btn"
-                    onclick="gtag('event', 'click', { 'event_category': 'Cross-promotion', 'event_label': 'VirtualTabs' })"
-                    style="font-size: 1rem; background: #333; border: 1px solid #666;">View VirtualTabs</a>
-            </div>
-        </div>
+  <div class="pills reveal">
+    <div class="pill"><kbd>Alt+P</kbd> Search everything instantly</div>
+    <div class="pill"><kbd>Enter</kbd> Copy to clipboard</div>
+    <div class="pill">Local AI titles — privacy-first</div>
+  </div>
+
+  <section class="sec reveal" id="features">
+    <div class="sec-hd">
+      <span class="sec-label">Features</span>
+      <h2 class="sec-title">Built for the gaps between agent turns.</h2>
     </div>
+    <div class="grid reveal">
+      <div class="card featured">
+        <img src="assets/capture_workflow_demo.png" alt="Quick Prompt panel showing clipboard history and saved prompt queue">
+        <div class="card-body">
+          <span class="card-num">01</span>
+          <h3>Capture the next thought</h3>
+          <p>Agent still running? Save the next instruction, snippet, or follow-up as soon as it appears. Quick Prompt keeps the idea inside VS Code instead of another tab or sticky note.</p>
+        </div>
+      </div>
+      <div class="card"><div class="card-body"><span class="card-num">02</span><h3>Pin clipboard into prompts</h3><p>Clipboard history catches copied code, paths, and notes while you move through a task. Pin the useful fragments as saved prompts when they should become reusable handoff material.</p></div></div>
+      <div class="card"><div class="card-body"><span class="card-num">03</span><h3>Let titles clean up the queue</h3><p>Local AI can generate semantic titles for saved prompts, so rough captures become readable entries without sending content off your machine.</p></div></div>
+      <div class="card"><div class="card-body"><span class="card-num">04</span><h3>Recall everything with Alt+P</h3><p>Search prompts and clipboard history from one palette. Type a few characters, pick the right item, and stay in the editor.</p></div></div>
+      <div class="card"><div class="card-body"><span class="card-num">05</span><h3>Send it to the agent chat</h3><p>Pick the saved prompt or clipboard fragment, then send it into your agent chat window when the next turn is ready. The handoff happens from inside VS Code instead of another note app.</p></div></div>
+      <div class="scope-note"><strong>Scoped per workspace.</strong><span>Your prompt library stays tied to the current project, so search results do not mix unrelated snippets from other repositories.</span></div>
+    </div>
+  </section>
+</main>
 
-    <footer>
-        <p>Created by <a href="https://github.com/winterdrive" style="color:#666">winterdrive</a>. Open Source under MIT
-            License.</p>
-        <p><a href="/vscode-quick-prompt/llms.txt" style="color:#444; text-decoration: none; font-size: 0.8rem;">[View AI
-                Context]</a></p>
-    </footer>
+<!-- AI Agent callout: feature_highlights.png — floating card illustration, visually distinctive -->
+<div class="callout reveal">
+  <div class="callout-inner">
+    <div class="callout-copy">
+      <span class="tag">Built for the AI agent era</span>
+      <h2>Everything you capture feeds your next agent.</h2>
+      <p>Task queue, clipboard history, version timeline — every piece of Quick Prompt is designed so your ideas flow from thought to agent prompt with the fewest steps possible.</p>
+    </div>
+    <div class="callout-img">
+      <img src="assets/feature_highlights.png" alt="AI Agent MCP, Secure Privacy, Version Timeline features">
+    </div>
+  </div>
+</div>
 
+<div style="background:var(--p2);border-top:1px solid var(--r)">
+  <div class="install-wrap reveal" id="install">
+    <div>
+      <h2 style="font-family:'Instrument Serif',serif;font-size:clamp(2rem,3.5vw,2.8rem);line-height:1.08;letter-spacing:-.03em;color:var(--ink);margin-bottom:16px">Choose your registry.</h2>
+      <p style="font-size:.9rem;font-weight:300;color:var(--ink3);line-height:1.75;margin-bottom:24px">Marketplace and Open VSX are treated as equal install paths. For command-line install in VS Code, press <kbd>Ctrl+P</kbd> and paste:</p>
+      <div class="codeline">ext install winterdrive.quick-prompt</div>
+    </div>
+    <div class="install-panel">
+      <div class="registry-grid" aria-label="Extension registries">
+        <div class="registry-card">
+          <span class="registry-label">Registry</span>
+          <h3>VS Code Marketplace</h3>
+          <p>Install from Microsoft Marketplace when you use the standard Visual Studio Code extension gallery.</p>
+          <a href="https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt" class="btn btn-p" onclick="gtag('event','click',{'event_category':'CTA','event_label':'Marketplace'})">Open Marketplace</a>
+        </div>
+        <div class="registry-card">
+          <span class="registry-label">Registry</span>
+          <h3>Open VSX Registry</h3>
+          <p>Install from Open VSX when your editor uses the open extension registry, including VSCodium-style setups.</p>
+          <a href="https://open-vsx.org/extension/winterdrive/quick-prompt" class="btn btn-p" onclick="gtag('event','click',{'event_category':'CTA','event_label':'OpenVSX'})">Open VSX</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="agent-setup reveal" aria-label="Agent setup options">
+    <div class="agent-card">
+      <span class="agent-label">Agent Skill</span>
+      <h3>Install the Quick Prompt agent skill.</h3>
+      <p>Give Codex, Claude Code, and other skill-aware agents the Quick Prompt workflow, safety rules, and fallback CLI instructions.</p>
+      <div class="codeline">npx skills add winterdrive/QuickPrompt</div>
+    </div>
+    <div class="agent-card">
+      <span class="agent-label">MCP Setup</span>
+      <h3>Connect your agent tools.</h3>
+      <p>After installing the extension, open the VS Code Command Palette and run <strong>Quick Prompt: Show MCP Config</strong> to generate the right MCP JSON for Cursor, Claude Code, Cline, Kiro, Antigravity, or VS Code.</p>
+    </div>
+  </div>
+</div>
+
+<div style="border-top:1px solid var(--r)">
+  <div class="companion">
+    <div class="comp-hd" style="max-width:1100px;margin:0 auto 48px">
+      <h2>Works better together.</h2>
+      <p>Quick Prompt captures your thoughts. These companions keep the rest of your workflow organized.</p>
+    </div>
+    <div class="comp-cards">
+      <div class="comp-card">
+        <div class="comp-thumb"><img src="https://winterdrive.github.io/vscode-virtual-tabs/assets/vscode-virtualtabs-grouping-banner1024X512.png" alt="VirtualTabs social preview banner"></div>
+        <div class="comp-body">
+          <h3>VirtualTabs</h3>
+          <p>Group files by task across any directory — persisted across sessions, visible at a glance. Perfect for keeping AI context curated before handoff.</p>
+          <a href="https://winterdrive.github.io/vscode-virtual-tabs/" class="btn btn-p" style="font-size:.84rem;padding:10px 20px;">Learn about VirtualTabs</a>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-thumb"><img src="https://pain-labs.github.io/Edo-Tensei/assets/hero_banner.png" alt="Edo Tensei social preview banner"></div>
+        <div class="comp-body">
+          <h3>Edo Tensei</h3>
+          <p>Extract AI session histories from Cursor, Claude Code, Copilot, and more. One click copies a complete handoff prompt — picks up where you left off.</p>
+          <a href="https://pain-labs.github.io/Edo-Tensei/" class="btn btn-o" style="font-size:.84rem;padding:10px 20px;">Learn about Edo Tensei</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>Created by <a href="https://github.com/winterdrive">winterdrive</a>. Open source under MIT License.</div>
+  <div class="flinks"><a href="https://github.com/winterdrive/vscode-quick-prompt">GitHub</a><a href="https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt">Marketplace</a><a href="https://open-vsx.org/extension/winterdrive/quick-prompt">Open VSX</a><a href="/vscode-quick-prompt/llms.txt">AI context</a></div>
+</footer>
+<script>
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}}),{threshold:.06,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
 </body>
-
 </html>

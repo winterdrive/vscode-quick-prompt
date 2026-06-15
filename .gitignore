@@ -14,6 +14,7 @@ docs/specs/**
 .kiro/**
 docs/ref/**
 docs/assets/deprecated/**
+docs/_archive/**
 .claude/**
 
 # Test outputs
@@ -21,3 +22,13 @@ coverage/
 out/
 dist-test/
 .vscode-test/
+# Edo Tensei skills
+.claude/skills/edo-tensei/
+# Edo Tensei skills
+.github/skills/edo-tensei/
+.kiro/skills/edo-tensei/
+.agents/skills/edo-tensei/
+.cline/skills/edo-tensei/
+.gemini/skills/edo-tensei/
+.cursor/rules/edo-tensei.mdc
+prompts.json
