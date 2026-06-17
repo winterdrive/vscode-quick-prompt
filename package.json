@@ -392,7 +392,7 @@
             },
             {
                 "command": "quickPrompt.generateSkill",
-                "title": "Install Skill",
+                "title": "%command.generateSkill.title%",
                 "category": "Quick Prompt",
                 "icon": "$(cloud-download)"
             },

@@ -31,6 +31,7 @@
     "command.removeMilestone.title": "移除里程碑標籤",
     "command.deleteVersion.title": "刪除版本",
     "command.copyVersionContent.title": "複製版本內容",
+    "command.generateSkill.title": "安裝 Agent Skill",
     "config.confirmBeforeDelete.description": "刪除 Prompt 或版本前顯示確認提示",
     "config.ai.enabled.description": "啟用 AI 功能（預設關閉以保持擴充套件輕量化）",
     "config.ai.provider.description": "AI 引擎來源，用於標題生成等功能",

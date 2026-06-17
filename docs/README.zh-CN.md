@@ -27,16 +27,16 @@
 
 ## 🔌 v0.3.0 重大更新：AI Agent 深度整合 (MCP)
 
-**全方位的 Model Context Protocol (MCP) 支持正式登场。** 彻底摆脱手动复制粘贴 — 让您的 AI 助手（Cursor, Copilot, Claude 等）通过原生工具直接管理您的提示词。
+**完整的 Model Context Protocol (MCP) 支持已可使用。** 彻底摆脱手动复制粘贴 — 让您的 AI 助手（Cursor, Copilot, Claude 等）通过原生工具直接管理您的提示词。
 
-### 🛡️ 正式 Skill 安全逻辑
+### 🛡️ 标准 Skill 安全逻辑
 
-QuickPrompt 正式 Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可靠：
+QuickPrompt Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可靠：
 
 1. **Layer 0: 连接网关 (Connection Gate)** — 自动通过 `list_prompts` 测试连接。若 MCP 断开连接，Agent 会立即触发 HALT 刹车并询问用户是否降级处理。
-2. **Layer 1: 标准 MCP 工具** — 提供 14 个优化过的工具，涵盖 Prompt 的增删改查与版本历史。
+2. **Layer 1: 标准 MCP 工具** — 提供 21 个工具，涵盖 Prompt 的增删改查、版本历史与隐私遮罩。
 3. **Layer 2: 安全验证** — 在执行敏感操作前进行二次逻辑检查，确保数据一致性。
-4. **Layer 3: CLI 硬核后备 (Hard Fallback)** — 当 MCP server 无法使用时，Agent 可切换调用内置的 `qp.bundle.js` 脚本直接操作数据库。
+4. **Layer 3: CLI 后备 (Fallback CLI)** — 当 MCP server 无法使用时，Agent 可切换调用内置的 `qp.bundle.js` 脚本直接操作数据库。
 
 ### ⚙️ 多客户端一键设置
 
@@ -54,13 +54,15 @@ QuickPrompt 正式 Skill 内置防呆与安全逻辑，确保 AI 在执行时稳
 
 - **🔌 21 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
 - **🛡️ 行动决策树**：确保 Agent 只在连接安全且逻辑通顺时执行变更。
-- **📦 CLI 后备脚本**：断线时的终极保险，内置于正式 skill 文件夹内。
+- **📦 CLI 后备脚本**：断线时可改用内置脚本，放在 generated skill 文件夹内。
 - **⚙️ 交互式设置面板**：轻松完成各类 AI 工具的环境配置。
-- **🧠 Agent Skill**：使用标准 Agent Skills CLI 安装正式 skill：
+- **🧠 Agent Skill**：执行 **Quick Prompt: Install Agent Skill**，选择 **Auto Install (Recommended)** 安装正式 skill。你也可以直接执行同一条安装命令：
 
   ```bash
   npx skills add winterdrive/QuickPrompt
   ```
+
+  只有在需要自行写入指定 agent 的 skill/rule 文件时，才选择 **Generate Skill Files Manually**。
 
 ### 📚 提示词管理 (Prompt Management)
 

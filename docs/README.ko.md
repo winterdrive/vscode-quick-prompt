@@ -29,14 +29,14 @@
 
 **완전한 Model Context Protocol (MCP) 지원이 출시되었습니다.** 수동 복사 붙여넣기를 완벽히 제거 — Cursor, Copilot, Claude 등의 AI 어시스턴트가 네이티브 도구를 통해 프롬프트를 직접 관리할 수 있습니다.
 
-### 🛡️ 공식 Skill 안전 로직
+### 🛡️ 표준 Skill 안전 로직
 
-QuickPrompt 공식 Skill에는 안정적인 운영을 보장하는 내장 안전 로직이 포함되어 있습니다:
+QuickPrompt Skill에는 안정적인 운영을 보장하는 내장 안전 로직이 포함되어 있습니다:
 
 1. **Layer 0: 연결 게이트** — `list_prompts`를 통한 자동 연결 확인. MCP가 끊기면 에이전트는 즉시 HALT를 트리거하고 폴백 처리를 제시합니다.
-2. **Layer 1: 표준 MCP 도구** — 프롬프트의 CRUD 작업과 버전 관리를 다루는 14개의 최적화된 도구.
+2. **Layer 1: 표준 MCP 도구** — 프롬프트의 CRUD 작업, 버전 관리, 개인정보 마스킹을 다루는 21개의 도구.
 3. **Layer 2: 안전 검증** — 민감한 작업 실행 전 내부 논리 검사로 데이터 일관성 보장.
-4. **Layer 3: CLI 하드 폴백** — MCP 서버를 사용할 수 없을 때 에이전트는 내장 `qp.bundle.js` 스크립트로 전환하여 데이터베이스에 직접 액세스.
+4. **Layer 3: CLI 폴백** — MCP 서버를 사용할 수 없을 때 에이전트는 내장 `qp.bundle.js` 스크립트로 전환하여 데이터베이스에 직접 액세스.
 
 ### ⚙️ 멀티 클라이언트 일괄 설정
 
@@ -54,13 +54,15 @@ QuickPrompt 공식 Skill에는 안정적인 운영을 보장하는 내장 안전
 
 - **🔌 21개의 MCP 도구**: AI 에이전트를 위한 완전한 프롬프트 관리 도구 모음.
 - **🛡️ 액션 의사결정 트리**: 에이전트가 연결되고 안전한 경우에만 작동.
-- **📦 CLI 폴백 번들**: 오프라인 시나리오를 위한 내장 보험.
+- **📦 CLI 폴백 번들**: 오프라인 시나리오에서 사용할 수 있는 내장 스크립트.
 - **⚙️ 인터랙티브 설정 패널**: Cursor, Copilot, Cline, Claude 등 주요 도구의 쉬운 설정.
-- **🧠 Agent Skill**: 표준 Agent Skills CLI로 공식 skill 설치:
+- **🧠 Agent Skill**: **Quick Prompt: Install Agent Skill**을 실행하고 **Auto Install (Recommended)**를 선택해 공식 skill을 설치합니다. 같은 설치 명령을 직접 실행할 수도 있습니다:
 
   ```bash
   npx skills add winterdrive/QuickPrompt
   ```
+
+  특정 agent용 skill/rule 파일을 직접 써야 할 때만 **Generate Skill Files Manually**를 선택합니다.
 
 ### 📚 프롬프트 관리
 

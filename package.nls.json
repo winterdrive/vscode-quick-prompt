@@ -31,6 +31,7 @@
     "command.removeMilestone.title": "Remove Milestone Tag",
     "command.deleteVersion.title": "Delete Version",
     "command.copyVersionContent.title": "Copy Version Content",
+    "command.generateSkill.title": "Install Agent Skill",
     "config.confirmBeforeDelete.description": "Show confirmation dialog before deleting prompts or versions",
     "config.ai.enabled.description": "Enable AI-powered features (disabled by default to keep the extension lightweight)",
     "config.ai.provider.description": "AI engine provider to use for features like title generation",
