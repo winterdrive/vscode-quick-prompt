@@ -90,7 +90,7 @@ Already listed above under "Available Tools". Always prefer these.
 
 Only if MCP is non-functional AND the user has explicitly confirmed they want to proceed.
 
-Use the bundled CLI script at `skills/quickprompt/scripts/qp.bundle.js` (relative to repo root):
+Use the bundled CLI script at `skills/quickprompt/scripts/qp.bundle.js` (relative to repo root), or the equivalent `scripts/qp.bundle.js` path inside the installed skill directory:
 
 ```bash
 node skills/quickprompt/scripts/qp.bundle.js list-prompts
@@ -99,4 +99,4 @@ node skills/quickprompt/scripts/qp.bundle.js edit-prompt 001 --content "New cont
 node skills/quickprompt/scripts/qp.bundle.js remove-prompt 001
 ```
 
-> If installed via the **QuickPrompt: Generate Skill File** button, use the agent-specific path instead (e.g. `.claude/skills/quickprompt/scripts/qp.bundle.js`).
+> If installed with `npx skills add winterdrive/QuickPrompt`, use the installed agent skill path instead (for example, `.agents/skills/quickprompt/scripts/qp.bundle.js` or `.claude/skills/quickprompt/scripts/qp.bundle.js`).

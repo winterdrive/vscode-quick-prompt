@@ -2,7 +2,7 @@
     "name": "quick-prompt",
     "displayName": "Quick Prompt - Capture Ideas & Queue Tasks While AI Works",
     "description": "%extension.description%",
-    "version": "0.5.4",
+    "version": "0.5.5",
     "publisher": "winterdrive",
     "icon": "docs/assets/quickprompt_icon_128.png",
     "license": "MIT",
@@ -392,9 +392,9 @@
             },
             {
                 "command": "quickPrompt.generateSkill",
-                "title": "Generate Skill File",
+                "title": "%command.generateSkill.title%",
                 "category": "Quick Prompt",
-                "icon": "$(file-code)"
+                "icon": "$(cloud-download)"
             },
             {
                 "command": "quickPrompt.maskPrompt",

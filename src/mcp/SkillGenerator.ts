@@ -3,17 +3,25 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 export type SkillGenerationResult =
-    | { status: 'generated'; target: string; projectRoot: string; skillPath: string }
+    | { status: 'generated'; target: string; projectRoot: string; skillPaths: string[] }
+    | { status: 'auto'; projectRoot: string }
     | { status: 'cancelled'; projectRoot: string }
     | { status: 'no_workspace' };
 
 export class SkillGenerator {
-    public static getProjectRoot(): string | undefined {
+    public static async getProjectRoot(): Promise<string | undefined> {
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
             return undefined;
         }
-        return workspaceFolders[0].uri.fsPath;
+        if (workspaceFolders.length === 1) {
+            return workspaceFolders[0].uri.fsPath;
+        }
+        const picked = await vscode.window.showQuickPick(
+            workspaceFolders.map(f => ({ label: f.name, description: f.uri.fsPath, uri: f.uri })),
+            { placeHolder: 'Select workspace to install the skill into' }
+        );
+        return picked?.uri.fsPath;
     }
 
     public static getMcpServerScriptPath(context: vscode.ExtensionContext): string {
@@ -21,49 +29,135 @@ export class SkillGenerator {
     }
 
     public static async generateSkill(context: vscode.ExtensionContext): Promise<SkillGenerationResult> {
-        const projectRoot = this.getProjectRoot();
-        if (!projectRoot) {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
             vscode.window.showErrorMessage('No workspace opened.');
             return { status: 'no_workspace' };
         }
 
-        const options = [
-            'Cursor (.cursor/rules/quickprompt.mdc)',
-            'Antigravity (.agents/skills/quickprompt/SKILL.md)',
-            'Claude Code (.claude/skills/quickprompt/SKILL.md)',
-            'GitHub Copilot (.github/skills/quickprompt/SKILL.md)',
-            'Kiro IDE (.kiro/skills/quickprompt/SKILL.md)',
-            'Cline (.cline/skills/quickprompt/SKILL.md)'
-        ];
+        const isMultiRoot = workspaceFolders.length > 1;
 
-        const choice = await vscode.window.showQuickPick(options, {
-            placeHolder: 'Select the AI agent to generate a skill file for',
-        });
-
-        if (!choice) {
-            return { status: 'cancelled', projectRoot };
+        // Detect active editor folder — only for pre-selection hint, never skips the picker
+        let detectedRoot = '';
+        if (isMultiRoot) {
+            const activeEditor = vscode.window.activeTextEditor;
+            if (activeEditor) {
+                const activeFolder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+                if (activeFolder) { detectedRoot = activeFolder.uri.fsPath; }
+            }
         }
 
-        const mcpServerScriptPath = this.getMcpServerScriptPath(context);
+        interface WorkspaceOption extends vscode.QuickPickItem { uri: vscode.Uri }
+        const workspaceOptions: WorkspaceOption[] = workspaceFolders.map(f => ({
+            label: f.name,
+            description: f.uri.fsPath,
+            uri: f.uri,
+        }));
 
-        if (choice.includes('Cursor')) {
-            const skillPath = await this.generateCursorRule(context, projectRoot, mcpServerScriptPath);
-            return { status: 'generated', target: 'cursor', projectRoot, skillPath };
-        } else if (choice.includes('Antigravity')) {
-            const skillPath = await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.agents');
-            return { status: 'generated', target: 'antigravity', projectRoot, skillPath };
-        } else if (choice.includes('Claude')) {
-            const skillPath = await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.claude');
-            return { status: 'generated', target: 'claude', projectRoot, skillPath };
-        } else if (choice.includes('GitHub Copilot')) {
-            const skillPath = await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.github');
-            return { status: 'generated', target: 'copilot', projectRoot, skillPath };
-        } else if (choice.includes('Kiro IDE')) {
-            const skillPath = await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.kiro');
-            return { status: 'generated', target: 'kiro', projectRoot, skillPath };
-        } else {
-            const skillPath = await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.cline');
-            return { status: 'generated', target: 'cline', projectRoot, skillPath };
+        interface ModeOption extends vscode.QuickPickItem { value: 'auto' | 'manual' | '__back__' }
+        interface AgentOption extends vscode.QuickPickItem { value: string }
+
+        const agentOptions: AgentOption[] = [
+            { label: '$(arrow-left) Back',          description: '',                                           value: '__back__' },
+            { label: '$(file-code) Cursor',         description: '.cursor/rules/quickprompt.mdc',             value: 'cursor' },
+            { label: '$(file-code) Antigravity',    description: '.agents/skills/quickprompt/SKILL.md',       value: 'antigravity' },
+            { label: '$(file-code) Claude Code',    description: '.claude/skills/quickprompt/SKILL.md',       value: 'claude' },
+            { label: '$(file-code) GitHub Copilot', description: '.github/skills/quickprompt/SKILL.md',       value: 'copilot' },
+            { label: '$(file-code) Kiro IDE',       description: '.kiro/skills/quickprompt/SKILL.md',         value: 'kiro' },
+            { label: '$(file-code) Cline',          description: '.cline/skills/quickprompt/SKILL.md',        value: 'cline' },
+            { label: '$(file-code) Gemini CLI',     description: '.gemini/skills/quickprompt/SKILL.md',       value: 'gemini' },
+        ];
+
+        type State = 'workspace' | 'mode' | 'agents';
+        let state: State = isMultiRoot ? 'workspace' : 'mode';
+        let projectRoot: string = isMultiRoot ? '' : workspaceFolders[0].uri.fsPath;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+
+            if (state === 'workspace') {
+                const qp = vscode.window.createQuickPick<WorkspaceOption>();
+                qp.items = workspaceOptions;
+                qp.placeholder = 'Select workspace to install the skill into';
+                if (detectedRoot) {
+                    const hint = workspaceOptions.find(o => o.uri.fsPath === detectedRoot);
+                    if (hint) { qp.activeItems = [hint]; }
+                }
+                const picked = await new Promise<WorkspaceOption | undefined>(resolve => {
+                    qp.onDidAccept(() => resolve(qp.activeItems[0]));
+                    qp.onDidHide(() => resolve(undefined));
+                    qp.show();
+                });
+                qp.dispose();
+                if (!picked) { return { status: 'cancelled', projectRoot: '' }; }
+                projectRoot = picked.uri.fsPath;
+                state = 'mode';
+                continue;
+            }
+
+            if (state === 'mode') {
+                const modeOptions: ModeOption[] = [
+                    ...(isMultiRoot ? [{ label: '$(arrow-left) Back', description: 'Re-select workspace', value: '__back__' as const }] : []),
+                    {
+                        label: '$(cloud-download) Auto Install (Recommended)',
+                        description: 'npx skills add winterdrive/QuickPrompt',
+                        detail: 'Installs to all AI agents detected in your workspace',
+                        value: 'auto' as const,
+                    },
+                    {
+                        label: '$(file-code) Generate Skill Files Manually',
+                        description: 'Pick one or more agents and write files yourself',
+                        value: 'manual' as const,
+                    },
+                ];
+                const mode = await vscode.window.showQuickPick(modeOptions, {
+                    placeHolder: `Install QuickPrompt skill${isMultiRoot ? ` into "${workspaceFolders.find(f => f.uri.fsPath === projectRoot)?.name}"` : ''}`,
+                });
+                if (!mode) { return { status: 'cancelled', projectRoot }; }
+                if (mode.value === '__back__') { state = 'workspace'; continue; }
+                if (mode.value === 'auto') {
+                    const terminal = vscode.window.createTerminal({ name: 'QuickPrompt: Install Skill', cwd: projectRoot });
+                    terminal.show(true);
+                    terminal.sendText('npx skills add winterdrive/QuickPrompt');
+                    return { status: 'auto', projectRoot };
+                }
+                state = 'agents';
+                continue;
+            }
+
+            // state === 'agents'
+            const choices = await vscode.window.showQuickPick(agentOptions, {
+                placeHolder: 'Select one or more AI agents to generate the skill file for',
+                canPickMany: true,
+            });
+            if (!choices || choices.length === 0) { return { status: 'cancelled', projectRoot }; }
+            if (choices.some(c => c.value === '__back__')) { state = 'mode'; continue; }
+
+            const mcpServerScriptPath = this.getMcpServerScriptPath(context);
+            const skillPaths: string[] = [];
+
+            for (const choice of choices) {
+                if (choice.value === 'cursor') {
+                    skillPaths.push(await this.generateCursorRule(context, projectRoot, mcpServerScriptPath));
+                } else if (choice.value === 'antigravity') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.agents'));
+                } else if (choice.value === 'claude') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.claude'));
+                } else if (choice.value === 'copilot') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.github'));
+                } else if (choice.value === 'kiro') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.kiro'));
+                } else if (choice.value === 'cline') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.cline'));
+                } else if (choice.value === 'gemini') {
+                    skillPaths.push(await this.generateAgentSkill(context, projectRoot, mcpServerScriptPath, '.gemini'));
+                }
+            }
+
+            if (skillPaths.length === 0) { return { status: 'cancelled', projectRoot }; }
+
+            const target = choices.map(c => c.value).join(', ');
+            return { status: 'generated', target, projectRoot, skillPaths };
         }
     }
 
@@ -116,7 +210,7 @@ ${this.getSkillContent(context, scriptRunPath)}`;
         context: vscode.ExtensionContext,
         projectRoot: string,
         mcpServerPath: string,
-        agentType: '.agents' | '.claude' | '.github' | '.kiro' | '.cline',
+        agentType: '.agents' | '.claude' | '.github' | '.kiro' | '.cline' | '.gemini',
     ): Promise<string> {
         const skillsDir = path.join(projectRoot, agentType, 'skills', 'quickprompt');
         const mdPath = path.join(skillsDir, 'SKILL.md');

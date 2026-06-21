@@ -29,14 +29,14 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 
 **Full Model Context Protocol (MCP) support is now here.** Stop copy-pasting—let your AI assistant (Cursor, Copilot, Claude, etc.) manage your prompts directly with native tools.
 
-### 🛡️ 4-Layer Safety Decision Tree
+### 🛡️ Standard Skill Safety Logic
 
-Every generated skill includes a built-in safety logic to ensure stable operation:
+The QuickPrompt skill includes built-in safety logic to ensure stable operation:
 
 1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
-2. **Layer 1: Standard MCP Tools** — Use 14 optimized tools for CRUD and versioning.
+2. **Layer 1: Standard MCP Tools** — Use 21 tools for CRUD, versioning, and privacy masking.
 3. **Layer 2: Safety Verification** — Internal sanity checks across different prompt contexts.
-4. **Layer 3: Hard Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
+4. **Layer 3: Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
 
 ### ⚙️ Multi-Client Setup
 
@@ -52,15 +52,17 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ### 🔌 AI Agent Power (New!)
 
-- **🔌 14 MCP Tools**: Complete prompt management suite for AI agents.
+- **🔌 21 MCP Tools**: Complete prompt management suite for AI agents.
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
-- **📦 CLI Fallback Bundle**: Built-in insurance for offline scenarios.
+- **📦 CLI Fallback Bundle**: Built-in script fallback for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
-- **🧠 Agent Skill**: Install the canonical skill directly:
+- **🧠 Agent Skill**: Run **Quick Prompt: Install Agent Skill** and choose **Auto Install (Recommended)** to install the canonical skill. You can also run the same install command directly:
 
   ```bash
   npx skills add winterdrive/QuickPrompt
   ```
+
+  Choose **Generate Skill Files Manually** only when you need to write agent-specific skill/rule files yourself.
 
 ### 📚 Prompt Management
 

@@ -29,14 +29,14 @@
 
 **完全な Model Context Protocol (MCP) サポートが登場しました。** 手動コピペを完全に廃止 — Cursor、Copilot、Claude などの AI アシスタントが、ネイティブツールを通じてプロンプトを直接管理できます。
 
-### 🛡️ 4層セーフティ判定ツリー
+### 🛡️ 標準 Skill の安全ロジック
 
-生成される各 Skill には、安全で安定した動作を保証する組み込みロジックが含まれています：
+QuickPrompt Skill には、安全で安定した動作を保証する組み込みロジックが含まれています：
 
 1. **Layer 0: 接続ゲート** — `list_prompts` による自動接続確認。MCP が切断された場合、エージェントは即座に HALT と判定し、フォールバック処理をユーザーに提示します。
-2. **Layer 1: 標準 MCP ツール** — プロンプトの CRUD 操作とバージョン管理を網羅した 14 個の最適化ツール。
+2. **Layer 1: 標準 MCP ツール** — プロンプトの CRUD 操作、バージョン管理、プライバシーマスキングを扱う 21 個のツール。
 3. **Layer 2: 安全検証** — 敏感な操作の実行前に内部的なサニティチェックを実施し、データ整合性を確保。
-4. **Layer 3: CLI ハードフォールバック** — MCP サーバーが利用不可の場合、エージェントは内蔵の `qp.bundle.js` スクリプトに切り替えてデータベースに直接アクセス。
+4. **Layer 3: CLI フォールバック** — MCP サーバーが利用不可の場合、エージェントは内蔵の `qp.bundle.js` スクリプトに切り替えてデータベースに直接アクセス。
 
 ### ⚙️ マルチクライアント一括設定
 
@@ -54,13 +54,15 @@
 
 - **🔌 21 個の MCP ツール**：AI エージェント用の完全なプロンプト管理スイート。
 - **🛡️ アクション判定ツリー**：エージェントは接続状態が安全で実行可能な場合にのみ動作。
-- **📦 CLI フォールバック バンドル**：オフラインシナリオ向けの組み込みバックアップ。
+- **📦 CLI フォールバック バンドル**：オフライン時に利用できる内蔵スクリプト。
 - **⚙️ インタラクティブ設定パネル**：Cursor、Copilot、Cline、Claude など主要ツールの簡単セットアップ。
-- **🧠 Agent Skill**：公式 skill を直接インストール：
+- **🧠 Agent Skill**：**Quick Prompt: Install Agent Skill** を実行し、**Auto Install (Recommended)** を選んで公式 skill をインストールします。同じインストールコマンドを直接実行することもできます：
 
   ```bash
   npx skills add winterdrive/QuickPrompt
   ```
+
+  特定の agent 向け skill/rule ファイルを手動で書き出す必要がある場合だけ、**Generate Skill Files Manually** を選びます。
 
 ### 📚 プロンプト管理
 
@@ -246,7 +248,6 @@ Quick Prompt v0.5.1 は拡張コマンドを `quickPrompt.*` namespace に統一
 | プロンプト削除 | `quickPrompt.deletePrompt` |
 | ピン トグル | `quickPrompt.togglePin` |
 | MCP 設定表示 | `quickPrompt.showMcpConfig` |
-| Skill ファイル生成 | `quickPrompt.generateSkill` |
 | AI 接続テスト | `quickPrompt.testAIConnection` |
 
 仮想プロンプトエディタタブは `quickprompt:` URI スキームを使用。既存のプロンプトデータと設定は変更されません。ただし、以前の VS Code セッションから復元された古い仮想エディタタブ、または古い仮想 URI へのリンクはサイドバーから開き直す必要があります。
