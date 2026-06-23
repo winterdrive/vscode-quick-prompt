@@ -51,15 +51,25 @@ export class PromptFileSystemProvider implements vscode.FileSystemProvider {
      * 根據 Prompt ID 生成虛擬 URI
      */
     getUriForPrompt(promptId: string): vscode.Uri {
-        return vscode.Uri.parse(`quickprompt:/${promptId}.md`);
+        const colonIndex = promptId.indexOf(':');
+        if (colonIndex !== -1) {
+            const wsName = promptId.substring(0, colonIndex);
+            const actualId = promptId.substring(colonIndex + 1);
+            return vscode.Uri.parse(`quickprompt:/${encodeURIComponent(wsName)}/${encodeURIComponent(actualId)}.md`);
+        }
+        return vscode.Uri.parse(`quickprompt:/${encodeURIComponent(promptId)}.md`);
     }
 
     /**
      * 從 URI 解析出 Prompt ID
      */
     private getPromptIdFromUri(uri: vscode.Uri): string {
-        // 移除開頭的 '/' 和結尾的 '.md'
-        return uri.path.substring(1).replace(/\.md$/, '');
+        const cleanPath = uri.path.replace(/\.md$/, '');
+        const parts = cleanPath.substring(1).split('/');
+        if (parts.length >= 2) {
+            return `${decodeURIComponent(parts[0])}:${decodeURIComponent(parts[1])}`;
+        }
+        return decodeURIComponent(parts[0]);
     }
 
     // ==================== FileSystemProvider 介面實作 ====================

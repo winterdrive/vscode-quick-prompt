@@ -2,6 +2,12 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { PromptVersion, VersionHistory, CreateVersionOptions } from '../types/versionHistory';
 
+export interface VersionHistoryLocation {
+    promptId: string;
+    historyDir: string;
+    cacheKey: string;
+}
+
 /**
  * Service for managing prompt version history
  * 
@@ -15,6 +21,7 @@ import { PromptVersion, VersionHistory, CreateVersionOptions } from '../types/ve
 export class VersionHistoryService {
     private historyDir: string;
     private cache: Map<string, VersionHistory> = new Map();
+    private workspaceResolver?: (promptId: string) => VersionHistoryLocation | undefined;
 
     constructor(private context: vscode.ExtensionContext) {
         // Determine history directory based on workspace
@@ -29,23 +36,29 @@ export class VersionHistoryService {
         }
     }
 
+    setWorkspaceResolver(resolver: (promptId: string) => VersionHistoryLocation | undefined): void {
+        this.workspaceResolver = resolver;
+    }
+
     /**
      * Load version history for a specific prompt
      */
     async loadHistory(promptId: string): Promise<VersionHistory> {
+        const location = this.resolveLocation(promptId);
         // Check cache first
-        if (this.cache.has(promptId)) {
-            return this.cache.get(promptId)!;
+        if (this.cache.has(location.cacheKey)) {
+            return this.cache.get(location.cacheKey)!;
         }
 
         try {
-            const historyPath = this.getHistoryPath(promptId);
+            const historyPath = this.getHistoryPath(location);
             const uri = vscode.Uri.file(historyPath);
             const content = await vscode.workspace.fs.readFile(uri);
             const history: VersionHistory = JSON.parse(content.toString());
+            history.promptId = promptId;
 
             // Cache the loaded history
-            this.cache.set(promptId, history);
+            this.cache.set(location.cacheKey, history);
             return history;
         } catch (error: any) {
             if (error.code === 'FileNotFound') {
@@ -55,7 +68,7 @@ export class VersionHistoryService {
                     versions: [],
                     currentVersionId: ''
                 };
-                this.cache.set(promptId, emptyHistory);
+                this.cache.set(location.cacheKey, emptyHistory);
                 return emptyHistory;
             }
             throw error;
@@ -67,19 +80,24 @@ export class VersionHistoryService {
      */
     async saveHistory(history: VersionHistory): Promise<void> {
         try {
-            const historyPath = this.getHistoryPath(history.promptId);
+            const location = this.resolveLocation(history.promptId);
+            const historyPath = this.getHistoryPath(location);
             const uri = vscode.Uri.file(historyPath);
-            const dirUri = vscode.Uri.file(this.historyDir);
+            const dirUri = vscode.Uri.file(location.historyDir);
 
             // Ensure directory exists
             await vscode.workspace.fs.createDirectory(dirUri);
 
             // Save to disk
-            const content = JSON.stringify(history, null, 2);
+            const storageHistory: VersionHistory = {
+                ...history,
+                promptId: location.promptId
+            };
+            const content = JSON.stringify(storageHistory, null, 2);
             await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
 
             // Update cache
-            this.cache.set(history.promptId, history);
+            this.cache.set(location.cacheKey, history);
         } catch (error) {
             console.error(`Failed to save version history for ${history.promptId}:`, error);
             throw error;
@@ -311,7 +329,7 @@ export class VersionHistoryService {
      */
     clearCache(promptId?: string): void {
         if (promptId) {
-            this.cache.delete(promptId);
+            this.cache.delete(this.resolveLocation(promptId).cacheKey);
         } else {
             this.cache.clear();
         }
@@ -322,10 +340,11 @@ export class VersionHistoryService {
      */
     async deleteHistory(promptId: string): Promise<void> {
         try {
-            const historyPath = this.getHistoryPath(promptId);
+            const location = this.resolveLocation(promptId);
+            const historyPath = this.getHistoryPath(location);
             const uri = vscode.Uri.file(historyPath);
             await vscode.workspace.fs.delete(uri);
-            this.cache.delete(promptId);
+            this.cache.delete(location.cacheKey);
 
             // Notify provider (reset meta)
             if (this.promptProvider) {
@@ -346,14 +365,27 @@ export class VersionHistoryService {
     /**
      * Get the file path for a prompt's history
      */
-    private getHistoryPath(promptId: string): string {
+    private resolveLocation(promptId: string): VersionHistoryLocation {
+        return this.workspaceResolver?.(promptId) ?? {
+            promptId,
+            historyDir: this.historyDir,
+            cacheKey: promptId
+        };
+    }
+
+    private getHistoryPath(location: VersionHistoryLocation): string {
         // Validation: Ensure promptId is safe (no path traversal)
-        if (promptId.includes('..') || promptId.includes('/') || promptId.includes('\\')) {
-            throw new Error(`Invalid promptId: ${promptId}`);
+        if (
+            location.promptId.includes('..') ||
+            location.promptId.includes('/') ||
+            location.promptId.includes('\\') ||
+            location.promptId.includes(':')
+        ) {
+            throw new Error(`Invalid promptId: ${location.promptId}`);
         }
 
-        const safePromptId = path.basename(promptId);
-        return path.join(this.historyDir, `${safePromptId}.history.json`);
+        const safePromptId = path.basename(location.promptId);
+        return path.join(location.historyDir, `${safePromptId}.history.json`);
     }
 
     /**

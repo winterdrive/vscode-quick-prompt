@@ -1,9 +1,71 @@
-export const workspace = {
+import * as fs from 'fs'
+import * as path from 'path'
+
+interface MockWorkspaceFolder {
+    uri: Uri
+    name: string
+}
+
+export const workspace: {
+    getConfiguration: (_section?: string) => { get: <T>(_key: string, defaultValue: T) => T }
+    workspaceFolders: undefined | MockWorkspaceFolder[]
+    activeTextEditor: undefined | { document: { uri: Uri } }
+    getWorkspaceFolder: jest.Mock<MockWorkspaceFolder | undefined, [Uri]>
+    onDidChangeConfiguration: (_listener: unknown) => { dispose: () => undefined }
+    onDidChangeWorkspaceFolders: (_listener: unknown) => { dispose: () => undefined }
+    createFileSystemWatcher: jest.Mock
+    fs: {
+        readFile: (uri: Uri) => Promise<Uint8Array>
+        writeFile: (uri: Uri, content: Uint8Array) => Promise<void>
+        createDirectory: (uri: Uri) => Promise<void>
+        delete: (uri: Uri) => Promise<void>
+    }
+} = {
     getConfiguration: (_section?: string) => ({
         get: <T>(_key: string, defaultValue: T): T => defaultValue,
     }),
-    workspaceFolders: undefined as undefined,
+    workspaceFolders: undefined,
+    activeTextEditor: undefined as undefined | { document: { uri: Uri } },
+    getWorkspaceFolder: jest.fn((uri: Uri): MockWorkspaceFolder | undefined =>
+        workspace.workspaceFolders?.find(folder => uri.fsPath.startsWith(folder.uri.fsPath))
+    ),
     onDidChangeConfiguration: (_listener: unknown) => ({ dispose: () => undefined }),
+    onDidChangeWorkspaceFolders: (_listener: unknown) => ({ dispose: () => undefined }),
+    createFileSystemWatcher: jest.fn(() => ({
+        onDidChange: jest.fn(),
+        onDidCreate: jest.fn(),
+        onDidDelete: jest.fn(),
+        dispose: jest.fn(),
+    })),
+    fs: {
+        readFile: async (uri: Uri): Promise<Uint8Array> => {
+            try {
+                return await fs.promises.readFile(uri.fsPath)
+            } catch (error: any) {
+                if (error?.code === 'ENOENT') {
+                    error.code = 'FileNotFound'
+                }
+                throw error
+            }
+        },
+        writeFile: async (uri: Uri, content: Uint8Array): Promise<void> => {
+            await fs.promises.mkdir(path.dirname(uri.fsPath), { recursive: true })
+            await fs.promises.writeFile(uri.fsPath, content)
+        },
+        createDirectory: async (uri: Uri): Promise<void> => {
+            await fs.promises.mkdir(uri.fsPath, { recursive: true })
+        },
+        delete: async (uri: Uri): Promise<void> => {
+            try {
+                await fs.promises.rm(uri.fsPath, { recursive: true, force: false })
+            } catch (error: any) {
+                if (error?.code === 'ENOENT') {
+                    error.code = 'FileNotFound'
+                }
+                throw error
+            }
+        },
+    },
 }
 
 export const TreeItemCollapsibleState = {
@@ -47,7 +109,14 @@ export class Uri {
         return new Uri('file', '', path, '', '')
     }
     static parse(value: string): Uri {
-        return new Uri('', '', value, '', '')
+        const match = value.match(/^([^:]+):(.+)$/)
+        if (!match) {
+            return new Uri('', '', value, '', '')
+        }
+        return new Uri(match[1], '', match[2], '', '')
+    }
+    static joinPath(base: Uri, ...segments: string[]): Uri {
+        return Uri.file(path.join(base.fsPath, ...segments))
     }
     constructor(
         public readonly scheme: string,
@@ -58,6 +127,13 @@ export class Uri {
     ) {}
     get fsPath(): string { return this.path }
     toString(): string { return `${this.scheme}://${this.path}` }
+}
+
+export class RelativePattern {
+    constructor(
+        public readonly base: Uri,
+        public readonly pattern: string,
+    ) {}
 }
 
 export class ExtensionContext {
@@ -87,11 +163,13 @@ export class ExtensionContext {
 }
 
 export const window = {
+    activeTextEditor: undefined as undefined | { document: { uri: Uri } },
     showInformationMessage: jest.fn(),
     showWarningMessage: jest.fn(),
     showErrorMessage: jest.fn(),
     showInputBox: jest.fn(),
     showQuickPick: jest.fn(),
+    setStatusBarMessage: jest.fn(),
     onDidChangeWindowState: jest.fn(() => ({ dispose: () => undefined })),
     onDidChangeTextEditorSelection: jest.fn(() => ({ dispose: () => undefined })),
     createOutputChannel: jest.fn(() => ({
@@ -111,6 +189,11 @@ export const window = {
         visible: false,
         selection: [],
     })),
+}
+
+export const FileSystemError = {
+    FileNotFound: (uri: Uri) => Object.assign(new Error(`File not found: ${uri.toString()}`), { code: 'FileNotFound' }),
+    NoPermissions: (message: string) => Object.assign(new Error(message), { code: 'NoPermissions' }),
 }
 
 export const commands = {

@@ -54,6 +54,13 @@ export function registerPromptCommands(
         })
     );
 
+    // 選擇 multi-root 顯示範圍
+    context.subscriptions.push(
+        vscode.commands.registerCommand('quickPrompt.selectScope', async () => {
+            await handleSelectScope(promptProvider);
+        })
+    );
+
     // 複製 Prompt
     context.subscriptions.push(
         vscode.commands.registerCommand('quickPrompt.insert', async (item: PromptItem) => {
@@ -362,7 +369,7 @@ async function handleSearch(
     promptProvider: PromptProvider,
     clipboardManager: ClipboardManager
 ): Promise<void> {
-    const prompts = promptProvider.getPrompts();
+    const prompts = promptProvider.getVisiblePrompts();
     const clipboardHistory = clipboardManager.getHistory();
 
     interface QuickPickItemWithType extends vscode.QuickPickItem {
@@ -374,6 +381,8 @@ async function handleSearch(
 
     // 1. 我的 Prompts（Pinned 優先）
     if (prompts.length > 0) {
+        const showWorkspaceLabels = promptProvider.shouldShowWorkspaceLabels();
+
         items.push({
             label: '我的 Prompts',
             kind: vscode.QuickPickItemKind.Separator,
@@ -384,9 +393,10 @@ async function handleSearch(
         const sorted = sortPrompts(prompts);
         sorted.forEach(p => {
             const icon = getPromptQuickPickIcon(p);
+            const workspaceName = showWorkspaceLabels ? promptProvider.getWorkspaceNameForPrompt(p.id) : undefined;
             items.push({
                 label: `${icon} ${p.title}`,
-                description: '',
+                description: workspaceName ? `$(folder) ${workspaceName}` : '',
                 detail: `使用 ${p.use_count} 次 (${p.content.length} 字元)`,
                 type: 'prompt',
                 data: p
@@ -435,6 +445,34 @@ async function handleSearch(
     }
 }
 
+async function handleSelectScope(promptProvider: PromptProvider): Promise<void> {
+    const configs = promptProvider.getWorkspaceConfigs();
+    if (configs.length <= 1) {
+        vscode.window.setStatusBarMessage('Only one Quick Prompt workspace is available', 2500);
+        return;
+    }
+
+    const pickedKeys = new Set(promptProvider.getPickedWorkspaceScopeKeys());
+    const items: (vscode.QuickPickItem & { workspaceKey: string })[] = configs.map(config => ({
+        label: config.name,
+        description: config.uri.fsPath,
+        picked: pickedKeys.has(config.key),
+        workspaceKey: config.key
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+        canPickMany: true,
+        placeHolder: 'Select workspaces to show (empty = show all workspaces)',
+        matchOnDescription: true
+    });
+
+    if (!selected) {
+        return;
+    }
+
+    await promptProvider.setActiveWorkspaceScope(selected.map(item => item.workspaceKey));
+}
+
 /**
  * Handle insert prompt command
  */
@@ -445,6 +483,39 @@ async function handleInsertPrompt(item: PromptItem, promptProvider: PromptProvid
 }
 
 /**
+ * Helper to pick target workspace in multi-root setup
+ */
+async function pickWorkspace(promptProvider: PromptProvider): Promise<string | undefined> {
+    const configs = promptProvider.getWorkspaceConfigs();
+    if (!configs || configs.length <= 1) {
+        return configs?.[0]?.key;
+    }
+
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor) {
+        const folder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+        if (folder) {
+            const matched = configs.find((c: any) => c.uri.toString() === folder.uri.toString());
+            if (matched) {
+                return matched.key;
+            }
+        }
+    }
+
+    const items: (vscode.QuickPickItem & { workspaceKey: string })[] = configs.map((c) => ({
+        label: c.name,
+        description: c.uri.fsPath,
+        workspaceKey: c.key
+    }));
+
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: '選擇要將 Prompt 儲存至哪一個工作區？'
+    });
+
+    return selected?.workspaceKey;
+}
+
+/**
  * Handle add prompt command
  * 建立空白 Prompt 並直接開啟內容編輯器，避免先要求輸入標題
  */
@@ -452,12 +523,18 @@ async function handleAddPrompt(
     promptProvider: PromptProvider,
     fileSystemProvider: PromptFileSystemProvider
 ): Promise<void> {
+    const targetWorkspace = await pickWorkspace(promptProvider);
+    if (!targetWorkspace) {
+        return;
+    }
+
     const fallbackTitle = I18n.getMessage('input.untitledPrompt');
     const promptId = await promptProvider.addPromptWithOption(
         fallbackTitle,
         '',
         true,  // silent=true,不顯示儲存通知
-        'ai'
+        'ai',
+        targetWorkspace
     );
 
     const uri = fileSystemProvider.getUriForPrompt(promptId);
@@ -478,6 +555,11 @@ async function handleAddPromptWithTitle(
     promptProvider: PromptProvider,
     titleGenService: TitleGenerationService
 ): Promise<void> {
+    const targetWorkspace = await pickWorkspace(promptProvider);
+    if (!targetWorkspace) {
+        return;
+    }
+
     const title = await vscode.window.showInputBox({
         prompt: I18n.getMessage('input.addPromptWithTitleTitlePrompt'),
         placeHolder: I18n.getMessage('input.addPromptTitlePlaceholder'),
@@ -508,7 +590,7 @@ async function handleAddPromptWithTitle(
         return;
     }
 
-    await promptProvider.addPrompt(title.trim(), content.trim(), 'user');
+    await promptProvider.addPromptWithOption(title.trim(), content.trim(), false, 'user', targetWorkspace);
 }
 
 /**
@@ -532,13 +614,19 @@ async function handleSilentAdd(
         return;
     }
 
+    const targetWorkspace = await pickWorkspace(promptProvider);
+    if (!targetWorkspace) {
+        return;
+    }
+
     // 1. 立即生成 Fallback 標題並儲存 (不等待 AI)
     const fallbackTitle = generateAutoTitle(selection);
     const promptId = await promptProvider.addPromptWithOption(
         fallbackTitle,
         selection,
         true,  // silent=true，不顯示儲存通知
-        'ai'
+        'ai',
+        targetWorkspace
     );
 
     // 2. 顯示狀態列訊息
@@ -553,7 +641,7 @@ async function handleSilentAdd(
         async (aiTitle, fallbackTitleFromAI) => {
             // AI 完成後，更新 Prompt 標題
             const prompts = promptProvider.getPrompts();
-            const prompt = prompts.find(p => p.content === selection);
+            const prompt = prompts.find(p => p.id === promptId);
 
             if (prompt && aiTitle !== fallbackTitle) {
                 // 更新標題
@@ -661,13 +749,19 @@ async function handlePinClipboardItem(
 ): Promise<void> {
     if (!item || !item.item) return;
 
+    const targetWorkspace = await pickWorkspace(promptProvider);
+    if (!targetWorkspace) {
+        return;
+    }
+
     // 1. 立即生成 Fallback 標題並儲存 (不等待 AI)
     const fallbackTitle = generateAutoTitle(item.item.content);
     const promptId = await promptProvider.addPromptWithOption(
         fallbackTitle,
         item.item.content,
         true,  // silent=true,不顯示儲存通知
-        'ai'
+        'ai',
+        targetWorkspace
     );
 
     // 2. 移除剪貼簿項目
@@ -685,7 +779,7 @@ async function handlePinClipboardItem(
         async (aiTitle, fallbackTitleFromAI) => {
             // AI 完成後,更新 Prompt 標題
             const prompts = promptProvider.getPrompts();
-            const prompt = prompts.find(p => p.content === item.item.content);
+            const prompt = prompts.find(p => p.id === promptId);
 
             if (prompt && aiTitle !== fallbackTitle) {
                 // 更新標題

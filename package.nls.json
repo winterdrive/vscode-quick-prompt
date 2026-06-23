@@ -5,6 +5,7 @@
     "view.prompts.name": "Prompts",
     "view.clipboard.name": "Clipboard History",
     "command.search.title": "Search Prompts",
+    "command.selectScope.title": "Select Scope",
     "command.insert.title": "Copy Prompt",
     "command.addPrompt.title": "Add Prompt (Auto Title)",
     "command.addPromptWithTitle.title": "Add Prompt (Custom Title)",
