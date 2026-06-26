@@ -32,3 +32,5 @@ dist-test/
 .gemini/skills/edo-tensei/
 .cursor/rules/edo-tensei.mdc
 prompts.json
+AGENTS.md
+debug.log

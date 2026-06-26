@@ -2,6 +2,22 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.5.6] - Multi-root Select Scope - 2026-06-24
+
+### 🗂 Multi-root Select Scope
+
+- **Flat prompt list**: Multi-root workspaces no longer show workspace section rows in the tree. Prompts from the active scope are displayed as a clean flat list, preserving the original single-root UX.
+- **Select Scope button**: New panel title button lets users pick one or more workspaces to display. Empty selection = show all workspaces.
+- **Scope-aware search**: `Search Prompts` only searches within the current scope. Workspace labels appear next to results only when All or multiple workspaces are selected.
+- **Tooltip workspace info**: Each prompt shows its workspace name in the hover tooltip instead of a row description, keeping the tree view horizontally uncluttered.
+- **Persistent scope**: Active scope is saved to `workspaceState` and restored on reload. Removed workspaces are automatically cleaned up from the saved scope.
+- **View description**: Panel header shows current scope (`WorkspaceName` / `All Workspaces` / `N workspaces`).
+
+### 🧪 Tests
+
+- Added `src/test/unit/promptProviderMultiroot.test.ts` and `src/test/unit/multiroot.test.ts` (13 unit tests) covering flat list, scope filtering, and tooltip workspace names.
+- Added `src/test/ui/multiRootQuickPrompt.ui.test.ts` (3 E2E tests) covering flat list rendering, scope-aware search, and Quick Add routing to the correct workspace root.
+
 ## [0.5.5] - Skill Installer UX - 2026-06-16
 
 ### 🧠 Skill Installer UX (closes #25)

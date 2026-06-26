@@ -1,18 +1,28 @@
-/**
- * Prompt management tool handlers for MCP server.
- */
-
-import { PromptManager, OptimisticLockError } from '../../../src/core/PromptManager.js';
-import { VersionManager } from '../../../src/core/VersionManager.js';
+import { OptimisticLockError } from '../../../src/core/PromptManager.js';
 import type { Prompt } from '../../../src/core/types.js';
 import type { ToolResponse, PromptSummary } from '../types.js';
 import { ErrorType } from '../types.js';
 import { createSuccess, createError } from '../utils/ResponseFactory.js';
+import type { WorkspaceBinding, WorkspaceRefArgs } from '../workspaceTypes.js';
+
+type WorkspacePromptSummary = PromptSummary & {
+  workspace: string;
+  workspaceId: string;
+  workspaceUri: string;
+};
+
+type WorkspacePrompt = Prompt & {
+  workspace: string;
+  workspaceId: string;
+  workspaceUri: string;
+};
+
+type PromptIdArgs = { id: string } & WorkspaceRefArgs;
 
 export class PromptTools {
   constructor(
-    private promptManager: PromptManager,
-    private versionManager: VersionManager,
+    private getWorkspace: (workspaceRef?: string) => WorkspaceBinding | undefined,
+    private getAllWorkspaces: () => WorkspaceBinding[]
   ) {}
 
   /**
@@ -30,9 +40,9 @@ export class PromptTools {
     throw new Error('Optimistic lock conflict — still failing after 3 retries');
   }
 
-  private toSummary(p: Prompt): PromptSummary {
+  private toSummary(p: Prompt, ws: WorkspaceBinding): WorkspacePromptSummary {
     return {
-      id: p.id,
+      id: this.wrapId(ws, p.id),
       title: p.title,
       contentPreview: p.content.length > 100 ? p.content.slice(0, 100) + '...' : p.content,
       use_count: p.use_count,
@@ -40,40 +50,98 @@ export class PromptTools {
       created_at: p.created_at,
       last_used: p.last_used,
       order: p.order ?? 0,
+      workspace: ws.name,
+      workspaceId: ws.id,
+      workspaceUri: ws.uri,
     };
   }
 
-  async listPrompts(): Promise<ToolResponse<{ prompts: PromptSummary[]; total: number; pinnedCount: number }>> {
+  private wrapPrompt(p: Prompt, ws: WorkspaceBinding): WorkspacePrompt {
+    return {
+      ...p,
+      id: this.wrapId(ws, p.id),
+      workspace: ws.name,
+      workspaceId: ws.id,
+      workspaceUri: ws.uri,
+    };
+  }
+
+  private wrapId(ws: WorkspaceBinding, promptId: string): string {
+    return `${ws.name}:${promptId}`;
+  }
+
+  private parsePrefixedId(prefixedId: string): { wsName: string; actualId: string } | undefined {
+    const colonIndex = prefixedId.indexOf(':');
+    if (colonIndex === -1) {
+      return undefined;
+    }
+    return {
+      wsName: prefixedId.substring(0, colonIndex),
+      actualId: prefixedId.substring(colonIndex + 1),
+    };
+  }
+
+  private getWorkspaceRef(args: WorkspaceRefArgs, fallbackName?: string): string | undefined {
+    return args.workspaceId || args.workspaceUri || args.workspace || fallbackName;
+  }
+
+  async listPrompts(): Promise<ToolResponse<{ prompts: WorkspacePromptSummary[]; total: number; pinnedCount: number }>> {
     try {
-      const prompts = this.promptManager.getPrompts();
-      const summaries = prompts.map(p => this.toSummary(p));
-      const pinnedCount = prompts.filter(p => !!p.pinned).length;
+      let allSummaries: WorkspacePromptSummary[] = [];
+      let totalPinned = 0;
+      const workspaces = this.getAllWorkspaces();
+
+      for (const ws of workspaces) {
+        const prompts = ws.promptManager.getPrompts();
+        const summaries = prompts.map(p => this.toSummary(p, ws));
+        allSummaries = allSummaries.concat(summaries);
+        totalPinned += prompts.filter(p => !!p.pinned).length;
+      }
+
       return createSuccess({
-        prompts: summaries,
-        total: prompts.length,
-        pinnedCount,
+        prompts: allSummaries,
+        total: allSummaries.length,
+        pinnedCount: totalPinned,
       });
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to list prompts: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async getPrompt(args: { id: string }): Promise<ToolResponse<Prompt>> {
+  async getPrompt(args: PromptIdArgs): Promise<ToolResponse<WorkspacePrompt>> {
     try {
-      const prompt = this.promptManager.getPrompt(args.id);
-      if (!prompt) {
-        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${args.id}`);
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
       }
-      return createSuccess(prompt);
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const prompt = ws.promptManager.getPrompt(parsed.actualId);
+      if (!prompt) {
+        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${parsed.actualId} in workspace ${parsed.wsName}`);
+      }
+      return createSuccess(this.wrapPrompt(prompt, ws));
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to get prompt: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async createPrompt(args: { title: string; content: string; pinned?: boolean }): Promise<ToolResponse<Prompt>> {
+  async createPrompt(args: { title: string; content: string; pinned?: boolean } & WorkspaceRefArgs): Promise<ToolResponse<WorkspacePrompt>> {
     try {
+      const ws = this.getWorkspace(this.getWorkspaceRef(args));
+      if (!ws) {
+        return createError(
+          ErrorType.NOT_FOUND,
+          `Workspace not found: ${this.getWorkspaceRef(args) || 'default'}. Please specify a valid target workspace.`
+        );
+      }
+
       const prompt = this.withRetry(() =>
-        this.promptManager.createPrompt(args.title, args.content, {
+        ws.promptManager.createPrompt(args.title, args.content, {
           pinned: args.pinned,
           titleSource: 'user',
         }),
@@ -81,7 +149,7 @@ export class PromptTools {
 
       // Create initial version
       try {
-        this.versionManager.createVersion(prompt.id, {
+        ws.versionManager.createVersion(prompt.id, {
           content: prompt.content,
           changeType: 'create',
         });
@@ -89,26 +157,36 @@ export class PromptTools {
         // Non-critical — prompt is still created
       }
 
-      return createSuccess(prompt, `Prompt "${prompt.title}" created successfully.`);
+      return createSuccess(this.wrapPrompt(prompt, ws), `Prompt "${prompt.title}" created successfully in workspace "${ws.name}".`);
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to create prompt: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async editPrompt(args: { id: string; title?: string; content?: string }): Promise<ToolResponse<Prompt>> {
+  async editPrompt(args: PromptIdArgs & { title?: string; content?: string }): Promise<ToolResponse<WorkspacePrompt>> {
     try {
       if (!args.title && !args.content) {
         return createError(ErrorType.VALIDATION_ERROR, 'At least one of title or content must be provided.');
       }
 
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // Get current prompt for version tracking
-      const current = this.promptManager.getPrompt(args.id);
+      const current = ws.promptManager.getPrompt(parsed.actualId);
       if (!current) {
-        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${args.id}`);
+        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${parsed.actualId}`);
       }
 
       const updated = this.withRetry(() =>
-        this.promptManager.editPrompt(args.id, {
+        ws.promptManager.editPrompt(parsed.actualId, {
           title: args.title,
           content: args.content,
         }),
@@ -117,7 +195,7 @@ export class PromptTools {
       // Create version if content changed
       if (args.content && args.content !== current.content) {
         try {
-          this.versionManager.createVersion(args.id, {
+          ws.versionManager.createVersion(parsed.actualId, {
             content: args.content,
             changeType: 'edit',
           });
@@ -126,7 +204,7 @@ export class PromptTools {
         }
       }
 
-      return createSuccess(updated, `Prompt "${updated.title}" updated successfully.`);
+      return createSuccess(this.wrapPrompt(updated, ws), `Prompt "${updated.title}" updated successfully.`);
     } catch (error) {
       if (error instanceof Error && error.message.includes('not found')) {
         return createError(ErrorType.NOT_FOUND, error.message);
@@ -135,19 +213,29 @@ export class PromptTools {
     }
   }
 
-  async deletePrompt(args: { id: string }): Promise<ToolResponse<{ deletedId: string }>> {
+  async deletePrompt(args: PromptIdArgs): Promise<ToolResponse<{ deletedId: string }>> {
     try {
-      const prompt = this.promptManager.getPrompt(args.id);
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const prompt = ws.promptManager.getPrompt(parsed.actualId);
       if (!prompt) {
-        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${args.id}`);
+        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${parsed.actualId}`);
       }
 
       const title = prompt.title;
-      this.withRetry(() => this.promptManager.deletePrompt(args.id));
+      this.withRetry(() => ws.promptManager.deletePrompt(parsed.actualId));
 
       // Also delete version history
       try {
-        this.versionManager.deleteHistory(args.id);
+        ws.versionManager.deleteHistory(parsed.actualId);
       } catch {
         // Non-critical
       }
@@ -158,11 +246,21 @@ export class PromptTools {
     }
   }
 
-  async togglePin(args: { id: string }): Promise<ToolResponse<{ id: string; pinned: boolean }>> {
+  async togglePin(args: PromptIdArgs): Promise<ToolResponse<{ id: string; pinned: boolean; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
-      const updated = this.withRetry(() => this.promptManager.togglePin(args.id));
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const updated = this.withRetry(() => ws.promptManager.togglePin(parsed.actualId));
       return createSuccess(
-        { id: updated.id, pinned: updated.pinned ?? false },
+        { id: this.wrapId(ws, updated.id), pinned: updated.pinned ?? false, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Prompt "${updated.title}" ${updated.pinned ? 'pinned' : 'unpinned'}.`,
       );
     } catch (error) {
@@ -173,11 +271,21 @@ export class PromptTools {
     }
   }
 
-  async movePrompt(args: { id: string; direction: 'up' | 'down' }): Promise<ToolResponse<{ id: string; newOrder: number }>> {
+  async movePrompt(args: PromptIdArgs & { direction: 'up' | 'down' }): Promise<ToolResponse<{ id: string; newOrder: number; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
-      const updated = this.withRetry(() => this.promptManager.movePrompt(args.id, args.direction));
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const updated = this.withRetry(() => ws.promptManager.movePrompt(parsed.actualId, args.direction));
       return createSuccess(
-        { id: updated.id, newOrder: updated.order ?? 0 },
+        { id: this.wrapId(ws, updated.id), newOrder: updated.order ?? 0, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Prompt moved ${args.direction}.`,
       );
     } catch (error) {
@@ -188,12 +296,20 @@ export class PromptTools {
     }
   }
 
-  async searchPrompts(args: { query: string }): Promise<ToolResponse<{ prompts: PromptSummary[]; total: number; query: string }>> {
+  async searchPrompts(args: { query: string }): Promise<ToolResponse<{ prompts: WorkspacePromptSummary[]; total: number; query: string }>> {
     try {
-      const results = this.promptManager.searchPrompts(args.query);
+      let allResults: WorkspacePromptSummary[] = [];
+      const workspaces = this.getAllWorkspaces();
+
+      for (const ws of workspaces) {
+        const results = ws.promptManager.searchPrompts(args.query);
+        const summaries = results.map(p => this.toSummary(p, ws));
+        allResults = allResults.concat(summaries);
+      }
+
       return createSuccess({
-        prompts: results.map(p => this.toSummary(p)),
-        total: results.length,
+        prompts: allResults,
+        total: allResults.length,
         query: args.query,
       });
     } catch (error) {
@@ -201,24 +317,37 @@ export class PromptTools {
     }
   }
 
-  async copyPromptContent(args: { id: string }): Promise<ToolResponse<{ id: string; content: string; use_count: number }>> {
+  async copyPromptContent(args: PromptIdArgs): Promise<ToolResponse<{ id: string; content: string; use_count: number; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
-      const prompt = this.promptManager.getPrompt(args.id);
+      const parsed = this.parsePrefixedId(args.id);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'ID must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const prompt = ws.promptManager.getPrompt(parsed.actualId);
       if (!prompt) {
-        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${args.id}`);
+        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${parsed.actualId}`);
       }
 
       // Increment use count
       try {
-        this.withRetry(() => this.promptManager.incrementUseCount(args.id));
+        this.withRetry(() => ws.promptManager.incrementUseCount(parsed.actualId));
       } catch {
         // Non-critical
       }
 
       return createSuccess({
-        id: prompt.id,
+        id: this.wrapId(ws, parsed.actualId),
         content: prompt.content,
         use_count: prompt.use_count + 1,
+        workspace: ws.name,
+        workspaceId: ws.id,
+        workspaceUri: ws.uri,
       }, `Content copied. Use count: ${prompt.use_count + 1}.`);
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to copy prompt content: ${error instanceof Error ? error.message : String(error)}`);

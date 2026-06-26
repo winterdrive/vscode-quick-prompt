@@ -17,10 +17,18 @@ import {
 export type { Prompt, PrivacyMeta } from './core/types';
 import type { Prompt } from './core/types';
 
+export interface WorkspaceConfig {
+    key: string;
+    name: string;
+    uri: vscode.Uri;
+    promptsFilePath: string;
+}
+
 // TreeItem 類型 (支援 PromptItem 和 VersionItem)
 export type PromptTreeItem = PromptItem | VersionItem;
 
 export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
+    private static readonly scopeStateKey = 'quickPrompt.activeWorkspaceScope';
     private _onDidChangeTreeData: vscode.EventEmitter<PromptTreeItem | undefined | null | void> = new vscode.EventEmitter<PromptTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<PromptTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -29,7 +37,12 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     readonly onPromptsChanged: vscode.Event<void> = this._onPromptsChanged.event;
 
     private prompts: Prompt[] = [];
-    private promptsFilePath: string;
+    private workspaceConfigs: WorkspaceConfig[] = [];
+    private loadedWorkspaceKeys: Set<string> = new Set();
+    private failedWorkspaceKeys: Set<string> = new Set();
+    private watchers: vscode.Disposable[] = [];
+    private treeView?: vscode.TreeView<PromptTreeItem>;
+    private activeWorkspaceScopeKeys: string[] | undefined;
     private clipboardManager?: ClipboardManager;
     private versionHistoryService: VersionHistoryService;
     private secretStorage: SecretStorageManager;
@@ -41,32 +54,86 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         this.versionHistoryService = versionHistoryService || new VersionHistoryService(context);
         // 注入 PromptProvider 以便 VersionHistoryService 更新 Metadata
         this.versionHistoryService.setPromptProvider(this);
+        this.versionHistoryService.setWorkspaceResolver((promptId) => this.resolveVersionHistoryLocation(promptId));
 
-        // 使用工作區路徑而非擴充功能路徑
+        this.setupWorkspaces();
+
+        // 監聽工作區資料夾變化
+        context.subscriptions.push(
+            vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+                this.setupWorkspaces();
+                await this.refresh();
+            })
+        );
+    }
+
+    private setupWorkspaces() {
+        // 清理舊的 watchers
+        this.watchers.forEach(w => w.dispose());
+        this.watchers = [];
+        this.workspaceConfigs = [];
+
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (workspaceFolders && workspaceFolders.length > 0) {
-            const vscodeDir = vscode.Uri.joinPath(workspaceFolders[0].uri, '.vscode');
-            this.promptsFilePath = vscode.Uri.joinPath(vscodeDir, 'prompts.json').fsPath;
-        } else {
-            // 如果沒有工作區，使用擴充功能路徑作為備用
-            this.promptsFilePath = vscode.Uri.joinPath(context.extensionUri, 'prompts.json').fsPath;
-        }
-        // 初始化時載入 prompts（但不阻塞）
-        this.loadPrompts().catch(err => {
-            console.error('Failed to load prompts:', err);
-        });
+            // 用來防止重名
+            const nameCount = new Map<string, number>();
 
-        // 監聽外部對 prompts.json 的修改（自己寫入時 _savingCount > 0，予以忽略）
-        const promptsDir = vscode.Uri.file(path.dirname(this.promptsFilePath));
-        const watcher = vscode.workspace.createFileSystemWatcher(
-            new vscode.RelativePattern(promptsDir, 'prompts.json')
-        );
-        watcher.onDidChange(async () => {
-            if (this._savingCount === 0) {
-                await this.refresh();
-            }
-        });
-        context.subscriptions.push(watcher);
+            workspaceFolders.forEach(folder => {
+                let name = folder.name;
+                const count = nameCount.get(name) || 0;
+                nameCount.set(name, count + 1);
+                if (count > 0) {
+                    name = `${name} (${count})`;
+                }
+
+                const vscodeDir = vscode.Uri.joinPath(folder.uri, '.vscode');
+                const promptsFilePath = vscode.Uri.joinPath(vscodeDir, 'prompts.json').fsPath;
+
+                this.workspaceConfigs.push({
+                    key: PromptProvider.getWorkspaceKey(folder.uri),
+                    name,
+                    uri: folder.uri,
+                    promptsFilePath
+                });
+
+                // 監聽此 prompts.json
+                const watcher = vscode.workspace.createFileSystemWatcher(
+                    new vscode.RelativePattern(vscodeDir, 'prompts.json')
+                );
+                watcher.onDidChange(async () => {
+                    if (this._savingCount === 0) {
+                        await this.refresh();
+                    }
+                });
+                this.watchers.push(watcher);
+                this.context.subscriptions.push(watcher);
+            });
+        } else {
+            // Fallback: Global storage or extension directory
+            const promptsFilePath = vscode.Uri.joinPath(this.context.extensionUri, 'prompts.json').fsPath;
+            this.workspaceConfigs.push({
+                key: 'global',
+                name: 'Global',
+                uri: this.context.extensionUri,
+                promptsFilePath
+            });
+
+            const watcher = vscode.workspace.createFileSystemWatcher(
+                new vscode.RelativePattern(vscode.Uri.file(path.dirname(promptsFilePath)), 'prompts.json')
+            );
+            watcher.onDidChange(async () => {
+                if (this._savingCount === 0) {
+                    await this.refresh();
+                }
+            });
+            this.watchers.push(watcher);
+            this.context.subscriptions.push(watcher);
+        }
+
+        this.activeWorkspaceScopeKeys = this.normalizeWorkspaceScope(
+            this.context.workspaceState.get<string[] | undefined>(PromptProvider.scopeStateKey)
+        ) ?? this.getInitialWorkspaceScope();
+        this.updateTreeViewDescription();
     }
 
     /**
@@ -87,78 +154,94 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     }
 
     private async loadPrompts(): Promise<void> {
-        try {
-            const uri = vscode.Uri.file(this.promptsFilePath);
-            const content = await vscode.workspace.fs.readFile(uri);
-            let prompts = JSON.parse(content.toString());
+        let allPrompts: Prompt[] = [];
+        const loadedWorkspaceKeys = new Set<string>();
+        const failedWorkspaceKeys = new Set<string>();
 
-            // 自動遷移：移除舊欄位 (status)，補齊新欄位
-            let needsMigration = false;
+        for (const config of this.workspaceConfigs) {
+            try {
+                const uri = vscode.Uri.file(config.promptsFilePath);
 
-            // 處理所有 Prompts 的欄位正規化（純記憶體操作，不讀磁碟）
-            const today = getTodayISOString();
-            const processedPrompts: Prompt[] = prompts.map((p: any) => {
-                // 檢查是否有舊欄位
-                if ('status' in p) {
-                    needsMigration = true;
+                let content: Uint8Array;
+                try {
+                    content = await vscode.workspace.fs.readFile(uri);
+                } catch (error: any) {
+                    if (error.code === 'FileNotFound') {
+                        continue;
+                    } else {
+                        throw error;
+                    }
                 }
 
-                // 缺少 meta 時給預設值（正確值由 initializeVersionHistory 在 activate 時補齊）
-                if (!p.meta) {
-                    p.meta = { totalVersions: 0 };
+                let prompts = JSON.parse(content.toString());
+                if (!Array.isArray(prompts)) {
+                    throw new Error('prompts.json must contain an array');
+                }
+                let needsMigration = false;
+                const today = getTodayISOString();
+
+                const processedPrompts: Prompt[] = prompts.map((p: any) => {
+                    if ('status' in p) {
+                        needsMigration = true;
+                    }
+                    if (!p.meta) {
+                        p.meta = { totalVersions: 0 };
+                    }
+
+                    const storedId = String(p.id ?? '');
+                    const actualId = this.getActualPromptId(storedId);
+                    const prefixedId = this.getPrefixedPromptId(config, actualId);
+
+                    return {
+                        id: prefixedId,
+                        title: p.title,
+                        content: p.content,
+                        use_count: p.use_count ?? 0,
+                        last_used: p.last_used || today,
+                        created_at: p.created_at || p.last_used || today,
+                        pinned: p.pinned ?? false,
+                        titleSource: p.titleSource,
+                        order: p.order,
+                        meta: p.meta,
+                        ignorePrivacyWarning: p.ignorePrivacyWarning ?? false,
+                        privacyMeta: p.privacyMeta
+                    };
+                });
+
+                // 遷移：清除舊格式自動指派的連續 order
+                const definedOrders = processedPrompts
+                    .map(p => p.order)
+                    .filter((o): o is number => o !== undefined);
+                if (definedOrders.length === processedPrompts.length) {
+                    const sorted = [...definedOrders].sort((a, b) => a - b);
+                    const isSequential = sorted.every((o, i) => o === i);
+                    if (isSequential) {
+                        processedPrompts.forEach(p => { p.order = undefined; });
+                        needsMigration = true;
+                    }
                 }
 
-                return {
-                    id: p.id,
-                    title: p.title,
-                    content: p.content,
-                    use_count: p.use_count ?? 0,
-                    last_used: p.last_used || today,
-                    created_at: p.created_at || p.last_used || today,
-                    pinned: p.pinned ?? false,
-                    titleSource: p.titleSource,
-                    order: p.order,
-                    meta: p.meta,
-                    ignorePrivacyWarning: p.ignorePrivacyWarning ?? false,
-                    privacyMeta: p.privacyMeta
-                };
-            });
-
-            // 遷移：清除舊格式自動指派的連續 order 值（0,1,2,...N-1）
-            // 這類 order 並非使用者手動排序，清除後改用 created_at 降冪作為預設排序
-            const definedOrders = processedPrompts
-                .map(p => p.order)
-                .filter((o): o is number => o !== undefined);
-            if (definedOrders.length === processedPrompts.length) {
-                const sorted = [...definedOrders].sort((a, b) => a - b);
-                const isSequential = sorted.every((o, i) => o === i);
-                if (isSequential) {
-                    processedPrompts.forEach(p => { p.order = undefined; });
-                    needsMigration = true;
+                if (needsMigration) {
+                    console.log(`[PromptProvider] Running schema migration for ${config.name}...`);
+                    await this.savePromptsForConfig(config, processedPrompts);
                 }
-            }
 
-            this.prompts = processedPrompts;
-
-            // 有舊欄位（status）才需要儲存清理；meta 缺失由 initializeVersionHistory 補齊後 save
-            if (needsMigration) {
-                console.log('[PromptProvider] Running schema migration...');
-                await this.savePrompts();
-            }
-        } catch (error: any) {
-            if (error.code === 'FileNotFound') {
-                // 檔案不存在時，建立預設檔案
-                await this.createDefaultPromptsFile();
-            } else {
-                console.error('Failed to load prompts:', error);
-                throw error;
+                allPrompts = allPrompts.concat(processedPrompts);
+                loadedWorkspaceKeys.add(config.key);
+            } catch (error) {
+                console.error(`Failed to load prompts for workspace ${config.name}:`, error);
+                failedWorkspaceKeys.add(config.key);
             }
         }
+
+        this.prompts = allPrompts;
+        this.loadedWorkspaceKeys = loadedWorkspaceKeys;
+        this.failedWorkspaceKeys = failedWorkspaceKeys;
     }
 
-    private async createDefaultPromptsFile(): Promise<void> {
+    private async createDefaultPromptsFileForConfig(config: WorkspaceConfig): Promise<void> {
         const today = getTodayISOString();
-        const defaultPrompts: Prompt[] = [
+        const defaultPrompts = [
             {
                 id: "001",
                 title: "範例 Prompt",
@@ -172,20 +255,19 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         ];
 
         try {
-            const uri = vscode.Uri.file(this.promptsFilePath);
-            const dirUri = vscode.Uri.file(vscode.Uri.joinPath(uri, '..').fsPath);
+            const uri = vscode.Uri.file(config.promptsFilePath);
+            const dirUri = vscode.Uri.file(path.dirname(config.promptsFilePath));
 
-            // 確保 .vscode 目錄存在
+            // 確保目錄存在
             await vscode.workspace.fs.createDirectory(dirUri);
 
             // 建立預設檔案
             const content = JSON.stringify(defaultPrompts, null, 2);
             await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
-            this.prompts = defaultPrompts;
 
-            vscode.window.showInformationMessage(`✨ 已在 ${this.promptsFilePath} 建立預設 Prompt 檔案`);
+            vscode.window.showInformationMessage(`✨ 已在 ${config.name} 建立預設 Prompt 檔案`);
         } catch (error) {
-            console.error('Failed to create default prompts file:', error);
+            console.error(`Failed to create default prompts file for ${config.name}:`, error);
             throw error;
         }
     }
@@ -196,13 +278,10 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
     async getChildren(element?: PromptTreeItem): Promise<PromptTreeItem[]> {
         if (!element) {
-            // 返回 Prompts 列表
-            const sorted = sortPrompts(this.prompts);
-
-            // 直接使用 p.meta.totalVersions，無需非同步讀取
+            const sorted = sortPrompts(this.getVisiblePrompts());
             return sorted.map(p => {
                 const totalVersions = p.meta?.totalVersions ?? 0;
-                return new PromptItem(p, totalVersions);
+                return new PromptItem(p, totalVersions, this.getWorkspaceTooltipName(p.id));
             });
         } else if (element instanceof PromptItem) {
             // 返回版本歷史
@@ -219,8 +298,6 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         const prompt = this.prompts.find(p => p.id === promptId);
         if (prompt) {
             prompt.meta = meta;
-            // 這裡不需要呼叫 refresh()，因為通常 VersionHistoryService 操作完後會觸發 refresh
-            // 但我們必須儲存 prompts.json
             await this.savePrompts();
         }
     }
@@ -228,15 +305,45 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     private async savePrompts(): Promise<void> {
         this._savingCount++;
         try {
-            const uri = vscode.Uri.file(this.promptsFilePath);
-            const content = JSON.stringify(this.prompts, null, 2);
-            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+            for (const config of this.workspaceConfigs) {
+                // 過濾出屬於該 workspace 的 prompts
+                const workspacePrompts = this.prompts.filter(p => this.getPromptWorkspaceKey(p.id) === config.key);
+                if (!this.loadedWorkspaceKeys.has(config.key) && workspacePrompts.length === 0) {
+                    continue;
+                }
+
+                // 克隆並將 ID 去前綴
+                const cleanPrompts = workspacePrompts.map(p => this.toStoredPrompt(p));
+
+                const uri = vscode.Uri.file(config.promptsFilePath);
+                const dirUri = vscode.Uri.file(path.dirname(config.promptsFilePath));
+                await vscode.workspace.fs.createDirectory(dirUri);
+                const content = JSON.stringify(cleanPrompts, null, 2);
+                await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+                this.loadedWorkspaceKeys.add(config.key);
+            }
             this._onPromptsChanged.fire(); // 通知 FileSystem 同步
         } catch (error) {
             console.error('Failed to save prompts:', error);
             throw error;
         } finally {
-            // 延遲清零，讓 FileSystemWatcher 事件有時間觸發並看到 _savingCount > 0
+            setTimeout(() => { this._savingCount--; }, 300);
+        }
+    }
+
+    private async savePromptsForConfig(config: WorkspaceConfig, configPrompts: Prompt[]): Promise<void> {
+        this._savingCount++;
+        try {
+            const cleanPrompts = configPrompts.map(p => this.toStoredPrompt(p));
+            const uri = vscode.Uri.file(config.promptsFilePath);
+            const dirUri = vscode.Uri.file(path.dirname(config.promptsFilePath));
+            await vscode.workspace.fs.createDirectory(dirUri);
+            const content = JSON.stringify(cleanPrompts, null, 2);
+            await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
+            this.loadedWorkspaceKeys.add(config.key);
+        } catch (error) {
+            console.error(`Failed to save prompts for ${config.name}:`, error);
+        } finally {
             setTimeout(() => { this._savingCount--; }, 300);
         }
     }
@@ -245,21 +352,144 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         return this.prompts;
     }
 
+    getVisiblePrompts(): Prompt[] {
+        const activeWorkspaceKeys = new Set(this.getActiveWorkspaceScopeKeys());
+        return this.prompts.filter(prompt => {
+            const workspaceKey = this.getPromptWorkspaceKey(prompt.id) || this.getDefaultWorkspaceKey();
+            return activeWorkspaceKeys.has(workspaceKey);
+        });
+    }
+
+    public getWorkspaceConfigs(): readonly WorkspaceConfig[] {
+        return this.workspaceConfigs;
+    }
+
+    public setTreeView(treeView: vscode.TreeView<PromptTreeItem>): void {
+        this.treeView = treeView;
+        this.updateTreeViewDescription();
+    }
+
+    public getWorkspaceNameForPrompt(promptId: string): string | undefined {
+        const workspaceKey = this.getPromptWorkspaceKey(promptId);
+        if (!workspaceKey) {
+            return undefined;
+        }
+
+        return this.getWorkspaceConfig(workspaceKey)?.name;
+    }
+
+    public getActiveWorkspaceScopeKeys(): string[] {
+        if (this.workspaceConfigs.length <= 1) {
+            return this.workspaceConfigs.map(config => config.key);
+        }
+
+        if (this.activeWorkspaceScopeKeys && this.activeWorkspaceScopeKeys.length === 0) {
+            return this.workspaceConfigs.map(config => config.key);
+        }
+
+        if (this.activeWorkspaceScopeKeys && this.activeWorkspaceScopeKeys.length > 0) {
+            return this.activeWorkspaceScopeKeys;
+        }
+
+        const defaultWorkspaceKey = this.getDefaultWorkspaceKey();
+        return defaultWorkspaceKey ? [defaultWorkspaceKey] : [];
+    }
+
+    public getPickedWorkspaceScopeKeys(): string[] {
+        return this.activeWorkspaceScopeKeys ?? this.getActiveWorkspaceScopeKeys();
+    }
+
+    public async setActiveWorkspaceScope(workspaceKeys: readonly string[]): Promise<void> {
+        const normalized = this.normalizeWorkspaceScope([...workspaceKeys]) ?? [];
+        this.activeWorkspaceScopeKeys = normalized;
+        await this.context.workspaceState.update(PromptProvider.scopeStateKey, normalized);
+        this.updateTreeViewDescription();
+        this._onDidChangeTreeData.fire();
+    }
+
+    public shouldShowWorkspaceLabels(): boolean {
+        return this.workspaceConfigs.length > 1 && this.getActiveWorkspaceScopeKeys().length > 1;
+    }
+
+    public getScopeDescription(): string | undefined {
+        if (this.workspaceConfigs.length <= 1) {
+            return undefined;
+        }
+
+        const activeKeys = this.getActiveWorkspaceScopeKeys();
+        if (activeKeys.length === this.workspaceConfigs.length) {
+            return 'All Workspaces';
+        }
+
+        const names = activeKeys
+            .map(key => this.getWorkspaceConfig(key)?.name)
+            .filter((name): name is string => !!name);
+
+        if (names.length <= 2) {
+            return names.join(' + ');
+        }
+
+        return `${names.length} workspaces`;
+    }
+
+    public getDefaultWorkspaceName(): string {
+        return this.getWorkspaceConfig(this.getDefaultWorkspaceKey())?.name || 'Global';
+    }
+
+    public getDefaultWorkspaceKey(): string {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            const folder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+            if (folder) {
+                const matched = this.workspaceConfigs.find(c => c.uri.toString() === folder.uri.toString());
+                if (matched) {
+                    return matched.key;
+                }
+            }
+        }
+        return this.workspaceConfigs[0]?.key || 'global';
+    }
+
     async addPrompt(title: string, content: string, titleSource?: 'user' | 'ai') {
         await this.addPromptWithOption(title, content, false, titleSource);
     }
 
-    // 重構 addPrompt 以支援 silent 模式
+    // 重構 addPrompt 以支援 silent 模式與目標工作區
     async addPromptWithOption(
         title: string,
         content: string,
         silent: boolean = false,
-        titleSource?: 'user' | 'ai'
+        titleSource?: 'user' | 'ai',
+        targetWorkspaceName?: string
     ): Promise<string> {
         const today = getTodayISOString();
-        const newId = generatePromptId(this.prompts);
+        const workspaceKey = targetWorkspaceName || this.getDefaultWorkspaceKey();
+        const workspaceConfig = this.getWorkspaceConfig(workspaceKey);
+        if (!workspaceConfig) {
+            throw new Error(`Workspace not found: ${workspaceKey}`);
+        }
+        if (this.failedWorkspaceKeys.has(workspaceKey)) {
+            throw new Error(`Cannot save prompt because workspace "${workspaceConfig.name}" prompts.json failed to load.`);
+        }
+
+        // 過濾出屬於該工作區的 prompts，以計算新的 ID
+        const wsPrompts = this.prompts.filter(p => this.getPromptWorkspaceKey(p.id) === workspaceKey);
+
+        // 取得去前綴的 prompts 清單以生成下一號的 ID
+        const cleanWsPrompts = wsPrompts.map(p => {
+            const colonIndex = p.id.indexOf(':');
+            const cleanId = colonIndex !== -1 ? p.id.substring(colonIndex + 1) : p.id;
+            return {
+                ...p,
+                id: cleanId
+            };
+        });
+
+        const nextActualId = generatePromptId(cleanWsPrompts);
+        const prefixedId = this.getPrefixedPromptId(workspaceConfig, nextActualId);
+
         const newPrompt: Prompt = {
-            id: newId,
+            id: prefixedId,
             title,
             content,
             use_count: 0,
@@ -267,6 +497,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             created_at: new Date().toISOString(), // full datetime for accurate sort ordering
             pinned: false,
             titleSource,
+            meta: { totalVersions: 0 }
         };
         this.prompts.push(newPrompt);
         await this.savePrompts();
@@ -278,7 +509,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             vscode.window.setStatusBarMessage(`✅ Prompt Saved: ${title}`, 3000);
         }
 
-        return newId;
+        return prefixedId;
     }
 
     // 增加使用次數
@@ -386,29 +617,31 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             prompt.ignorePrivacyWarning = true;
             await this.savePrompts();
             this._onDidChangeTreeData.fire();
-            vscode.window.setStatusBarMessage(`✅ 防護警示已忽略`, 2000);
         }
     }
 
-    // 重新啟用安全警告
+    // 重新啟用 Prompt 隱私警告
     async restorePromptWarning(id: string): Promise<void> {
         const prompt = this.prompts.find(p => p.id === id);
         if (prompt) {
             prompt.ignorePrivacyWarning = false;
             await this.savePrompts();
             this._onDidChangeTreeData.fire();
-            vscode.window.setStatusBarMessage(`✅ 隱私防護警示已重新啟用`, 2000);
         }
     }
 
     // 上移 Prompt
     async moveUp(item: PromptItem): Promise<void> {
-        const sorted = sortPrompts(this.prompts);
+        const workspaceKey = this.getPromptWorkspaceKey(item.prompt.id) || this.getDefaultWorkspaceKey();
+
+        // 過濾出屬於該工作區的 prompts 進行排序
+        const wsPrompts = this.prompts.filter(p => this.getPromptWorkspaceKey(p.id) === workspaceKey);
+        const sorted = sortPrompts(wsPrompts);
         const idx = sorted.findIndex(p => p.id === item.prompt.id);
         if (idx <= 0) { return; }
         if (sorted[idx - 1].pinned && !item.prompt.pinned) { return; } // 不可越過 pinned
 
-        // 首次手動移動：為所有 prompt 指派基於當前排序的 order
+        // 首次手動移動：為工作區內所有 prompt 指派基於當前排序的 order
         sorted.forEach((p, i) => { p.order = i; });
         [sorted[idx - 1].order, sorted[idx].order] = [sorted[idx].order, sorted[idx - 1].order];
 
@@ -419,7 +652,11 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
     // 下移 Prompt
     async moveDown(item: PromptItem): Promise<void> {
-        const sorted = sortPrompts(this.prompts);
+        const workspaceKey = this.getPromptWorkspaceKey(item.prompt.id) || this.getDefaultWorkspaceKey();
+
+        // 過濾出屬於該工作區的 prompts 進行排序
+        const wsPrompts = this.prompts.filter(p => this.getPromptWorkspaceKey(p.id) === workspaceKey);
+        const sorted = sortPrompts(wsPrompts);
         const idx = sorted.findIndex(p => p.id === item.prompt.id);
         if (idx < 0 || idx >= sorted.length - 1) { return; }
         if (item.prompt.pinned && !sorted[idx + 1].pinned) { return; } // pinned 不可移至非 pinned 之後
@@ -431,6 +668,8 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         this._onDidChangeTreeData.fire();
         vscode.window.setStatusBarMessage(`✅ 已下移: ${item.prompt.title}`, 2000);
     }
+
+
 
     /**
      * Get version history for a prompt as TreeItems
@@ -446,12 +685,101 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             )
         );
     }
+
+    private static getWorkspaceKey(uri: vscode.Uri): string {
+        return Buffer.from(uri.toString(), 'utf8')
+            .toString('base64')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/g, '');
+    }
+
+    private getWorkspaceConfig(workspaceKey: string): WorkspaceConfig | undefined {
+        return this.workspaceConfigs.find(config => config.key === workspaceKey);
+    }
+
+    private normalizeWorkspaceScope(workspaceKeys: string[] | undefined): string[] | undefined {
+        if (!workspaceKeys) {
+            return undefined;
+        }
+
+        if (this.workspaceConfigs.length <= 1) {
+            return this.workspaceConfigs.map(config => config.key);
+        }
+
+        const validKeys = new Set(this.workspaceConfigs.map(config => config.key));
+        const normalized = [...new Set(workspaceKeys)].filter(key => validKeys.has(key));
+        if (normalized.length === 0 || normalized.length === this.workspaceConfigs.length) {
+            return [];
+        }
+
+        return normalized;
+    }
+
+    private getInitialWorkspaceScope(): string[] {
+        if (this.workspaceConfigs.length <= 1) {
+            return this.workspaceConfigs.map(config => config.key);
+        }
+
+        const defaultWorkspaceKey = this.getDefaultWorkspaceKey();
+        return defaultWorkspaceKey ? [defaultWorkspaceKey] : [];
+    }
+
+    private getWorkspaceTooltipName(promptId: string): string | undefined {
+        return this.workspaceConfigs.length > 1 ? this.getWorkspaceNameForPrompt(promptId) : undefined;
+    }
+
+    private updateTreeViewDescription(): void {
+        if (this.treeView) {
+            this.treeView.description = this.getScopeDescription();
+        }
+    }
+
+    private getPrefixedPromptId(config: WorkspaceConfig, actualId: string): string {
+        return `${config.key}:${actualId}`;
+    }
+
+    private getPromptWorkspaceKey(promptId: string): string | undefined {
+        const colonIndex = promptId.indexOf(':');
+        return colonIndex === -1 ? undefined : promptId.substring(0, colonIndex);
+    }
+
+    private getActualPromptId(promptId: string): string {
+        const colonIndex = promptId.indexOf(':');
+        return colonIndex === -1 ? promptId : promptId.substring(colonIndex + 1);
+    }
+
+    private toStoredPrompt(prompt: Prompt): Prompt {
+        return {
+            ...prompt,
+            id: this.getActualPromptId(prompt.id)
+        };
+    }
+
+    private resolveVersionHistoryLocation(promptId: string): { promptId: string; historyDir: string; cacheKey: string } | undefined {
+        const workspaceKey = this.getPromptWorkspaceKey(promptId);
+        if (!workspaceKey) {
+            return undefined;
+        }
+
+        const config = this.getWorkspaceConfig(workspaceKey);
+        if (!config) {
+            return undefined;
+        }
+
+        return {
+            promptId: this.getActualPromptId(promptId),
+            historyDir: vscode.Uri.joinPath(config.uri, '.vscode', '.quickprompt', 'history').fsPath,
+            cacheKey: promptId
+        };
+    }
 }
 
 export class PromptItem extends vscode.TreeItem {
     constructor(
         public readonly prompt: Prompt,
-        versionCount: number = 0
+        versionCount: number = 0,
+        workspaceName?: string
     ) {
         // Set collapsible state based on version count
         super(
@@ -474,8 +802,9 @@ export class PromptItem extends vscode.TreeItem {
         const contentPreview = prompt.content.length > MAX_PREVIEW
             ? `${prompt.content.slice(0, MAX_PREVIEW)}...`
             : prompt.content;
+        const workspaceLine = workspaceName ? `Workspace: ${workspaceName}\n` : '';
         const metaLine = `${useCountText}${versionCountText}  |  ${I18n.getMessage('status.lastUsed', timeText)}`;
-        this.tooltip = `${metaLine}\n\n${contentPreview}`;
+        this.tooltip = `${workspaceLine}${metaLine}\n\n${contentPreview}`;
 
         // 點擊 item 直接開啟編輯畫面
         this.command = {
@@ -498,12 +827,12 @@ export class PromptItem extends vscode.TreeItem {
             const maskedTypes = prompt.privacyMeta?.types.join(', ') ?? '';
             const typesLine = maskedTypes ? `  |  Types: ${maskedTypes}` : '';
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("testing.iconPassed"));
-            this.tooltip = `🛡️ Sensitive Data Masked${typesLine}\n${metaLine}\n\n${contentPreview}`;
+            this.tooltip = `${workspaceLine}🛡️ Sensitive Data Masked${typesLine}\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_protected';
         } else if (hasLegacyMaskToken) {
             // 狀態 2: 舊資料已遮罩但缺少對照表 (不可還原)
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
-            this.tooltip = `⚠ Masked tokens found, but mapping is missing (cannot unmask)\n${metaLine}\n\n${contentPreview}`;
+            this.tooltip = `${workspaceLine}⚠ Masked tokens found, but mapping is missing (cannot unmask)\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_masked_unrestorable';
         } else if (prompt.ignorePrivacyWarning && hasRawSensitiveData) {
             // 狀態 3: 使用者選擇忽略警報 (白名單)
@@ -511,7 +840,7 @@ export class PromptItem extends vscode.TreeItem {
         } else if (hasRawSensitiveData) {
             // 狀態 4: 含裸露敏感資料，尚未遮罩 (黃色盾牌)
             this.iconPath = new vscode.ThemeIcon("shield", new vscode.ThemeColor("problemsWarningIcon.foreground"));
-            this.tooltip = `⚠ Contains sensitive data (Maskable)\n${metaLine}\n\n${contentPreview}`;
+            this.tooltip = `${workspaceLine}⚠ Contains sensitive data (Maskable)\n${metaLine}\n\n${contentPreview}`;
             this.contextValue = 'promptItem_maskable';
         }
     }

@@ -161,6 +161,7 @@ describe('Quick Prompt - UI / E2E', function () {
 
         for (const command of [
             'Search Prompts',
+            'Select Scope',
             'Add Prompt (Auto Title)',
             'Add Prompt (Custom Title)',
             'Quick Add Prompt (Selection)',
@@ -261,6 +262,7 @@ describe('Quick Prompt - UI / E2E', function () {
         const editor = new TextEditor();
         await editor.setText(selectedText);
         await new Workbench().executeCommand('Select All');
+        await driver.sleep(500); // allow VS Code to settle after command palette close
 
         await runCommandViaKeyboard('Quick Add Prompt (Selection)');
 
@@ -271,6 +273,7 @@ describe('Quick Prompt - UI / E2E', function () {
     });
 
     it('Show MCP Config opens the MCP configuration webview editor', async function () {
+        await closeQuickInput();
         await runCommandViaKeyboard('Show MCP Config');
 
         const driver = VSBrowser.instance.driver;

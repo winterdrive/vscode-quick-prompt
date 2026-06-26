@@ -5,6 +5,7 @@
     "view.prompts.name": "Prompts",
     "view.clipboard.name": "剪貼簿歷史",
     "command.search.title": "搜尋 Prompt",
+    "command.selectScope.title": "選擇範圍",
     "command.insert.title": "複製 Prompt",
     "command.addPrompt.title": "新增 Prompt (自動標題)",
     "command.addPromptWithTitle.title": "新增 Prompt (自訂標題)",

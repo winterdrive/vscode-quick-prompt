@@ -1,18 +1,15 @@
-/**
- * Version history tool handlers for MCP server.
- */
-
-import { VersionManager } from '../../../src/core/VersionManager.js';
-import { PromptManager, OptimisticLockError } from '../../../src/core/PromptManager.js';
+import { OptimisticLockError } from '../../../src/core/PromptManager.js';
 import type { PromptVersion } from '../../../src/core/types.js';
 import type { ToolResponse, VersionSummary } from '../types.js';
 import { ErrorType } from '../types.js';
 import { createSuccess, createError } from '../utils/ResponseFactory.js';
+import type { WorkspaceBinding, WorkspaceRefArgs } from '../workspaceTypes.js';
+
+type PromptIdArgs = { promptId: string } & WorkspaceRefArgs;
 
 export class VersionTools {
   constructor(
-    private versionManager: VersionManager,
-    private promptManager: PromptManager,
+    private getWorkspace: (workspaceRef?: string) => WorkspaceBinding | undefined,
   ) {}
 
   /**
@@ -40,65 +37,113 @@ export class VersionTools {
     };
   }
 
-  async listVersions(args: { promptId: string }): Promise<ToolResponse<{ promptId: string; versions: VersionSummary[]; total: number; milestoneCount: number }>> {
+  private parsePrefixedId(prefixedId: string): { wsName: string; actualId: string } | undefined {
+    const colonIndex = prefixedId.indexOf(':');
+    if (colonIndex === -1) {
+      return undefined;
+    }
+    return {
+      wsName: prefixedId.substring(0, colonIndex),
+      actualId: prefixedId.substring(colonIndex + 1),
+    };
+  }
+
+  private getWorkspaceRef(args: WorkspaceRefArgs, fallbackName?: string): string | undefined {
+    return args.workspaceId || args.workspaceUri || args.workspace || fallbackName;
+  }
+
+  async listVersions(args: PromptIdArgs): Promise<ToolResponse<{ promptId: string; versions: VersionSummary[]; total: number; milestoneCount: number; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
-      const { versions } = this.versionManager.listVersions(args.promptId);
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
+      const { versions } = ws.versionManager.listVersions(parsed.actualId);
       const milestoneCount = versions.filter(v => v.milestone).length;
       return createSuccess({
         promptId: args.promptId,
         versions: versions.map(v => this.toSummary(v)),
         total: versions.length,
         milestoneCount,
+        workspace: ws.name,
+        workspaceId: ws.id,
+        workspaceUri: ws.uri,
       });
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to list versions: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async getVersion(args: { promptId: string; versionId: string }): Promise<ToolResponse<{ promptId: string; version: PromptVersion }>> {
+  async getVersion(args: PromptIdArgs & { versionId: string }): Promise<ToolResponse<{ promptId: string; version: PromptVersion; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // getVersionContent throws if not found
       try {
-        this.versionManager.getVersionContent(args.promptId, args.versionId);
+        ws.versionManager.getVersionContent(parsed.actualId, args.versionId);
       } catch {
         return createError(ErrorType.NOT_FOUND, `Version not found: ${args.versionId}`);
       }
 
       // Get the full version entry
-      const { versions } = this.versionManager.listVersions(args.promptId);
+      const { versions } = ws.versionManager.listVersions(parsed.actualId);
       const version = versions.find(v => v.versionId === args.versionId);
       if (!version) {
         return createError(ErrorType.NOT_FOUND, `Version not found: ${args.versionId}`);
       }
 
-      return createSuccess({ promptId: args.promptId, version });
+      return createSuccess({ promptId: args.promptId, version, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri });
     } catch (error) {
       return createError(ErrorType.INTERNAL_ERROR, `Failed to get version: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  async applyVersion(args: { promptId: string; versionId: string }): Promise<ToolResponse<{ promptId: string; restoredVersionId: string; newVersionId: string }>> {
+  async applyVersion(args: PromptIdArgs & { versionId: string }): Promise<ToolResponse<{ promptId: string; restoredVersionId: string; newVersionId: string; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // Validate prompt exists
-      const prompt = this.promptManager.getPrompt(args.promptId);
+      const prompt = ws.promptManager.getPrompt(parsed.actualId);
       if (!prompt) {
-        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${args.promptId}`);
+        return createError(ErrorType.NOT_FOUND, `Prompt not found: ${parsed.actualId} in workspace ${parsed.wsName}`);
       }
 
       // Get the version content (throws if not found)
       let restoredContent: string;
       try {
-        restoredContent = this.versionManager.getVersionContent(args.promptId, args.versionId);
+        restoredContent = ws.versionManager.getVersionContent(parsed.actualId, args.versionId);
       } catch {
         return createError(ErrorType.NOT_FOUND, `Version not found: ${args.versionId}`);
       }
 
       // Apply the version (creates a restore entry)
-      const newVersion = this.versionManager.applyVersion(args.promptId, args.versionId);
+      const newVersion = ws.versionManager.applyVersion(parsed.actualId, args.versionId);
 
       // Update the prompt content
       this.withRetry(() =>
-        this.promptManager.editPrompt(args.promptId, { content: restoredContent }),
+        ws.promptManager.editPrompt(parsed.actualId, { content: restoredContent }),
       );
 
       return createSuccess(
@@ -106,6 +151,9 @@ export class VersionTools {
           promptId: args.promptId,
           restoredVersionId: args.versionId,
           newVersionId: newVersion.versionId,
+          workspace: ws.name,
+          workspaceId: ws.id,
+          workspaceUri: ws.uri,
         },
         `Prompt restored to version ${args.versionId}. A new version was created to record the restore.`,
       );
@@ -114,11 +162,21 @@ export class VersionTools {
     }
   }
 
-  async deleteVersion(args: { promptId: string; versionId: string }): Promise<ToolResponse<{ deletedVersionId: string }>> {
+  async deleteVersion(args: PromptIdArgs & { versionId: string }): Promise<ToolResponse<{ deletedVersionId: string; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // deleteVersion returns void and throws on error
       try {
-        this.versionManager.deleteVersion(args.promptId, args.versionId);
+        ws.versionManager.deleteVersion(parsed.actualId, args.versionId);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('not found')) {
@@ -127,7 +185,7 @@ export class VersionTools {
         return createError(ErrorType.VALIDATION_ERROR, msg);
       }
       return createSuccess(
-        { deletedVersionId: args.versionId },
+        { deletedVersionId: args.versionId, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Version ${args.versionId} deleted.`,
       );
     } catch (error) {
@@ -135,11 +193,21 @@ export class VersionTools {
     }
   }
 
-  async tagMilestone(args: { promptId: string; versionId: string; name: string }): Promise<ToolResponse<{ versionId: string; milestone: string }>> {
+  async tagMilestone(args: PromptIdArgs & { versionId: string; name: string }): Promise<ToolResponse<{ versionId: string; milestone: string; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // tagMilestone returns void and throws on error
       try {
-        this.versionManager.tagMilestone(args.promptId, args.versionId, args.name);
+        ws.versionManager.tagMilestone(parsed.actualId, args.versionId, args.name);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('not found')) {
@@ -148,7 +216,7 @@ export class VersionTools {
         return createError(ErrorType.VALIDATION_ERROR, msg);
       }
       return createSuccess(
-        { versionId: args.versionId, milestone: args.name },
+        { versionId: args.versionId, milestone: args.name, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Version ${args.versionId} tagged as "${args.name}".`,
       );
     } catch (error) {
@@ -156,11 +224,21 @@ export class VersionTools {
     }
   }
 
-  async renameMilestone(args: { promptId: string; versionId: string; newName: string }): Promise<ToolResponse<{ versionId: string; milestone: string }>> {
+  async renameMilestone(args: PromptIdArgs & { versionId: string; newName: string }): Promise<ToolResponse<{ versionId: string; milestone: string; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // renameMilestone returns void and throws on error
       try {
-        this.versionManager.renameMilestone(args.promptId, args.versionId, args.newName);
+        ws.versionManager.renameMilestone(parsed.actualId, args.versionId, args.newName);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('not found')) {
@@ -169,7 +247,7 @@ export class VersionTools {
         return createError(ErrorType.VALIDATION_ERROR, msg);
       }
       return createSuccess(
-        { versionId: args.versionId, milestone: args.newName },
+        { versionId: args.versionId, milestone: args.newName, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Milestone renamed to "${args.newName}".`,
       );
     } catch (error) {
@@ -177,11 +255,21 @@ export class VersionTools {
     }
   }
 
-  async removeMilestone(args: { promptId: string; versionId: string }): Promise<ToolResponse<{ versionId: string }>> {
+  async removeMilestone(args: PromptIdArgs & { versionId: string }): Promise<ToolResponse<{ versionId: string; workspace: string; workspaceId: string; workspaceUri: string }>> {
     try {
+      const parsed = this.parsePrefixedId(args.promptId);
+      if (!parsed) {
+        return createError(ErrorType.VALIDATION_ERROR, 'promptId must be prefixed with workspace name (e.g. projectA:001)');
+      }
+
+      const ws = this.getWorkspace(this.getWorkspaceRef(args, parsed.wsName));
+      if (!ws) {
+        return createError(ErrorType.NOT_FOUND, `Workspace not found: ${this.getWorkspaceRef(args, parsed.wsName)}`);
+      }
+
       // removeMilestone returns void and throws on error
       try {
-        this.versionManager.removeMilestone(args.promptId, args.versionId);
+        ws.versionManager.removeMilestone(parsed.actualId, args.versionId);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (msg.includes('not found')) {
@@ -190,7 +278,7 @@ export class VersionTools {
         return createError(ErrorType.VALIDATION_ERROR, msg);
       }
       return createSuccess(
-        { versionId: args.versionId },
+        { versionId: args.versionId, workspace: ws.name, workspaceId: ws.id, workspaceUri: ws.uri },
         `Milestone removed from version ${args.versionId}.`,
       );
     } catch (error) {

@@ -145,7 +145,11 @@ export function deactivate() { }
 function initializeProviders(context: vscode.ExtensionContext, versionHistoryService: VersionHistoryService) {
     // 初始化 PromptProvider
     const promptProvider = new PromptProvider(context, versionHistoryService);
-    vscode.window.registerTreeDataProvider('quickPromptView', promptProvider);
+    const promptTreeView = vscode.window.createTreeView('quickPromptView', {
+        treeDataProvider: promptProvider
+    });
+    promptProvider.setTreeView(promptTreeView);
+    context.subscriptions.push(promptTreeView);
 
     // 初始化 ClipboardManager
     const clipboardManager = new ClipboardManager(context);

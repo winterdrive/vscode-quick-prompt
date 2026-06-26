@@ -260,7 +260,7 @@ Open VSCode Settings and search for "Quick Prompt":
 
 ### File Location
 
-- **Workspace Mode**: `.vscode/prompts.json` (independent per project)
+- **Workspace Mode**: `.vscode/prompts.json` (independent per project folder, supports Multi-root workspaces)
 - **Fallback Mode**: Uses extension directory if no workspace is open
 
 ### Keyboard Shortcuts

@@ -24,6 +24,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import * as path from 'path';
 import * as fs from 'fs';
+import { pathToFileURL } from 'url';
 import { z } from 'zod';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import { zodToJsonSchema } from './utils/zodToJsonSchema.js';
@@ -33,6 +34,7 @@ import { PromptManager } from '../../src/core/PromptManager.js';
 import { VersionManager } from '../../src/core/VersionManager.js';
 import { PromptTools } from './tools/promptTools.js';
 import { VersionTools } from './tools/versionTools.js';
+import type { WorkspaceBinding } from './workspaceTypes.js';
 import { ClipboardTools } from './tools/clipboardTools.js';
 
 const SERVER_NAME = 'quickprompt';
@@ -56,6 +58,8 @@ const TOOL_DEFS = {
     description: 'Get a single prompt by ID. Returns full content plus metadata.',
     schema: {
       id: z.string().describe('The unique prompt ID.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   create_prompt: {
@@ -64,6 +68,9 @@ const TOOL_DEFS = {
       title: z.string().describe('The prompt title.'),
       content: z.string().describe('The prompt content text.'),
       pinned: z.boolean().optional().describe('Whether to pin the prompt (default: false).'),
+      workspace: z.string().optional().describe('The workspace folder name to create the prompt in.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts.'),
     },
   },
   edit_prompt: {
@@ -72,18 +79,24 @@ const TOOL_DEFS = {
       id: z.string().describe('The prompt ID to edit.'),
       title: z.string().optional().describe('New title (omit to keep unchanged).'),
       content: z.string().optional().describe('New content (omit to keep unchanged).'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   delete_prompt: {
     description: 'Delete a prompt by ID. Also deletes its version history.',
     schema: {
       id: z.string().describe('The prompt ID to delete.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   toggle_pin: {
     description: 'Toggle the pinned state of a prompt.',
     schema: {
       id: z.string().describe('The prompt ID to toggle pin.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   move_prompt: {
@@ -91,6 +104,8 @@ const TOOL_DEFS = {
     schema: {
       id: z.string().describe('The prompt ID to move.'),
       direction: z.enum(['up', 'down']).describe('Direction to move: "up" or "down".'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   search_prompts_fuzzy: {
@@ -103,6 +118,8 @@ const TOOL_DEFS = {
     description: 'Get the content of a prompt ready for clipboard use. Increments use_count.',
     schema: {
       id: z.string().describe('The prompt ID to copy.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
 
@@ -111,6 +128,8 @@ const TOOL_DEFS = {
     description: 'List all version history entries for a specific prompt, including milestones.',
     schema: {
       promptId: z.string().describe('The prompt ID to list versions for.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   get_version: {
@@ -118,6 +137,8 @@ const TOOL_DEFS = {
     schema: {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to retrieve.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   apply_version: {
@@ -125,6 +146,8 @@ const TOOL_DEFS = {
     schema: {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to restore to.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   delete_version: {
@@ -132,6 +155,8 @@ const TOOL_DEFS = {
     schema: {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to delete.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   tag_milestone: {
@@ -140,6 +165,8 @@ const TOOL_DEFS = {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to tag.'),
       name: z.string().describe('The milestone name (e.g., "v1.0", "before-refactor").'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   rename_milestone: {
@@ -148,6 +175,8 @@ const TOOL_DEFS = {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID.'),
       newName: z.string().describe('The new milestone name.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
   remove_milestone: {
@@ -155,6 +184,8 @@ const TOOL_DEFS = {
     schema: {
       promptId: z.string().describe('The prompt ID.'),
       versionId: z.string().describe('The version ID to un-tag.'),
+      workspaceId: z.string().optional().describe('Stable workspace id from list_prompts; use this to disambiguate duplicate workspace names.'),
+      workspaceUri: z.string().optional().describe('Workspace URI from list_prompts; use this to disambiguate duplicate workspace names.'),
     },
   },
 
@@ -290,12 +321,11 @@ The following sensitive data types are automatically detected and masked:
 
 export class QuickPromptMCPServer {
   private server: Server;
-  private workspaceRoot?: string;
   private currentLogLevel?: LoggingLevel = process.env.QUICKPROMPT_MCP_DEBUG ? 'debug' : undefined;
 
-  // Core managers
-  private promptManager?: PromptManager;
-  private versionManager?: VersionManager;
+  // Multi-workspace data structure
+  private workspaces: Map<string, WorkspaceBinding> = new Map();
+  private primaryWorkspaceId: string = '';
 
   // Tool handlers
   private promptTools?: PromptTools;
@@ -314,6 +344,15 @@ export class QuickPromptMCPServer {
           logging: {},
         },
       },
+    );
+
+    // Initialize tools with dynamic workspace lookup helpers
+    this.promptTools = new PromptTools(
+      (name) => this.getWorkspaceData(name),
+      () => this.getAllWorkspacesData()
+    );
+    this.versionTools = new VersionTools(
+      (name) => this.getWorkspaceData(name)
     );
 
     if (workspaceRoot) {
@@ -339,18 +378,60 @@ export class QuickPromptMCPServer {
 
   // ── Workspace ─────────────────────────────────────────────────────────────────
 
+  getWorkspaceData(workspaceRef?: string): WorkspaceBinding | undefined {
+    const ref = workspaceRef || this.primaryWorkspaceId;
+    if (!ref) {
+      return undefined;
+    }
+
+    const exact = this.workspaces.get(ref);
+    if (exact) {
+      return exact;
+    }
+
+    const matches = Array.from(this.workspaces.values()).filter(ws =>
+      ws.name === ref ||
+      ws.uri === ref ||
+      ws.rootPath === ref ||
+      path.resolve(ws.rootPath) === path.resolve(ref)
+    );
+    return matches.length === 1 ? matches[0] : undefined;
+  }
+
+  getAllWorkspacesData(): WorkspaceBinding[] {
+    return Array.from(this.workspaces.values());
+  }
+
   private updateWorkspaceRoot(newWorkspaceRoot: string): void {
-    this.workspaceRoot = path.resolve(newWorkspaceRoot);
+    const resolvedPath = path.resolve(newWorkspaceRoot);
+    const uri = QuickPromptMCPServer.toWorkspaceUri(resolvedPath);
+    const id = QuickPromptMCPServer.getWorkspaceId(uri);
+    const name = path.basename(resolvedPath) || 'Default';
 
-    // Initialize core managers
-    this.promptManager = new PromptManager(this.workspaceRoot);
-    this.versionManager = new VersionManager(this.workspaceRoot);
+    this.workspaces.clear();
+    this.workspaces.set(id, {
+      id,
+      name,
+      uri,
+      rootPath: resolvedPath,
+      promptManager: new PromptManager(resolvedPath),
+      versionManager: new VersionManager(resolvedPath)
+    });
+    this.primaryWorkspaceId = id;
 
-    // Initialize tool handlers
-    this.promptTools = new PromptTools(this.promptManager, this.versionManager);
-    this.versionTools = new VersionTools(this.versionManager, this.promptManager);
+    this.log('info', `Workspace [${name}] initialized from CLI: ${resolvedPath}`);
+  }
 
-    this.log('info', `Workspace root updated: ${this.workspaceRoot}`);
+  private static toWorkspaceUri(rootPath: string): string {
+    return pathToFileURL(rootPath).href;
+  }
+
+  private static getWorkspaceId(workspaceUri: string): string {
+    return Buffer.from(workspaceUri, 'utf8')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/g, '');
   }
 
   private async updateWorkspaceFromRoots(roots: Root[]): Promise<void> {
@@ -359,42 +440,75 @@ export class QuickPromptMCPServer {
       return;
     }
 
-    const firstRoot = roots[0];
-    let rootPath = firstRoot.uri;
+    this.workspaces.clear();
+    this.primaryWorkspaceId = '';
 
-    // Strip file:// scheme
-    if (rootPath.startsWith('file://')) {
-      rootPath = rootPath.slice(7);
-      // Handle Windows drive letter: /C:/... → C:/...
-      if (rootPath.startsWith('/') && rootPath.charAt(2) === ':') {
-        rootPath = rootPath.slice(1);
-      }
-    }
+    const nameCount = new Map<string, number>();
 
-    try {
-      const stats = await fs.promises.stat(rootPath);
-      if (stats.isDirectory()) {
-        this.updateWorkspaceRoot(rootPath);
-        this.log('info', `Workspace set from MCP Roots: ${rootPath}`);
-      } else {
-        this.log('warning', `Root path is not a directory: ${rootPath}`);
+    for (let i = 0; i < roots.length; i++) {
+      const root = roots[i];
+      let rootPath = root.uri;
+
+      // Strip file:// scheme
+      if (rootPath.startsWith('file://')) {
+        rootPath = rootPath.slice(7);
+        // Handle Windows drive letter: /C:/... → C:/...
+        if (rootPath.startsWith('/') && rootPath.charAt(2) === ':') {
+          rootPath = rootPath.slice(1);
+        }
       }
-    } catch (error) {
-      this.log('error', `Cannot access root path ${rootPath}`, error instanceof Error ? error.message : String(error));
+
+      let name = root.name;
+      if (!name) {
+        name = path.basename(rootPath) || `Folder-${i + 1}`;
+      }
+
+      const count = nameCount.get(name) || 0;
+      nameCount.set(name, count + 1);
+      if (count > 0) {
+        name = `${name} (${count})`;
+      }
+
+      try {
+        const stats = await fs.promises.stat(rootPath);
+        if (stats.isDirectory()) {
+          const resolvedPath = path.resolve(rootPath);
+          const uri = QuickPromptMCPServer.toWorkspaceUri(resolvedPath);
+          const id = QuickPromptMCPServer.getWorkspaceId(uri);
+          this.workspaces.set(id, {
+            id,
+            name,
+            uri,
+            rootPath: resolvedPath,
+            promptManager: new PromptManager(resolvedPath),
+            versionManager: new VersionManager(resolvedPath)
+          });
+
+          if (!this.primaryWorkspaceId) {
+            this.primaryWorkspaceId = id;
+          }
+          this.log('info', `Workspace [${name}] loaded from MCP Roots: ${resolvedPath}`);
+        } else {
+          this.log('warning', `Root path is not a directory: ${rootPath}`);
+        }
+      } catch (error) {
+        this.log('error', `Cannot access root path ${rootPath}`, error instanceof Error ? error.message : String(error));
+      }
     }
   }
 
   getWorkspaceRoot(): string | undefined {
-    return this.workspaceRoot;
+    // Return primary workspace path for compat with index.ts logging/caching
+    return this.workspaces.get(this.primaryWorkspaceId)?.rootPath;
   }
 
   // ── Tool call wrapper ─────────────────────────────────────────────────────────
 
   private async wrap<T>(fn: () => Promise<T> | T) {
-    if (!this.workspaceRoot) {
+    if (this.workspaces.size === 0) {
       return toMcpResult(createError(
         ErrorType.NOT_INITIALIZED,
-        'Workspace not initialized. Please ensure the client supports the MCP Roots protocol, or specify a workspace path via command-line arguments.',
+        'No workspaces initialized. Please ensure the client supports the MCP Roots protocol, or specify a workspace path via command-line arguments.',
       ));
     }
     try {
@@ -600,16 +714,17 @@ export class QuickPromptMCPServer {
           }
         } catch (error) {
           this.log('error', 'Failed to get initial roots from client', error instanceof Error ? error.message : String(error));
-          if (!this.workspaceRoot) {
+          if (!this.getWorkspaceRoot()) {
             this.log('error', 'Warning: no workspace path — MCP tools will not be available');
           }
         }
       } else {
         this.log('notice', 'Client does not support MCP Roots protocol');
-        if (!this.workspaceRoot) {
+        const workspaceRoot = this.getWorkspaceRoot();
+        if (!workspaceRoot) {
           this.log('error', 'Error: cannot obtain workspace path. Please specify one via command-line arguments, or use a client that supports MCP Roots.');
         } else {
-          this.log('info', `Using command-line specified workspace: ${this.workspaceRoot}`);
+          this.log('info', `Using command-line specified workspace: ${workspaceRoot}`);
         }
       }
     };
