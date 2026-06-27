@@ -610,7 +610,6 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run build:qp && npm run build:mcp && tsc -p ./ && npm run build:skills",
-        "clean": "node -e \"const fs=require('fs');for (const p of ['dist','out']) fs.rmSync(p,{recursive:true,force:true})\"",
         "build": "npm run clean && tsc -p ./ && npm run build:qp && npm run build:mcp && npm run build:skills",
         "build:skills": "node -e \"const fs=require('fs');fs.mkdirSync('dist/skills/quickprompt',{recursive:true});fs.copyFileSync('skills/quickprompt/SKILL.md','dist/skills/quickprompt/SKILL.md');fs.mkdirSync('skills/quickprompt/scripts',{recursive:true});fs.copyFileSync('dist/qp.bundle.js','skills/quickprompt/scripts/qp.bundle.js')\"",
         "_trigger_publish": "echo 'Triggering publish workflow'",
