@@ -123,7 +123,7 @@ export class OpenAICompatibleClient {
      */
     async testConnection(): Promise<ConnectionTestResult> {
         try {
-            const reply = await this.chat([
+            await this.chat([
                 { role: 'user', content: 'Reply with "ok" only.' }
             ], 5);
 
