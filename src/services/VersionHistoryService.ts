@@ -54,7 +54,20 @@ export class VersionHistoryService {
             const historyPath = this.getHistoryPath(location);
             const uri = vscode.Uri.file(historyPath);
             const content = await vscode.workspace.fs.readFile(uri);
-            const history: VersionHistory = JSON.parse(content.toString());
+            const parsed: unknown = JSON.parse(content.toString());
+
+            if (!VersionHistoryService.isValidHistory(parsed)) {
+                console.error(`Invalid version history shape for ${promptId}, resetting to empty`);
+                const resetHistory: VersionHistory = {
+                    promptId,
+                    versions: [],
+                    currentVersionId: ''
+                };
+                this.cache.set(location.cacheKey, resetHistory);
+                return resetHistory;
+            }
+
+            const history = parsed;
             history.promptId = promptId;
 
             // Cache the loaded history
@@ -71,8 +84,31 @@ export class VersionHistoryService {
                 this.cache.set(location.cacheKey, emptyHistory);
                 return emptyHistory;
             }
+            if (error instanceof SyntaxError) {
+                // Corrupted JSON file — reset rather than crash the tree view/migration flow
+                console.error(`Failed to parse version history for ${promptId}, resetting to empty:`, error);
+                const resetHistory: VersionHistory = {
+                    promptId,
+                    versions: [],
+                    currentVersionId: ''
+                };
+                this.cache.set(location.cacheKey, resetHistory);
+                return resetHistory;
+            }
             throw error;
         }
+    }
+
+    /**
+     * Type guard to ensure parsed JSON matches the expected VersionHistory shape.
+     */
+    private static isValidHistory(value: unknown): value is VersionHistory {
+        return (
+            !!value &&
+            typeof value === 'object' &&
+            Array.isArray((value as VersionHistory).versions) &&
+            typeof (value as VersionHistory).currentVersionId === 'string'
+        );
     }
 
     /**
