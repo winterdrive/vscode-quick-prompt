@@ -34,6 +34,16 @@ describe('PathUtils', () => {
         it('rejects path traversal attack', () => {
             expect(utils.validatePath('../outside/file.json')).toBe(false);
         });
+
+        it('rejects a sibling directory that merely shares a name prefix', () => {
+            // e.g. workspace "/foo/bar" must not accept "/foo/bar-evil/file.json"
+            const siblingPath = `${tmpDir}-evil${path.sep}file.json`;
+            expect(utils.validatePath(siblingPath)).toBe(false);
+        });
+
+        it('accepts the workspace root itself', () => {
+            expect(utils.validatePath(tmpDir)).toBe(true);
+        });
     });
 
     // ── toAbsolutePath ────────────────────────────────────────────────────────
