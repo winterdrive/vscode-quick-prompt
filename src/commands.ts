@@ -483,36 +483,11 @@ async function handleInsertPrompt(item: PromptItem, promptProvider: PromptProvid
 }
 
 /**
- * Helper to pick target workspace in multi-root setup
+ * Resolve the target workspace for high-frequency create flows without
+ * interrupting the user with a workspace picker.
  */
-async function pickWorkspace(promptProvider: PromptProvider): Promise<string | undefined> {
-    const configs = promptProvider.getWorkspaceConfigs();
-    if (!configs || configs.length <= 1) {
-        return configs?.[0]?.key;
-    }
-
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor) {
-        const folder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
-        if (folder) {
-            const matched = configs.find((c: any) => c.uri.toString() === folder.uri.toString());
-            if (matched) {
-                return matched.key;
-            }
-        }
-    }
-
-    const items: (vscode.QuickPickItem & { workspaceKey: string })[] = configs.map((c) => ({
-        label: c.name,
-        description: c.uri.fsPath,
-        workspaceKey: c.key
-    }));
-
-    const selected = await vscode.window.showQuickPick(items, {
-        placeHolder: '選擇要將 Prompt 儲存至哪一個工作區？'
-    });
-
-    return selected?.workspaceKey;
+function resolveQuickCreateWorkspace(promptProvider: PromptProvider): string | undefined {
+    return promptProvider.getQuickCreateWorkspaceKey();
 }
 
 /**
@@ -523,8 +498,9 @@ async function handleAddPrompt(
     promptProvider: PromptProvider,
     fileSystemProvider: PromptFileSystemProvider
 ): Promise<void> {
-    const targetWorkspace = await pickWorkspace(promptProvider);
+    const targetWorkspace = resolveQuickCreateWorkspace(promptProvider);
     if (!targetWorkspace) {
+        vscode.window.showWarningMessage('Quick Prompt: No workspace available to save the prompt.');
         return;
     }
 
@@ -555,11 +531,6 @@ async function handleAddPromptWithTitle(
     promptProvider: PromptProvider,
     titleGenService: TitleGenerationService
 ): Promise<void> {
-    const targetWorkspace = await pickWorkspace(promptProvider);
-    if (!targetWorkspace) {
-        return;
-    }
-
     const title = await vscode.window.showInputBox({
         prompt: I18n.getMessage('input.addPromptWithTitleTitlePrompt'),
         placeHolder: I18n.getMessage('input.addPromptTitlePlaceholder'),
@@ -590,6 +561,12 @@ async function handleAddPromptWithTitle(
         return;
     }
 
+    const targetWorkspace = resolveQuickCreateWorkspace(promptProvider);
+    if (!targetWorkspace) {
+        vscode.window.showWarningMessage('Quick Prompt: No workspace available to save the prompt.');
+        return;
+    }
+
     await promptProvider.addPromptWithOption(title.trim(), content.trim(), false, 'user', targetWorkspace);
 }
 
@@ -614,8 +591,9 @@ async function handleSilentAdd(
         return;
     }
 
-    const targetWorkspace = await pickWorkspace(promptProvider);
+    const targetWorkspace = resolveQuickCreateWorkspace(promptProvider);
     if (!targetWorkspace) {
+        vscode.window.showWarningMessage('Quick Prompt: No workspace available to save the prompt.');
         return;
     }
 
@@ -749,8 +727,9 @@ async function handlePinClipboardItem(
 ): Promise<void> {
     if (!item || !item.item) return;
 
-    const targetWorkspace = await pickWorkspace(promptProvider);
+    const targetWorkspace = resolveQuickCreateWorkspace(promptProvider);
     if (!targetWorkspace) {
+        vscode.window.showWarningMessage('Quick Prompt: No workspace available to save the prompt.');
         return;
     }
 

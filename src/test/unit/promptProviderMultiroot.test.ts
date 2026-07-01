@@ -24,7 +24,17 @@ describe('PromptProvider multi-root routing', () => {
     }
 
     function makeContext(): vscode.ExtensionContext {
-        return new (vscode as any).ExtensionContext();
+        const context = new (vscode as any).ExtensionContext();
+        const state = new Map<string, unknown>();
+        context.workspaceState = {
+            get: jest.fn((key: string, defaultValue?: unknown) => state.has(key) ? state.get(key) : defaultValue),
+            update: jest.fn((key: string, value: unknown) => {
+                state.set(key, value);
+                return Promise.resolve();
+            }),
+            keys: jest.fn(() => Array.from(state.keys()))
+        };
+        return context;
     }
 
     beforeEach(() => {
@@ -180,5 +190,55 @@ describe('PromptProvider multi-root routing', () => {
         expect((children[0] as PromptItem).prompt.title).toBe('Prompt B');
         expect(provider.getScopeDescription()).toBe('ProjectB');
         expect(provider.shouldShowWorkspaceLabels()).toBe(false);
+    });
+
+    it('uses the active editor workspace for quick-create target', async () => {
+        writePrompts(tmpDir1, []);
+        writePrompts(tmpDir2, []);
+
+        (vscode.window as any).activeTextEditor = {
+            document: { uri: vscode.Uri.file(path.join(tmpDir2, 'source.ts')) }
+        };
+
+        const context = makeContext();
+        const provider = new PromptProvider(context, new VersionHistoryService(context));
+        await provider.refresh();
+
+        const projectBKey = provider.getWorkspaceConfigs().find(config => config.name === 'ProjectB')?.key;
+        expect(projectBKey).toBeDefined();
+        expect(provider.getQuickCreateWorkspaceKey()).toBe(projectBKey);
+    });
+
+    it('uses a single selected scope for quick-create target when there is no active editor workspace', async () => {
+        writePrompts(tmpDir1, []);
+        writePrompts(tmpDir2, []);
+
+        const context = makeContext();
+        const provider = new PromptProvider(context, new VersionHistoryService(context));
+        await provider.refresh();
+
+        const projectBKey = provider.getWorkspaceConfigs().find(config => config.name === 'ProjectB')?.key;
+        expect(projectBKey).toBeDefined();
+
+        await provider.setActiveWorkspaceScope([projectBKey!]);
+
+        expect(provider.getQuickCreateWorkspaceKey()).toBe(projectBKey);
+    });
+
+    it('remembers the last create workspace when scope shows all workspaces', async () => {
+        writePrompts(tmpDir1, []);
+        writePrompts(tmpDir2, []);
+
+        const context = makeContext();
+        const provider = new PromptProvider(context, new VersionHistoryService(context));
+        await provider.refresh();
+
+        const projectBKey = provider.getWorkspaceConfigs().find(config => config.name === 'ProjectB')?.key;
+        expect(projectBKey).toBeDefined();
+
+        await provider.addPromptWithOption('Prompt B', 'B', true, 'user', projectBKey);
+        await provider.setActiveWorkspaceScope([]);
+
+        expect(provider.getQuickCreateWorkspaceKey()).toBe(projectBKey);
     });
 });

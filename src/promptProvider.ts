@@ -29,6 +29,7 @@ export type PromptTreeItem = PromptItem | VersionItem;
 
 export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     private static readonly scopeStateKey = 'quickPrompt.activeWorkspaceScope';
+    private static readonly lastCreateWorkspaceStateKey = 'quickPrompt.lastCreateWorkspaceKey';
     private _onDidChangeTreeData: vscode.EventEmitter<PromptTreeItem | undefined | null | void> = new vscode.EventEmitter<PromptTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<PromptTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
@@ -450,6 +451,41 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         return this.workspaceConfigs[0]?.key || 'global';
     }
 
+    public getQuickCreateWorkspaceKey(): string | undefined {
+        if (!this.workspaceConfigs || this.workspaceConfigs.length === 0) {
+            return undefined;
+        }
+
+        if (this.workspaceConfigs.length === 1) {
+            return this.workspaceConfigs[0].key;
+        }
+
+        const activeEditor = vscode.window.activeTextEditor;
+        if (activeEditor) {
+            const folder = vscode.workspace.getWorkspaceFolder(activeEditor.document.uri);
+            if (folder) {
+                const matched = this.workspaceConfigs.find(c => c.uri.toString() === folder.uri.toString());
+                if (matched) {
+                    return matched.key;
+                }
+            }
+        }
+
+        const activeScopeKeys = this.getActiveWorkspaceScopeKeys();
+        if (activeScopeKeys.length === 1 && this.getWorkspaceConfig(activeScopeKeys[0])) {
+            return activeScopeKeys[0];
+        }
+
+        const lastCreateWorkspaceKey = this.context.workspaceState.get<string | undefined>(
+            PromptProvider.lastCreateWorkspaceStateKey
+        );
+        if (lastCreateWorkspaceKey && this.getWorkspaceConfig(lastCreateWorkspaceKey)) {
+            return lastCreateWorkspaceKey;
+        }
+
+        return this.workspaceConfigs[0].key;
+    }
+
     async addPrompt(title: string, content: string, titleSource?: 'user' | 'ai') {
         await this.addPromptWithOption(title, content, false, titleSource);
     }
@@ -501,6 +537,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
         };
         this.prompts.push(newPrompt);
         await this.savePrompts();
+        await this.context.workspaceState.update(PromptProvider.lastCreateWorkspaceStateKey, workspaceKey);
         this._onDidChangeTreeData.fire();
 
         if (!silent) {
