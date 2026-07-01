@@ -125,3 +125,42 @@ describe('ClipboardManager.checkClipboard', () => {
         await expect(manager.checkClipboard('external', true)).rejects.toThrow('Permission denied');
     });
 });
+
+describe('ClipboardManager.loadHistory', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+        tmpDir = fs.mkdtempSync(path.join(realOs.tmpdir(), 'cm-loadhistory-test-'));
+        homedirMock.mockReturnValue(tmpDir);
+        readText.mockReset().mockResolvedValue('');
+    });
+
+    afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        jest.clearAllMocks();
+    });
+
+    it('resets history to [] when clipboard-history.json contains non-array JSON', async () => {
+        const storageDir = path.join(tmpDir, '.quickprompt');
+        fs.mkdirSync(storageDir, { recursive: true });
+        fs.writeFileSync(path.join(storageDir, 'clipboard-history.json'), '{"not":"an-array"}', 'utf-8');
+
+        const manager = new ClipboardManager(makeContext());
+        await flushMicrotasks();
+
+        expect(manager.getHistory()).toEqual([]);
+        manager.dispose();
+    });
+
+    it('resets history to [] when clipboard-history.json contains null', async () => {
+        const storageDir = path.join(tmpDir, '.quickprompt');
+        fs.mkdirSync(storageDir, { recursive: true });
+        fs.writeFileSync(path.join(storageDir, 'clipboard-history.json'), 'null', 'utf-8');
+
+        const manager = new ClipboardManager(makeContext());
+        await flushMicrotasks();
+
+        expect(manager.getHistory()).toEqual([]);
+        manager.dispose();
+    });
+});

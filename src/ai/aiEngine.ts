@@ -162,20 +162,22 @@ export class AIEngine {
                 }, async (progress) => {
                     this.loadingProgress = progress;
 
-                    await new Promise<void>((res, rej) => {
-                        const interval = setInterval(() => {
-                            if (this.status === 'ready') {
-                                clearInterval(interval);
-                                res();
-                            } else if (this.status === 'error') {
-                                clearInterval(interval);
-                                rej(new Error('Worker initialization failed'));
-                            }
-                        }, 200);
-                    });
-
-                    this.loadingProgress = null;
-                });
+                    try {
+                        await new Promise<void>((res, rej) => {
+                            const interval = setInterval(() => {
+                                if (this.status === 'ready') {
+                                    clearInterval(interval);
+                                    res();
+                                } else if (this.status === 'error') {
+                                    clearInterval(interval);
+                                    rej(new Error('Worker initialization failed'));
+                                }
+                            }, 200);
+                        });
+                    } finally {
+                        this.loadingProgress = null;
+                    }
+                }).then(undefined, () => { /* rejection handled by the outer promise */ });
 
                 checkStatus();
             });

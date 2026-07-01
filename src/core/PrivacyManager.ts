@@ -315,10 +315,10 @@ export class PrivacyManager {
     }
 
     private generateTokenId(): string {
-        return `tok_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        return `tok_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     }
 
     private generateId(): string {
-        return `dict_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `dict_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     }
 }
