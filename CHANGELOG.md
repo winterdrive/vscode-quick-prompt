@@ -2,6 +2,21 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.5.7] - Stability Fixes - 2026-07-02
+
+### Stability
+
+- Guard clipboard history loading against valid JSON payloads that are not arrays, falling back to an empty history instead of throwing later during clipboard updates.
+- Guard prompt loading against non-array `prompts.json` payloads and keep the existing backup-and-reset recovery path explicit and tested.
+- Guard version history loading against corrupted JSON and malformed history objects, resetting to an empty history instead of breaking tree rendering or migration for later prompts.
+- Ensure local Qwen progress notifications are cleaned up when worker initialization fails, and handle the `withProgress` rejection path to avoid unhandled promise warnings.
+
+### Maintenance
+
+- Replace deprecated `String.prototype.substr()` usage with equivalent `substring()` calls in privacy and version helpers.
+- Remove an unused `reply` assignment from the OpenAI-compatible connection test path.
+- Added unit coverage for clipboard history, prompt loading, and version history malformed-data recovery paths.
+
 ## [0.5.6] - Multi-root Select Scope - 2026-06-24
 
 ### 🗂 Multi-root Select Scope

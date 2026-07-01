@@ -44,7 +44,12 @@ export class PromptManager {
         }
         try {
             const content = fs.readFileSync(this.promptsFilePath, 'utf-8');
-            const prompts: Prompt[] = JSON.parse(content);
+            const parsed: unknown = JSON.parse(content);
+            if (!Array.isArray(parsed)) {
+                this.createBackup();
+                return { prompts: [], version: 0 };
+            }
+            const prompts: Prompt[] = parsed;
             const version = PathUtils.getMtime(this.promptsFilePath);
 
             // Normalize/migrate each prompt

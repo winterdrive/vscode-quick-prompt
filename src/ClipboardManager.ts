@@ -322,7 +322,8 @@ export class ClipboardManager {
         if (fs.existsSync(this.storagePath)) {
             try {
                 const data = await fs.promises.readFile(this.storagePath, 'utf-8');
-                this.history = JSON.parse(data);
+                const parsed: unknown = JSON.parse(data);
+                this.history = Array.isArray(parsed) ? parsed : [];
             } catch (err) {
                 console.error('Failed to parse clipboard history file:', err);
                 this.history = [];

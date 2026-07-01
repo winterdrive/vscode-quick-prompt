@@ -60,6 +60,19 @@ describe('PromptManager', () => {
             expect(backups.length).toBeGreaterThan(0);
         });
 
+        it('returns empty list and creates backup when JSON is valid but not an array', () => {
+            const promptsPath = path.join(tmpDir, '.vscode', 'prompts.json');
+            for (const invalidJson of ['{"id":"001"}', 'null', '"string"', '42']) {
+                fs.writeFileSync(promptsPath, invalidJson, 'utf-8');
+                manager.clearCache();
+                const { prompts } = manager.loadPrompts();
+                expect(prompts).toEqual([]);
+            }
+            const backups = fs.readdirSync(path.join(tmpDir, '.vscode'))
+                .filter(f => f.includes('.backup.'));
+            expect(backups.length).toBeGreaterThan(0);
+        });
+
         it('normalizes missing fields with defaults', () => {
             const raw = [{ id: '001', title: 'X', content: 'Y' }];
             writePrompts(tmpDir, raw as Prompt[]);

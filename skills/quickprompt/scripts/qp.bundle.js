@@ -139,7 +139,12 @@ var PromptManager = class {
     }
     try {
       const content = fs2.readFileSync(this.promptsFilePath, "utf-8");
-      const prompts = JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (!Array.isArray(parsed)) {
+        this.createBackup();
+        return { prompts: [], version: 0 };
+      }
+      const prompts = parsed;
       const version = PathUtils.getMtime(this.promptsFilePath);
       const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
       const normalized = prompts.map((p) => ({
@@ -571,7 +576,7 @@ var VersionManager = class {
     return path3.join(this.historyDir, `${safeId}.history.json`);
   }
   generateVersionId() {
-    return `v${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `v${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
   pruneVersions(history) {
     while (history.versions.length > PROMPT_CONSTANTS.MAX_VERSIONS) {
