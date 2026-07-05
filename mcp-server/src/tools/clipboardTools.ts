@@ -24,7 +24,8 @@ export class ClipboardTools {
     if (fs.existsSync(storagePath)) {
       try {
         const data = fs.readFileSync(storagePath, 'utf-8');
-        return JSON.parse(data) as ClipboardHistoryItem[];
+        const parsed: unknown = JSON.parse(data);
+        return Array.isArray(parsed) ? (parsed as ClipboardHistoryItem[]) : [];
       } catch (err) {
         throw new Error(`Failed to read clipboard history: ${err}`);
       }
