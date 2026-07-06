@@ -59,7 +59,11 @@ export class VersionManager {
 
         try {
             const content = fs.readFileSync(historyPath, 'utf-8');
-            const history: VersionHistory = JSON.parse(content);
+            const parsed: unknown = JSON.parse(content);
+            if (!VersionManager.isValidHistory(parsed)) {
+                throw new Error(`Malformed version history shape for ${promptId}`);
+            }
+            const history: VersionHistory = parsed;
             this.cache.set(promptId, { history, mtimeMs: currentMtime });
             return JSON.parse(JSON.stringify(history));
         } catch {
@@ -70,6 +74,20 @@ export class VersionManager {
             };
             return emptyHistory;
         }
+    }
+
+    /**
+     * Type guard ensuring parsed JSON matches the expected VersionHistory shape,
+     * so a corrupted or unexpectedly-shaped history.json falls back to empty
+     * history instead of throwing later (e.g. `history.versions.find` on undefined).
+     */
+    private static isValidHistory(value: unknown): value is VersionHistory {
+        return (
+            !!value &&
+            typeof value === 'object' &&
+            Array.isArray((value as VersionHistory).versions) &&
+            typeof (value as VersionHistory).currentVersionId === 'string'
+        );
     }
 
     /**
