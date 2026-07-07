@@ -277,7 +277,7 @@ export class PromptManager {
             if (fs.existsSync(this.promptsFilePath)) {
                 const backupPath = `${this.promptsFilePath}.backup.${Date.now()}`;
                 fs.copyFileSync(this.promptsFilePath, backupPath);
-                console.error(`[PromptManager] Created backup: ${backupPath}`);
+                console.error(`[PromptManager] Created backup: ${path.basename(backupPath)}`);
             }
         } catch { /* ignore backup errors */ }
     }
