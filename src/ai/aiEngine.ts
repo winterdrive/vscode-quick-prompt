@@ -117,7 +117,7 @@ export class AIEngine {
     private async initializeQwen(context: vscode.ExtensionContext): Promise<void> {
         try {
             const workerPath = path.join(__dirname, 'aiWorker.js');
-            console.log('[AIEngine] Spawning Qwen worker from:', workerPath);
+            console.log('[AIEngine] Spawning Qwen worker from:', path.basename(workerPath));
 
             this.worker = new Worker(workerPath);
 

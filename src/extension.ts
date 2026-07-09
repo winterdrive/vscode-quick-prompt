@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { PromptProvider } from './promptProvider';
 import { ClipboardProvider } from './clipboardProvider';
 import { PromptFileSystemProvider } from './promptFileSystem';
@@ -34,7 +35,7 @@ async function deployMcpServer(context: vscode.ExtensionContext): Promise<string
         // Write to the stable path, overwriting any previous version
         await vscode.workspace.fs.writeFile(targetFile, sourceContent);
 
-        console.log(`[QuickPrompt] MCP server deployed to stable path: ${targetFile.fsPath}`);
+        console.log(`[QuickPrompt] MCP server deployed to stable path: ${path.basename(targetFile.fsPath)}`);
         return targetFile.fsPath.replace(/\\/g, '/');
     } catch (error) {
         // Deployment failure should not affect the extension's main functionality
