@@ -41,13 +41,14 @@ export class PromptHoverProvider implements vscode.HoverProvider {
             return null;
         }
 
-        // 從 URI 中提取 Prompt ID
-        const fileName = document.uri.path.split('/').pop();
-        if (!fileName) {
+        // 從 URI 中提取 Prompt ID（虛擬路徑格式為 /<workspaceKey>/<actualId>.md 或 /<actualId>.md）
+        const cleanPath = document.uri.path.replace(/\.md$/, '');
+        const parts = cleanPath.substring(1).split('/').map(decodeURIComponent);
+        if (parts.length === 0 || !parts[0]) {
             return null;
         }
 
-        const promptId = fileName.replace('.md', '');
+        const promptId = parts.length >= 2 ? `${parts[0]}:${parts[1]}` : parts[0];
         const prompt = this.prompts.get(promptId);
 
         if (!prompt) {
