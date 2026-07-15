@@ -82,12 +82,12 @@ function parseArgs(): { workspaceRoot?: string } {
 function validateWorkspaceRoot(workspaceRoot: string): boolean {
   try {
     if (!fs.existsSync(workspaceRoot)) {
-      console.error(`[WARNING] Workspace path does not exist: ${workspaceRoot}`);
+      console.error(`[WARNING] Workspace path does not exist: ${path.basename(workspaceRoot)}`);
       return false;
     }
     const stats = fs.statSync(workspaceRoot);
     if (!stats.isDirectory()) {
-      console.error(`[WARNING] Workspace path is not a directory: ${workspaceRoot}`);
+      console.error(`[WARNING] Workspace path is not a directory: ${path.basename(workspaceRoot)}`);
       return false;
     }
     return true;
@@ -113,10 +113,10 @@ async function main() {
 
     if (cliRoot && validateWorkspaceRoot(cliRoot)) {
       validatedWorkspaceRoot = path.resolve(cliRoot);
-      console.error(`[INFO] Using command-line workspace: ${validatedWorkspaceRoot}`);
+      console.error(`[INFO] Using command-line workspace: ${path.basename(validatedWorkspaceRoot)}`);
     } else if (state.lastWorkspaceRoot && validateWorkspaceRoot(state.lastWorkspaceRoot)) {
       validatedWorkspaceRoot = state.lastWorkspaceRoot;
-      console.error(`[INFO] Using cached workspace path: ${validatedWorkspaceRoot}`);
+      console.error(`[INFO] Using cached workspace path: ${path.basename(validatedWorkspaceRoot)}`);
     }
 
     // 4. Create the QuickPrompt MCP Server
@@ -128,7 +128,7 @@ async function main() {
       const root = server.getWorkspaceRoot();
       if (root) {
         saveState({ lastWorkspaceRoot: root });
-        console.error(`[INFO] Workspace path cached: ${root}`);
+        console.error(`[INFO] Workspace path cached: ${path.basename(root)}`);
       }
     }, 3000);
 
