@@ -144,10 +144,13 @@ export class PatternRegistry {
             // 重新建立 regex 以重置 lastIndex
             const regex = new RegExp(pattern.regex.source, pattern.regex.flags);
             const matches = Array.from(maskedText.matchAll(regex));
+            // matches 的 index 是相對於此 pattern 開始時的 maskedText 快照；
+            // 同一 pattern 內每次替換都可能改變長度，須用 offset 校正後續 match 的位置。
+            let offset = 0;
 
             for (const match of matches) {
                 if (match.index === undefined) { continue; }
-                const start = match.index;
+                const start = match.index + offset;
                 const end = start + match[0].length;
 
                 if (this.isOverlapping(start, end, maskedRanges)) { continue; }
@@ -156,9 +159,12 @@ export class PatternRegistry {
                 tokens.push(token);
 
                 maskedText = maskedText.substring(0, start) + token.maskedValue + maskedText.substring(end);
-                maskedRanges.push({ start, end });
+                // 記錄的範圍要對應「取代後」文字中 token 實際佔用的區間，而非原始 match 的長度，
+                // 否則後續 pattern 的重疊判斷會用到錯誤座標。
+                maskedRanges.push({ start, end: start + token.maskedValue.length });
 
                 const diff = token.maskedValue.length - match[0].length;
+                offset += diff;
                 for (const r of maskedRanges) {
                     if (r.start > start) { r.start += diff; r.end += diff; }
                 }
