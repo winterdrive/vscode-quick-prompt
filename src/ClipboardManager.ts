@@ -20,6 +20,7 @@ export class ClipboardManager {
     private historyLoaded: boolean = false;
     private readonly storagePath: string;
     private readonly configListener: vscode.Disposable;
+    private windowStateListener: vscode.Disposable | null = null;
 
     // Cached config — invalidated on onDidChangeConfiguration
     private cfg = {
@@ -120,7 +121,7 @@ export class ClipboardManager {
      * 視窗焦點監聽 - 當 VSCode 獲得焦點時檢查剪貼簿
      */
     private registerWindowFocusListener() {
-        vscode.window.onDidChangeWindowState((state) => {
+        this.windowStateListener = vscode.window.onDidChangeWindowState((state) => {
             this.isVSCodeActive = state.focused;
 
             if (state.focused) {
@@ -372,6 +373,7 @@ export class ClipboardManager {
     dispose() {
         this.stopPolling();
         this.configListener.dispose();
+        this.windowStateListener?.dispose();
         this._onHistoryChanged.dispose();
     }
 }

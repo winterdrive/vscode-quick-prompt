@@ -164,3 +164,30 @@ describe('ClipboardManager.loadHistory', () => {
         manager.dispose();
     });
 });
+
+describe('ClipboardManager.dispose', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+        tmpDir = fs.mkdtempSync(path.join(realOs.tmpdir(), 'cm-dispose-test-'));
+        homedirMock.mockReturnValue(tmpDir);
+        readText.mockReset().mockResolvedValue('');
+    });
+
+    afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        jest.clearAllMocks();
+    });
+
+    it('disposes the window focus listener registered in the constructor', async () => {
+        const disposeSpy = jest.fn();
+        (vscode.window.onDidChangeWindowState as jest.Mock).mockReturnValueOnce({ dispose: disposeSpy });
+
+        const manager = new ClipboardManager(makeContext());
+        await flushMicrotasks();
+
+        manager.dispose();
+
+        expect(disposeSpy).toHaveBeenCalledTimes(1);
+    });
+});
