@@ -2,7 +2,7 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
-## [0.6.0] - Privacy & Stability Fixes (pre-release) - 2026-07-22
+## [0.5.8] - Privacy & Stability Fixes (pre-release) - 2026-07-22
 
 ### 🐛 Bug Fixes
 
