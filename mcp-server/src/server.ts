@@ -419,7 +419,7 @@ export class QuickPromptMCPServer {
     });
     this.primaryWorkspaceId = id;
 
-    this.log('info', `Workspace [${name}] initialized from CLI: ${resolvedPath}`);
+    this.log('info', `Workspace [${name}] initialized from CLI: ${path.basename(resolvedPath)}`);
   }
 
   private static toWorkspaceUri(rootPath: string): string {
@@ -487,12 +487,12 @@ export class QuickPromptMCPServer {
           if (!this.primaryWorkspaceId) {
             this.primaryWorkspaceId = id;
           }
-          this.log('info', `Workspace [${name}] loaded from MCP Roots: ${resolvedPath}`);
+          this.log('info', `Workspace [${name}] loaded from MCP Roots: ${path.basename(resolvedPath)}`);
         } else {
-          this.log('warning', `Root path is not a directory: ${rootPath}`);
+          this.log('warning', `Root path is not a directory: ${path.basename(rootPath)}`);
         }
       } catch (error) {
-        this.log('error', `Cannot access root path ${rootPath}`, error instanceof Error ? error.message : String(error));
+        this.log('error', `Cannot access root path ${path.basename(rootPath)}`, error instanceof Error ? error.message : String(error));
       }
     }
   }
@@ -724,7 +724,7 @@ export class QuickPromptMCPServer {
         if (!workspaceRoot) {
           this.log('error', 'Error: cannot obtain workspace path. Please specify one via command-line arguments, or use a client that supports MCP Roots.');
         } else {
-          this.log('info', `Using command-line specified workspace: ${workspaceRoot}`);
+          this.log('info', `Using command-line specified workspace: ${path.basename(workspaceRoot)}`);
         }
       }
     };
