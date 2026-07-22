@@ -234,7 +234,7 @@ description: Manages reusable prompts with version history and privacy masking v
 ${this.getSkillContent(context, scriptRunPath)}`;
 
         fs.writeFileSync(mdPath, content, 'utf8');
-        const relativeSkillPath = path.relative(projectRoot, mdPath).replace(/\\\\/g, '/');
+        const relativeSkillPath = path.relative(projectRoot, mdPath).replace(/\\/g, '/');
         vscode.window.showInformationMessage(`QuickPrompt skill file generated: ${relativeSkillPath}`);
 
         const document = await vscode.workspace.openTextDocument(vscode.Uri.file(mdPath));
