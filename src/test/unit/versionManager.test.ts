@@ -40,6 +40,24 @@ describe('VersionManager', () => {
         it('throws for invalid promptId with path traversal', () => {
             expect(() => manager.loadHistory('../evil')).toThrow('Invalid promptId');
         });
+
+        it('resets to empty history when the file contains corrupted JSON', () => {
+            const historyDir = path.join(tmpDir, '.vscode', '.quickprompt', 'history');
+            fs.mkdirSync(historyDir, { recursive: true });
+            fs.writeFileSync(path.join(historyDir, '001.history.json'), '{not valid json', 'utf-8');
+
+            const history = manager.loadHistory('001');
+            expect(history).toEqual({ promptId: '001', versions: [], currentVersionId: '' });
+        });
+
+        it('resets to empty history when the file contains JSON of the wrong shape', () => {
+            const historyDir = path.join(tmpDir, '.vscode', '.quickprompt', 'history');
+            fs.mkdirSync(historyDir, { recursive: true });
+            fs.writeFileSync(path.join(historyDir, '001.history.json'), JSON.stringify([1, 2, 3]), 'utf-8');
+
+            const history = manager.loadHistory('001');
+            expect(history).toEqual({ promptId: '001', versions: [], currentVersionId: '' });
+        });
     });
 
     // ── createVersion ─────────────────────────────────────────────────────────
