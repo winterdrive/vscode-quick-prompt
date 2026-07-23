@@ -2,6 +2,23 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.5.8] - Privacy & Stability Fixes (pre-release) - 2026-07-22
+
+### 🐛 Bug Fixes
+
+- **test:** ignore local Claude worktrees in Jest (#45)
+- **fix(mcp-clipboard):** guard against non-array JSON in clipboard history load (#47)
+- **fix(VersionManager):** guard against malformed history JSON shape (#48)
+- **fix(PromptManager):** avoid logging full backup file path (#49)
+- **fix(extension/aiEngine):** avoid logging full file paths in activation and AI worker startup (#51)
+- **fix(mcp-server):** avoid logging full workspace path in MCP server stderr (#55)
+- **fix(mcp-server):** avoid logging full workspace paths in server.ts (#57)
+- **refactor(VersionHistoryService):** replace deprecated String.substr() with substring() (#46)
+- **fix(promptHoverProvider):** correct prompt ID extraction in virtual URI parsing (#52)
+- **fix(SkillGenerator):** correct backslash regex in generated skill path display (#53)
+- **fix(ClipboardManager):** dispose window focus listener on deactivation (#54)
+- **fix(mcp-server):** avoid logging full workspace path in validateWorkspaceRoot catch block (#59)
+
 ## [0.5.7] - Stability Fixes - 2026-07-02
 
 ### Stability
