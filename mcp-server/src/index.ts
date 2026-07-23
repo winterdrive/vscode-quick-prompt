@@ -92,7 +92,8 @@ function validateWorkspaceRoot(workspaceRoot: string): boolean {
     }
     return true;
   } catch (error) {
-    console.error(`[WARNING] Failed to validate workspace path: ${error}`);
+    const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+    console.error(`[WARNING] Failed to validate workspace path: ${path.basename(workspaceRoot)}${code ? ` (${code})` : ''}`);
     return false;
   }
 }
