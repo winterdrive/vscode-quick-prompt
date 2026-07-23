@@ -3,7 +3,7 @@ module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
     testMatch: ['**/src/test/**/*.test.ts'],
-    testPathIgnorePatterns: ['/node_modules/', '/src/test/ui/', '/.vscode-test/', '/.claude/'],
+    testPathIgnorePatterns: ['/node_modules/', '/src/test/ui/', '/.vscode-test/', '<rootDir>/.claude/'],
     modulePathIgnorePatterns: ['<rootDir>/.vscode-test/', '<rootDir>/.claude/', '<rootDir>/dist/'],
     transform: {
         '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
