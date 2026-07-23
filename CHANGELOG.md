@@ -17,6 +17,7 @@ All notable changes to the "Quick Prompt" extension will be documented in this f
 - **fix(promptHoverProvider):** correct prompt ID extraction in virtual URI parsing (#52)
 - **fix(SkillGenerator):** correct backslash regex in generated skill path display (#53)
 - **fix(ClipboardManager):** dispose window focus listener on deactivation (#54)
+- **fix(mcp-server):** avoid logging full workspace path in validateWorkspaceRoot catch block (#59)
 
 ## [0.5.7] - Stability Fixes - 2026-07-02
 
