@@ -161,7 +161,8 @@ export class PrivacyManager {
         let result = maskedText;
         for (const [maskedValue, token] of this.tokenStore) {
             if (token.reversible && result.includes(maskedValue)) {
-                result = result.replace(maskedValue, token.originalValue);
+                // split/join replaces every occurrence — String.replace(string) only replaces the first
+                result = result.split(maskedValue).join(token.originalValue);
             }
         }
         return result;
