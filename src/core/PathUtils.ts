@@ -16,7 +16,7 @@ export class PathUtils {
         const resolved = this.toAbsolutePath(filePath);
         const normalizedRoot = path.resolve(this.workspaceRoot);
         const normalizedPath = path.resolve(resolved);
-        return normalizedPath.startsWith(normalizedRoot);
+        return normalizedPath === normalizedRoot || normalizedPath.startsWith(normalizedRoot + path.sep);
     }
 
     /**
