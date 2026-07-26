@@ -2,6 +2,14 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.6.0] - Stable Release: High-Risk Security & Privacy Fixes - 2026-07-26
+
+### 🐛 Bug Fixes
+
+- **fix(PathUtils):** close prefix-match bypass in `validatePath` — a sibling directory merely sharing a name prefix with the workspace root (e.g. `/foo/bar-evil` vs `/foo/bar`) was incorrectly accepted as inside the workspace boundary (#44)
+- **fix(PrivacyManager):** restore all occurrences when unmasking repeated privacy tokens — `unmaskText` previously only restored the first occurrence of a repeated masked value (#50)
+- **fix(PatternRegistry):** correct index offset for multiple matches in `mask()` — when a pattern matched more than once and the label length differed from the match length, later matches in the same pass were masked at the wrong position (#56)
+
 ## [0.5.8] - Privacy & Stability Fixes (pre-release) - 2026-07-22
 
 ### 🐛 Bug Fixes
