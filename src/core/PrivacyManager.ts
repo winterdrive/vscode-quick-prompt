@@ -298,10 +298,23 @@ export class PrivacyManager {
         }
         try {
             const content = fs.readFileSync(this.dictionaryPath, 'utf-8');
-            return JSON.parse(content) as DictionaryFile;
+            const parsed: unknown = JSON.parse(content);
+            if (!PrivacyManager.isValidDictionaryFile(parsed)) {
+                throw new Error('Malformed privacy dictionary shape');
+            }
+            return parsed;
         } catch {
             return { version: '1.0', description: 'Quick Prompt Privacy Dictionary', lastModified: new Date().toISOString(), entries: [] };
         }
+    }
+
+    /**
+     * Guards against a privacy-dictionary.json that parses successfully but has
+     * an unexpected shape (e.g. `{}`, `null`, `{"entries": null}`), which would
+     * otherwise throw later on `data.entries.push/find/findIndex`.
+     */
+    private static isValidDictionaryFile(value: unknown): value is DictionaryFile {
+        return !!value && typeof value === 'object' && Array.isArray((value as DictionaryFile).entries);
     }
 
     private saveDictionary(data: DictionaryFile): void {
