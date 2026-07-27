@@ -27,6 +27,15 @@ export interface WorkspaceConfig {
 // TreeItem 類型 (支援 PromptItem 和 VersionItem)
 export type PromptTreeItem = PromptItem | VersionItem;
 
+/**
+ * 將檔案系統錯誤格式化為安全的日誌訊息：僅保留錯誤代碼，避免將
+ * fs.statSync/readFile 等錯誤訊息中內嵌的完整工作區路徑寫入日誌。
+ */
+function formatFsErrorForLog(error: unknown): string {
+    const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+    return code ?? (error instanceof Error ? error.name : 'unknown error');
+}
+
 export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
     private static readonly scopeStateKey = 'quickPrompt.activeWorkspaceScope';
     private static readonly lastCreateWorkspaceStateKey = 'quickPrompt.lastCreateWorkspaceKey';
@@ -230,7 +239,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                 allPrompts = allPrompts.concat(processedPrompts);
                 loadedWorkspaceKeys.add(config.key);
             } catch (error) {
-                console.error(`Failed to load prompts for workspace ${config.name}:`, error);
+                console.error(`Failed to load prompts for workspace ${config.name}: ${formatFsErrorForLog(error)}`);
                 failedWorkspaceKeys.add(config.key);
             }
         }
@@ -268,7 +277,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
 
             vscode.window.showInformationMessage(`✨ 已在 ${config.name} 建立預設 Prompt 檔案`);
         } catch (error) {
-            console.error(`Failed to create default prompts file for ${config.name}:`, error);
+            console.error(`Failed to create default prompts file for ${config.name}: ${formatFsErrorForLog(error)}`);
             throw error;
         }
     }
@@ -325,7 +334,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             }
             this._onPromptsChanged.fire(); // 通知 FileSystem 同步
         } catch (error) {
-            console.error('Failed to save prompts:', error);
+            console.error(`Failed to save prompts: ${formatFsErrorForLog(error)}`);
             throw error;
         } finally {
             setTimeout(() => { this._savingCount--; }, 300);
@@ -343,7 +352,7 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
             await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'));
             this.loadedWorkspaceKeys.add(config.key);
         } catch (error) {
-            console.error(`Failed to save prompts for ${config.name}:`, error);
+            console.error(`Failed to save prompts for ${config.name}: ${formatFsErrorForLog(error)}`);
         } finally {
             setTimeout(() => { this._savingCount--; }, 300);
         }
