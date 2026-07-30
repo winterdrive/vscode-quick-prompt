@@ -94,7 +94,9 @@ export class VersionItem extends vscode.TreeItem {
     private static getTooltip(version: PromptVersion, isCurrent: boolean): vscode.MarkdownString {
         const tooltip = new vscode.MarkdownString();
         tooltip.supportHtml = true;
-        tooltip.isTrusted = true;
+        // isTrusted intentionally left false: version content/milestone labels are
+        // user-controlled, and isTrusted would let a crafted `[label](command:...)`
+        // markdown link execute VS Code commands. Nothing here needs command links.
 
         // Header
         if (isCurrent) {

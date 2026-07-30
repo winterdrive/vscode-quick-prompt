@@ -66,7 +66,10 @@ export class PromptHoverProvider implements vscode.HoverProvider {
     private createPromptHoverMarkdown(prompt: Prompt): vscode.MarkdownString {
         const md = new vscode.MarkdownString();
         md.supportHtml = true;
-        md.isTrusted = true;
+        // isTrusted intentionally left false: prompt title/content is user-controlled
+        // (and may come from a shared, version-controlled prompts.json), and isTrusted
+        // would let a crafted `[label](command:...)` markdown link execute VS Code
+        // commands. Nothing here needs command links.
 
         // 標題
         md.appendMarkdown(`## ${prompt.pinned ? '📌 ' : ''}${prompt.title}\n\n`);
