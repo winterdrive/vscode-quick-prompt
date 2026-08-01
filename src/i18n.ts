@@ -55,7 +55,7 @@ export class I18n {
             console.log(`Successfully loaded ${locale}.json`);
             return true;
         } catch (error) {
-            console.log(`Failed to load ${locale}.json:`, error);
+            console.log(`Failed to load ${locale}.json`);
             return false;
         }
     }
