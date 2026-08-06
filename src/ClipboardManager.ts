@@ -3,6 +3,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { CLIPBOARD_CONSTANTS } from './utils/constants';
+
+/**
+ * 將檔案系統錯誤格式化為安全的日誌訊息：僅保留錯誤代碼，避免將
+ * fs.readFile/writeFile 等錯誤訊息中內嵌的完整檔案路徑（含使用者主目錄）寫入日誌。
+ */
+function formatFsErrorForLog(error: unknown): string {
+    const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+    return code ?? (error instanceof Error ? error.name : 'unknown error');
+}
+
 export interface ClipboardHistoryItem {
     id: string;              // 唯一識別碼
     content: string;         // 剪貼簿內容
@@ -326,7 +336,7 @@ export class ClipboardManager {
                 const parsed: unknown = JSON.parse(data);
                 this.history = Array.isArray(parsed) ? parsed : [];
             } catch (err) {
-                console.error('Failed to parse clipboard history file:', err);
+                console.error(`Failed to parse clipboard history file: ${formatFsErrorForLog(err)}`);
                 this.history = [];
             }
         } else {
@@ -351,7 +361,7 @@ export class ClipboardManager {
             this.storagePath,
             JSON.stringify(this.history, null, 2),
             'utf-8'
-        ).catch(err => console.error('Failed to save clipboard history file:', err));
+        ).catch(err => console.error(`Failed to save clipboard history file: ${formatFsErrorForLog(err)}`));
     }
 
     /**
