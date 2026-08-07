@@ -6,12 +6,21 @@ import { ErrorType } from '../types.js';
 import { createSuccess, createError } from '../utils/ResponseFactory.js';
 
 export interface ClipboardHistoryItem {
-    id: string;              
-    content: string;         
-    preview: string;         
-    timestamp: number;       
-    source: 'vscode' | 'external';  
-    length: number;          
+    id: string;
+    content: string;
+    preview: string;
+    timestamp: number;
+    source: 'vscode' | 'external';
+    length: number;
+}
+
+/**
+ * 將檔案系統錯誤格式化為安全的訊息：僅保留錯誤代碼，避免將
+ * fs.readFileSync 錯誤訊息中內嵌的完整檔案路徑（含使用者主目錄）回傳給呼叫端。
+ */
+function formatFsErrorForLog(error: unknown): string {
+  const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+  return code ?? (error instanceof Error ? error.name : 'unknown error');
 }
 
 export class ClipboardTools {
@@ -27,7 +36,7 @@ export class ClipboardTools {
         const parsed: unknown = JSON.parse(data);
         return Array.isArray(parsed) ? (parsed as ClipboardHistoryItem[]) : [];
       } catch (err) {
-        throw new Error(`Failed to read clipboard history: ${err}`);
+        throw new Error(`Failed to read clipboard history: ${formatFsErrorForLog(err)}`);
       }
     }
     return [];
