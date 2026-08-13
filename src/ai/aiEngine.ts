@@ -222,7 +222,16 @@ export class AIEngine {
             }
             case 'error':
                 console.error('[AIEngine] Worker reported error:', message.error);
-                this.status = 'error';
+                if (message.requestId !== undefined && this.pendingRequests.has(message.requestId)) {
+                    // Request-scoped failure (e.g. summarize()) — fail fast instead of
+                    // waiting for the 90s timeout in summarizeViaWorker(), and don't mark
+                    // the whole engine as broken over a single bad generation.
+                    const req = this.pendingRequests.get(message.requestId)!;
+                    this.pendingRequests.delete(message.requestId);
+                    req.reject(new Error(message.error));
+                } else {
+                    this.status = 'error';
+                }
                 break;
         }
     }
