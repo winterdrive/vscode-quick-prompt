@@ -29,6 +29,15 @@ interface WorkspaceOption {
     path: string;
 }
 
+export function escapeHtmlForWebview(value: string): string {
+    return value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 export class McpConfigPanel {
     public static currentPanel: McpConfigPanel | undefined;
     private readonly _panel: vscode.WebviewPanel;
@@ -236,7 +245,7 @@ export class McpConfigPanel {
         const workspaceOptionsHtml = workspaceContext.workspaces.length > 0
             ? workspaceContext.workspaces.map(workspace => {
                 const selected = workspace.id === workspaceContext.selectedWorkspaceId ? 'selected' : '';
-                return `<option value="${workspace.id}" ${selected}>${workspace.name}</option>`;
+                return `<option value="${escapeHtmlForWebview(workspace.id)}" ${selected}>${escapeHtmlForWebview(workspace.name)}</option>`;
             }).join('')
             : `<option value="__none__">${i18n.workspaceEmpty}</option>`;
 
