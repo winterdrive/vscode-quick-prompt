@@ -626,32 +626,46 @@ async function acceptQuickInput(): Promise<void> {
 }
 
 /**
- * Discard unsaved changes in every currently open editor tab, regardless of
- * which one happens to be "active" right now — a test that opens a scratch
- * "File: New Text File" buffer can lose focus to it (e.g. a subsequently
- * opened prompt/webview tab) before its own cleanup runs, leaving the
- * original buffer dirty in the background. Any dirty tab left open when
- * closeAllEditors() runs pops VS Code's native "Do you want to save?"
- * dialog, which blocks all further WebDriver interaction for the rest of
- * the run — so this is called as a safety net right before every
- * closeAllEditors() in this suite's after() hook, on top of any per-test
- * cleanup.
+ * Discard unsaved changes in every currently open editor tab and close it,
+ * regardless of which one happens to be "active" right now — a test that
+ * opens a scratch "File: New Text File" buffer can lose focus to it (e.g.
+ * a subsequently opened prompt/webview tab) before its own cleanup runs,
+ * leaving the original buffer dirty in the background.
+ *
+ * Uses `workbench.action.revertAndCloseActiveEditor`, NOT
+ * `workbench.action.files.revert` — "revert" alone means "reload from
+ * disk", which is meaningless for an untitled buffer that was never saved
+ * (it silently no-ops instead of discarding, leaving the tab dirty). The
+ * combined revert-and-close command is the one that correctly discards an
+ * untitled buffer's contents before closing, with no save prompt.
+ *
+ * Any dirty tab left open when closeAllEditors() runs pops VS Code's
+ * native "Do you want to save?" dialog; if the user or a later step then
+ * clicks "Save" on an untitled buffer, VS Code has to ask WHERE to save
+ * it, which opens an OS-level "Save As" file picker — a real native
+ * dialog, not a VS Code modal, that WebDriver cannot see or dismiss at
+ * all. So this must actually discard-and-close each tab, not just attempt
+ * a revert that may silently do nothing.
  */
 async function revertAllOpenEditors(): Promise<void> {
     const editorView = new EditorView();
-    let titles: string[] = [];
-    try {
-        titles = await editorView.getOpenEditorTitles();
-    } catch {
-        return;
-    }
-    for (const title of titles) {
+    for (let i = 0; i < 20; i++) {
+        let titles: string[] = [];
         try {
-            await editorView.openEditor(title);
-            await new Workbench().executeCommand('workbench.action.files.revert');
+            titles = await editorView.getOpenEditorTitles();
         } catch {
-            // Tab may already be gone, non-file (e.g. a webview), or already
-            // clean — reverting is a no-op in all of those cases either way.
+            return;
+        }
+        if (titles.length === 0) {
+            return;
+        }
+        try {
+            await editorView.openEditor(titles[0]);
+            await new Workbench().executeCommand('workbench.action.revertAndCloseActiveEditor');
+        } catch {
+            // Tab may already be gone by the time we act on it — move on
+            // rather than looping forever on the same title.
+            break;
         }
     }
 }
