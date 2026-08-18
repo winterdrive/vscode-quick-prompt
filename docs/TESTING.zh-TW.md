@@ -2,12 +2,10 @@
 
 繁體中文 | [English](./TESTING.md)
 
-這是本 repo **自動化**測試套件目前維護中的參考文件,取代 `docs/specs/` 底下較舊的手動測試清單
-(`TESTING_GUIDE.md`、`MCP_CRUD_TEST_CASES.md`、`MCP_E2E_TESTING_GUIDE.md`、
-`PRIVACY_TEST_GUIDE.md`、`20260408_manual_test.md`)。那些文件描述的是 v0.3.0 時代的功能組合
-(例如互動式的 Privacy Dictionary UI),現在的擴充套件裡已經不存在——字典功能在 v2 就被移除,
-改成透過設定檔的自訂規則(見 `src/privacy/maskingEngine.ts`)。那些舊文件僅供歷史參考,
-不要拿來判斷現況的行為或涵蓋範圍。
+這是本 repo **自動化**測試套件目前維護中的參考文件。補充背景:`PrivacyManager` 的字典功能
+(見下方單元測試表格)在 v2 改版時已經被透過設定檔的自訂規則取代
+(`src/privacy/maskingEngine.ts`)——如果你在本機看到其他描述互動式 Privacy Dictionary UI
+的舊筆記,那個功能已經不存在了,不要拿來判斷現況的行為或涵蓋範圍。
 
 如果你新增、重新命名或移除測試檔案,請在同一個 PR 裡更新這份文件。
 

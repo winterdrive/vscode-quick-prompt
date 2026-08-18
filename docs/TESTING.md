@@ -3,14 +3,11 @@
 [繁體中文](./TESTING.zh-TW.md) | English
 
 This is the current, maintained reference for this repo's **automated** test
-suites. It replaces the older manual-testing checklists under `docs/specs/`
-(`TESTING_GUIDE.md`, `MCP_CRUD_TEST_CASES.md`, `MCP_E2E_TESTING_GUIDE.md`,
-`PRIVACY_TEST_GUIDE.md`, `20260408_manual_test.md`), which describe a
-v0.3.0-era feature set (e.g. an interactive Privacy Dictionary UI) that no
-longer exists in the current extension — the dictionary feature was removed
-in v2 in favor of settings-based custom rules (see `src/privacy/maskingEngine.ts`).
-Those files are kept for historical reference only; do not use them to judge
-current behavior or coverage.
+suites. Note for context: `PrivacyManager`'s dictionary feature (see the unit
+test table below) predates a v2 rewrite that replaced it with settings-based
+custom rules (`src/privacy/maskingEngine.ts`) — if you find older local notes
+describing an interactive Privacy Dictionary UI, that feature no longer
+exists; don't use such notes to judge current behavior or coverage.
 
 If you add, rename, or remove a test file, update this doc in the same PR.
 
