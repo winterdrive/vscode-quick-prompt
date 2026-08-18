@@ -22,12 +22,14 @@ export class MaskingEngine {
         this.registry.loadBuiltIn(PREDEFINED_PATTERNS);
         this.registry.applyConfig(this.config);
 
-        vscode.workspace.onDidChangeConfiguration(e => {
-            if (e.affectsConfiguration('quickPrompt.privacy')) {
-                this.config = this.loadConfig();
-                this.registry.applyConfig(this.config);
-            }
-        });
+        context.subscriptions.push(
+            vscode.workspace.onDidChangeConfiguration(e => {
+                if (e.affectsConfiguration('quickPrompt.privacy')) {
+                    this.config = this.loadConfig();
+                    this.registry.applyConfig(this.config);
+                }
+            })
+        );
     }
 
     public static getInstance(context?: vscode.ExtensionContext): MaskingEngine {
