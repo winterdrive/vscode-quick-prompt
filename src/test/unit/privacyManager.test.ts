@@ -40,6 +40,34 @@ describe('PrivacyManager', () => {
 
             expect(manager.unmaskText(maskedText)).toBe(original);
         });
+
+        // Regression for #63: a shorter custom-dictionary label that is a
+        // literal substring of a longer one must not be restored first, or
+        // it corrupts the still-unprocessed longer occurrence (here,
+        // "[SECRET]" is a true substring of "[SECRET]-BACKUP" — unlike the
+        // issue's original "[SECRET]"/"[SECRET-CODE]" example, which isn't
+        // actually a substring pair since "]" never lines up). Covers both
+        // dictionary-insertion orders since the bug depended on Map
+        // iteration order.
+        it('restores both values correctly when one label is a substring of another (shorter label added first)', () => {
+            manager.addDictionaryEntry({ pattern: 'sk_live_111', isRegex: false, label: '[SECRET]', enabled: true });
+            manager.addDictionaryEntry({ pattern: 'sk_live_222', isRegex: false, label: '[SECRET]-BACKUP', enabled: true });
+
+            const original = 'key sk_live_111 and code sk_live_222 must both roundtrip.';
+            const { maskedText } = manager.maskText(original);
+
+            expect(manager.unmaskText(maskedText)).toBe(original);
+        });
+
+        it('restores both values correctly when one label is a substring of another (longer label added first)', () => {
+            manager.addDictionaryEntry({ pattern: 'sk_live_222', isRegex: false, label: '[SECRET]-BACKUP', enabled: true });
+            manager.addDictionaryEntry({ pattern: 'sk_live_111', isRegex: false, label: '[SECRET]', enabled: true });
+
+            const original = 'key sk_live_111 and code sk_live_222 must both roundtrip.';
+            const { maskedText } = manager.maskText(original);
+
+            expect(manager.unmaskText(maskedText)).toBe(original);
+        });
     });
 
     // ── dictionary file shape guard ──────────────────────────────────────────

@@ -159,7 +159,13 @@ export class PrivacyManager {
      */
     unmaskText(maskedText: string): string {
         let result = maskedText;
-        for (const [maskedValue, token] of this.tokenStore) {
+        // Longer masked values first: a shorter custom-dictionary label that
+        // is a literal substring of a longer one (e.g. "[SECRET]" is a
+        // substring of "[SECRET]-BACKUP") must not be substituted before the
+        // longer, more specific label gets its turn — restoring it first
+        // would corrupt the still-unprocessed longer occurrence.
+        const entries = [...this.tokenStore].sort(([a], [b]) => b.length - a.length);
+        for (const [maskedValue, token] of entries) {
             if (token.reversible && result.includes(maskedValue)) {
                 // split/join replaces every occurrence — String.replace(string) only replaces the first
                 result = result.split(maskedValue).join(token.originalValue);

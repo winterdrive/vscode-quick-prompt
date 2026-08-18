@@ -57,4 +57,39 @@ describe('VersionHistoryService', () => {
             expect(history).toEqual({ promptId: 'abc', versions: [], currentVersionId: '' });
         });
     });
+
+    describe('saveHistory error logging', () => {
+        it('does not leak the raw fs error (with absolute path) to the console, but still rethrows it', async () => {
+            const fakePath = 'C:\\Users\\faketestuser\\project\\.vscode\\.quickprompt\\history\\abc.history.json';
+            const fsError = Object.assign(
+                new Error(`EPERM: operation not permitted, open '${fakePath}'`),
+                { code: 'EPERM' }
+            );
+
+            const writeFileSpy = jest
+                .spyOn(vscode.workspace.fs, 'writeFile')
+                .mockRejectedValueOnce(fsError);
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+            try {
+                await expect(
+                    service.saveHistory({ promptId: 'abc', versions: [], currentVersionId: '' })
+                ).rejects.toBe(fsError);
+
+                expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+                const loggedOutput = consoleErrorSpy.mock.calls
+                    .map(call => call.map(arg => (arg instanceof Error ? arg.stack ?? arg.message : String(arg))).join(' '))
+                    .join('\n');
+
+                // The absolute path and the fake username it contains must never reach the log.
+                expect(loggedOutput).not.toContain(fakePath);
+                expect(loggedOutput).not.toContain('faketestuser');
+                // But the error code should still be present so the failure is identifiable.
+                expect(loggedOutput).toContain('EPERM');
+            } finally {
+                writeFileSpy.mockRestore();
+                consoleErrorSpy.mockRestore();
+            }
+        });
+    });
 });

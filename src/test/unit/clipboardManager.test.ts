@@ -165,6 +165,70 @@ describe('ClipboardManager.loadHistory', () => {
     });
 });
 
+describe('ClipboardManager fs error logging (PR #74 regression)', () => {
+    let tmpDir: string;
+    const fakePath = 'C:\\Users\\fakeuser\\.quickprompt\\clipboard-history.json';
+
+    beforeEach(() => {
+        tmpDir = fs.mkdtempSync(path.join(realOs.tmpdir(), 'cm-fserr-test-'));
+        homedirMock.mockReturnValue(tmpDir);
+        readText.mockReset().mockResolvedValue('');
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+        jest.clearAllMocks();
+    });
+
+    it('does not leak the absolute storage path in logs when loadHistory fails to read the file', async () => {
+        // File must exist so loadHistory takes the fs.promises.readFile() branch.
+        const storageDir = path.join(tmpDir, '.quickprompt');
+        fs.mkdirSync(storageDir, { recursive: true });
+        fs.writeFileSync(path.join(storageDir, 'clipboard-history.json'), '[]', 'utf-8');
+
+        const fsError = Object.assign(
+            new Error(`ENOENT: no such file or directory, open '${fakePath}'`),
+            { code: 'ENOENT' }
+        );
+        jest.spyOn(fs.promises, 'readFile').mockRejectedValueOnce(fsError);
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        const manager = new ClipboardManager(makeContext());
+        await flushMicrotasks();
+
+        const loggedMessages = errorSpy.mock.calls.map(call => call.join(' '));
+        expect(loggedMessages.some(msg => msg.includes('ENOENT'))).toBe(true);
+        expect(loggedMessages.some(msg => msg.includes('fakeuser'))).toBe(false);
+        expect(loggedMessages.some(msg => msg.includes(fakePath))).toBe(false);
+
+        manager.dispose();
+    });
+
+    it('does not leak the absolute storage path in logs when saveHistory fails to write the file', async () => {
+        const fsError = Object.assign(
+            new Error(`EACCES: permission denied, open '${fakePath}'`),
+            { code: 'EACCES' }
+        );
+        jest.spyOn(fs.promises, 'writeFile').mockRejectedValueOnce(fsError);
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        const manager = new ClipboardManager(makeContext());
+        await flushMicrotasks();
+
+        readText.mockResolvedValue('Some long enough content to store');
+        await manager.checkClipboard('external');
+        await flushMicrotasks();
+
+        const loggedMessages = errorSpy.mock.calls.map(call => call.join(' '));
+        expect(loggedMessages.some(msg => msg.includes('EACCES'))).toBe(true);
+        expect(loggedMessages.some(msg => msg.includes('fakeuser'))).toBe(false);
+        expect(loggedMessages.some(msg => msg.includes(fakePath))).toBe(false);
+
+        manager.dispose();
+    });
+});
+
 describe('ClipboardManager.dispose', () => {
     let tmpDir: string;
 
