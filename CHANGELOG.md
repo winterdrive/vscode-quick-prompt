@@ -2,6 +2,13 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.8.0] - Stable Release: Maintenance - 2026-08-19
+
+Promotes the [0.7.0] pre-release content to stable unchanged — no new code in this release.
+
+- **test:** anchor jest `.claude` ignore pattern to `rootDir` (#62)
+- **chore(deps):** bump the `npm_and_yarn` dependency group across 1 directory with 6 updates (#61)
+
 ## [0.7.0] - Maintenance (pre-release) - 2026-07-26
 
 ### 🔧 Maintenance
