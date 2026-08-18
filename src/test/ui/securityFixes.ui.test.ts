@@ -172,8 +172,19 @@ describe('Quick Prompt - Security Fixes UI / E2E', function () {
 
                 try {
                     renderedHtml = (await driver.wait(async () => {
-                        const html = (await driver.executeScript('return document.body.innerHTML;')) as string;
-                        return html.includes(marker) ? html : false;
+                        // Scope to the hover widget itself, not the whole page --
+                        // document.body.innerHTML also contains the rest of the
+                        // workbench chrome (menus, command palette backing DOM,
+                        // etc.), where the literal command ID under test
+                        // ("workbench.action.files.newUntitledFile", a common
+                        // built-in command) legitimately appears regardless of
+                        // this fix, producing a false positive.
+                        const html = (await driver.executeScript(`
+                            const hovers = Array.from(document.querySelectorAll('.monaco-hover'));
+                            const match = hovers.find(h => h.innerHTML.includes(${JSON.stringify(marker)}));
+                            return match ? match.outerHTML : '';
+                        `)) as string;
+                        return html ? html : false;
                     }, 4_000)) as string;
                 } catch {
                     renderedHtml = '';
@@ -300,8 +311,13 @@ describe('Quick Prompt - Security Fixes UI / E2E', function () {
 
                 // The payload's <script> tag would set this global if it ever ran as
                 // live markup instead of being rendered as escaped, inert text.
+                // Selenium's executeScript() serializes a JS `undefined` return value
+                // as `null` over the wire, so an unset global legitimately comes back
+                // as `null` here, not `undefined` -- use chai's null-or-undefined
+                // check (`.to.not.exist`) rather than a strict `undefined` equality,
+                // which would false-positive on every safe run.
                 const marker = await driver.executeScript('return window.__xssMarker;');
-                expect(marker, 'Injected <script> tag executed inside the MCP config webview').to.equal(undefined);
+                expect(marker, 'Injected <script> tag executed inside the MCP config webview').to.not.exist;
 
                 const options = await webview.findWebElements(By.css('#workspace-select option'));
 
