@@ -9,6 +9,15 @@ export interface VersionHistoryLocation {
 }
 
 /**
+ * 將檔案系統錯誤格式化為安全的日誌訊息：僅保留錯誤代碼，避免將
+ * vscode.workspace.fs 寫入失敗訊息中內嵌的完整檔案路徑寫入日誌。
+ */
+function formatFsErrorForLog(error: unknown): string {
+    const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+    return code ?? (error instanceof Error ? error.name : 'unknown error');
+}
+
+/**
  * Service for managing prompt version history
  * 
  * This service handles all version-related operations including:
@@ -135,7 +144,7 @@ export class VersionHistoryService {
             // Update cache
             this.cache.set(location.cacheKey, history);
         } catch (error) {
-            console.error(`Failed to save version history for ${history.promptId}:`, error);
+            console.error(`Failed to save version history for ${history.promptId}: ${formatFsErrorForLog(error)}`);
             throw error;
         }
     }
