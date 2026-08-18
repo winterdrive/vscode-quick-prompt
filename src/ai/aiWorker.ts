@@ -33,7 +33,8 @@ parentPort.on('message', async (message: any) => {
     } catch (error: any) {
         parentPort?.postMessage({
             type: 'error',
-            error: error.message || String(error)
+            error: error.message || String(error),
+            ...(message.requestId !== undefined && { requestId: message.requestId })
         });
     }
 });
