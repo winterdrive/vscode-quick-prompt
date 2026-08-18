@@ -159,7 +159,9 @@ function initializeProviders(context: vscode.ExtensionContext, versionHistorySer
     // 初始化 ClipboardProvider (新的獨立剪貼簿視圖)
     const clipboardProvider = new ClipboardProvider();
     clipboardProvider.setClipboardManager(clipboardManager);
-    vscode.window.registerTreeDataProvider('clipboardHistoryView', clipboardProvider);
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider('clipboardHistoryView', clipboardProvider)
+    );
 
     // 註冊即時捕捉（監聽選取變化）
     clipboardManager.registerInstantCapture(context.subscriptions);
