@@ -25,10 +25,13 @@ function loadState(): McpState {
   try {
     if (fs.existsSync(STATE_FILE)) {
       const raw = fs.readFileSync(STATE_FILE, 'utf-8');
-      return JSON.parse(raw) as McpState;
+      const parsed: unknown = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as McpState;
+      }
     }
   } catch {
-    // Ignore read errors; treat as empty state
+    // Ignore read/parse errors; treat as empty state
   }
   return {};
 }
