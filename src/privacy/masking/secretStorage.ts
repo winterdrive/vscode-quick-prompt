@@ -19,7 +19,8 @@ export class SecretStorageManager {
         const raw = await this.secrets.get(KEY_PREFIX + promptId);
         if (!raw) { return undefined; }
         try {
-            return JSON.parse(raw) as Record<string, string>;
+            const parsed: unknown = JSON.parse(raw);
+            return SecretStorageManager.isValidTokenMap(parsed) ? parsed : undefined;
         } catch {
             return undefined;
         }
@@ -27,5 +28,17 @@ export class SecretStorageManager {
 
     async delete(promptId: string): Promise<void> {
         await this.secrets.delete(KEY_PREFIX + promptId);
+    }
+
+    /**
+     * Guards against secret-storage content that parses successfully but isn't a
+     * plain string map (e.g. an array or a value with non-string entries), which
+     * would otherwise corrupt prompt content when unmaskPromptContent iterates it.
+     */
+    private static isValidTokenMap(value: unknown): value is Record<string, string> {
+        return !!value
+            && typeof value === 'object'
+            && !Array.isArray(value)
+            && Object.values(value).every(v => typeof v === 'string');
     }
 }
