@@ -270,6 +270,12 @@ describe('Quick Prompt - UI / E2E', function () {
             prompt.content === selectedText &&
             prompt.titleSource === 'ai'
         );
+
+        // Discard the scratch untitled buffer so it doesn't linger as an
+        // unsaved tab into later tests/suites — closing it un-reverted would
+        // pop VS Code's native "Do you want to save?" dialog, which blocks
+        // all further WebDriver interaction for the rest of the run.
+        await new Workbench().executeCommand('workbench.action.revertAndCloseActiveEditor');
     });
 
     it('Show MCP Config opens the MCP configuration webview editor', async function () {
@@ -331,6 +337,13 @@ describe('Quick Prompt - UI / E2E', function () {
         // Verify the content appears in the Clipboard History panel
         const rowText = await waitForWorkbenchText(uniqueContent.substring(0, 20));
         expect(rowText).to.include(uniqueContent.substring(0, 20));
+
+        // Discard the scratch untitled buffer — same reasoning as the
+        // "Quick Add Prompt (Selection)" test above, and this is the LAST
+        // test in the suite, so an un-reverted dirty buffer here survives
+        // straight into the outer after() hook's closeAllEditors() call and
+        // blocks the next test file's entire run behind a native dialog.
+        await new Workbench().executeCommand('workbench.action.revertAndCloseActiveEditor');
     });
 });
 
