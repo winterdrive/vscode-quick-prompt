@@ -620,7 +620,7 @@
         "test:coverage": "jest --runInBand --coverage",
         "test:watch": "jest --watch",
         "test:ui:setup": "extest setup-tests",
-        "test:ui": "node -e \"require('fs').rmSync('out/test/ui',{recursive:true,force:true})\" && tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\" -s \".vscode-test/test-resources-vscode-1.96\" -c 1.96.0"
+        "test:ui": "node -e \"require('fs').rmSync('out/test/ui',{recursive:true,force:true})\" && tsc -p tsconfig.test.ui.json && extest setup-and-run \"out/test/ui/**/*.test.js\" -e \".vscode-test/extensions\" -c 1.96.0"
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",
