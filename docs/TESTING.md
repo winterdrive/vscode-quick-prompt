@@ -1,5 +1,7 @@
 # Testing Guide (Quick Prompt)
 
+[繁體中文](./TESTING.zh-TW.md) | English
+
 This is the current, maintained reference for this repo's **automated** test
 suites. It replaces the older manual-testing checklists under `docs/specs/`
 (`TESTING_GUIDE.md`, `MCP_CRUD_TEST_CASES.md`, `MCP_E2E_TESTING_GUIDE.md`,
