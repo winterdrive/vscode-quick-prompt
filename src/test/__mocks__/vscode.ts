@@ -6,6 +6,16 @@ interface MockWorkspaceFolder {
     name: string
 }
 
+interface TextDocumentContentProviderLike {
+    provideTextDocumentContent(uri: Uri): string | Thenable<string | undefined | null> | undefined | null
+}
+
+// Tracks the currently-registered content provider per scheme, mirroring real
+// VS Code's rule that only one TextDocumentContentProvider may be registered
+// per URI scheme at a time. Registering a second provider for the same scheme
+// without disposing the first throws, so tests can exercise that failure mode.
+const registeredContentProviderSchemes = new Set<string>()
+
 export const workspace: {
     getConfiguration: (_section?: string) => { get: <T>(_key: string, defaultValue: T) => T }
     workspaceFolders: undefined | MockWorkspaceFolder[]
@@ -14,6 +24,7 @@ export const workspace: {
     onDidChangeConfiguration: (_listener: unknown) => { dispose: () => undefined }
     onDidChangeWorkspaceFolders: (_listener: unknown) => { dispose: () => undefined }
     createFileSystemWatcher: jest.Mock
+    registerTextDocumentContentProvider: (scheme: string, provider: TextDocumentContentProviderLike) => { dispose: () => void }
     fs: {
         readFile: (uri: Uri) => Promise<Uint8Array>
         writeFile: (uri: Uri, content: Uint8Array) => Promise<void>
@@ -37,6 +48,22 @@ export const workspace: {
         onDidDelete: jest.fn(),
         dispose: jest.fn(),
     })),
+    registerTextDocumentContentProvider: (scheme: string, _provider: TextDocumentContentProviderLike) => {
+        if (registeredContentProviderSchemes.has(scheme)) {
+            throw new Error(`A content provider for scheme '${scheme}' is already registered`)
+        }
+        registeredContentProviderSchemes.add(scheme)
+        let disposed = false
+        return {
+            dispose: () => {
+                if (disposed) {
+                    return
+                }
+                disposed = true
+                registeredContentProviderSchemes.delete(scheme)
+            },
+        }
+    },
     fs: {
         readFile: async (uri: Uri): Promise<Uint8Array> => {
             try {
@@ -189,6 +216,40 @@ export const window = {
         visible: false,
         selection: [],
     })),
+    registerTreeDataProvider: jest.fn(() => ({ dispose: jest.fn() })),
+}
+
+export class MarkdownString {
+    value: string
+    isTrusted?: boolean | { enabledCommands: readonly string[] }
+    supportHtml?: boolean
+    supportThemeIcons?: boolean
+
+    constructor(value: string = '') {
+        this.value = value
+    }
+
+    appendText(value: string): MarkdownString {
+        this.value += value
+        return this
+    }
+
+    appendMarkdown(value: string): MarkdownString {
+        this.value += value
+        return this
+    }
+
+    appendCodeblock(value: string, language?: string): MarkdownString {
+        this.value += `\n\`\`\`${language ?? ''}\n${value}\n\`\`\`\n`
+        return this
+    }
+}
+
+export class Hover {
+    constructor(
+        public readonly contents: MarkdownString | MarkdownString[],
+        public readonly range?: unknown,
+    ) {}
 }
 
 export const FileSystemError = {

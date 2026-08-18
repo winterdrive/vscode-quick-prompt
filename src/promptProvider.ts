@@ -32,8 +32,17 @@ export type PromptTreeItem = PromptItem | VersionItem;
  * fs.statSync/readFile 等錯誤訊息中內嵌的完整工作區路徑寫入日誌。
  */
 function formatFsErrorForLog(error: unknown): string {
-    const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
-    return code ?? (error instanceof Error ? error.name : 'unknown error');
+    // Duck-type rather than gate on `instanceof Error`: fs errors crossing a
+    // VM/realm boundary (e.g. Jest's per-file context) can carry a proper
+    // `.code`/`.message` shape without passing `instanceof Error` here.
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code) return code;
+    }
+    if (typeof error === 'object' && error !== null && 'name' in error && typeof (error as { name: unknown }).name === 'string') {
+        return (error as { name: string }).name;
+    }
+    return 'unknown error';
 }
 
 export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {

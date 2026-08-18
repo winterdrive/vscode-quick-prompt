@@ -10,39 +10,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { QuickPromptMCPServer } from './server.js';
-
-/** State file stored at ~/.quickprompt-mcp-state.json */
-const STATE_FILE = path.join(os.homedir(), '.quickprompt-mcp-state.json');
-
-interface McpState {
-  lastWorkspaceRoot?: string;
-}
-
-function loadState(): McpState {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const raw = fs.readFileSync(STATE_FILE, 'utf-8');
-      const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as McpState;
-      }
-    }
-  } catch {
-    // Ignore read/parse errors; treat as empty state
-  }
-  return {};
-}
-
-function saveState(state: McpState): void {
-  try {
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
-  } catch {
-    // Ignore write errors (non-critical for core functionality)
-  }
-}
+import { loadState, saveState } from './stateStore.js';
 
 /**
  * Parse optional command-line arguments.
