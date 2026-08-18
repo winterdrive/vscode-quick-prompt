@@ -110,6 +110,26 @@ describe('Quick Prompt - Security Fixes UI / E2E', function () {
         const dangerousCommand = 'workbench.action.files.newUntitledFile';
         const maliciousTitle = `[${marker}](command:${dangerousCommand})`;
 
+        // this.retries() below tolerates known Monaco-hover-dwell timing
+        // flakiness (see the it() block), NOT a silent pass -- surface every
+        // retry loudly so a real regression (as opposed to timing noise)
+        // doesn't quietly hide behind a green checkmark. If this ever prints
+        // more than rarely, that itself is a signal the flakiness assumption
+        // needs re-examining, not just re-tolerating.
+        afterEach(function () {
+            const test = this.currentTest;
+            if (!test || test.state !== 'failed') return;
+            const currentRetry = (test as unknown as { currentRetry(): number }).currentRetry();
+            if (currentRetry < test.retries()) {
+                console.warn(
+                    `[RETRY] "${test.title}" failed on attempt ${currentRetry + 1}; retrying. ` +
+                    'This tolerates Monaco hover-dwell timing flakiness, not a logic bug -- ' +
+                    'see promptHoverProvider.test.ts for the deterministic backstop. ' +
+                    'If this fires often, the timing assumption needs re-examining.'
+                );
+            }
+        });
+
         before(function () {
             // Seed directly onto disk (same approach as quickPrompt.ui.test.ts) so the
             // payload is exactly what a shared prompts.json file could contain -- no UI
