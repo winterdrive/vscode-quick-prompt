@@ -5,6 +5,11 @@ import { PromptProvider } from '../promptProvider';
 import { I18n } from '../i18n';
 import { executeWithConfirmation } from '../utils';
 
+// VS Code allows only one TextDocumentContentProvider per URI scheme, so we
+// track the active 'prompt-history' registration and dispose it before
+// registering a new one (e.g. when viewing diffs for two versions in quick succession).
+let activeVersionDiffRegistration: vscode.Disposable | undefined;
+
 /**
  * Show diff between a historical version and the current version
  */
@@ -36,7 +41,9 @@ export async function handleShowVersionDiff(
             }
         };
 
+        activeVersionDiffRegistration?.dispose();
         const registration = vscode.workspace.registerTextDocumentContentProvider('prompt-history', provider);
+        activeVersionDiffRegistration = registration;
 
         // Show diff
         const historyLabel = item.version.milestone?.label || new Date(item.version.timestamp).toLocaleString();
@@ -49,8 +56,13 @@ export async function handleShowVersionDiff(
             diffTitle
         );
 
-        // Clean up after a delay
-        setTimeout(() => registration.dispose(), 60000);
+        // Clean up after a delay, unless a newer diff has already replaced this registration
+        setTimeout(() => {
+            if (activeVersionDiffRegistration === registration) {
+                registration.dispose();
+                activeVersionDiffRegistration = undefined;
+            }
+        }, 60000);
     } catch (error) {
         console.error('Failed to show version diff:', error);
         vscode.window.showErrorMessage(I18n.getMessage('message.showDiffFailed'));
