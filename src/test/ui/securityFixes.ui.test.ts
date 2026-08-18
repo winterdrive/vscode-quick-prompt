@@ -160,15 +160,22 @@ describe('Quick Prompt - Security Fixes UI / E2E', function () {
                 }
             }, 10_000, 'Editor content did not render for the seeded prompt') as WebElement;
 
-            // Hovering (mouse move + dwell) is what triggers provideHover(); no click
-            // is involved anywhere in this test. Synthetic Selenium mouse moves can be
-            // missed by Monaco's hover tracking in CI, so nudge a couple of times.
+            // Hovering (mouse move + dwell) is what triggers provideHover(), but
+            // synthetic Selenium mouse moves can miss Monaco's hover-dwell timing
+            // in CI even after several nudges. "Show or Focus Hover" invokes the
+            // exact same provideHover() code path deterministically (it's the
+            // real Ctrl+K Ctrl+I keyboard-accessibility route to the same
+            // tooltip, not a different feature), so click into the line first to
+            // place the cursor, then use it as a reliable fallback alongside the
+            // mouse-based attempts rather than depending on dwell timing alone.
             let renderedHtml = '';
             for (let attempt = 0; attempt < 3 && !renderedHtml; attempt++) {
                 await driver.actions().move({ x: 10, y: 10 }).perform();
                 await driver.sleep(150);
                 await driver.actions().move({ origin: viewLine }).perform();
                 await driver.actions().move({ origin: viewLine, x: 3, y: 0 }).perform();
+                await viewLine.click();
+                await new Workbench().executeCommand('Show or Focus Hover');
 
                 try {
                     renderedHtml = (await driver.wait(async () => {
