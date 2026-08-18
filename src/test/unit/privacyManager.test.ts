@@ -41,4 +41,35 @@ describe('PrivacyManager', () => {
             expect(manager.unmaskText(maskedText)).toBe(original);
         });
     });
+
+    // ── dictionary file shape guard ──────────────────────────────────────────
+
+    describe('dictionary CRUD with malformed privacy-dictionary.json', () => {
+        const writeDictionaryFile = (content: string) => {
+            const dictDir = path.join(tmpDir, '.vscode');
+            fs.mkdirSync(dictDir, { recursive: true });
+            fs.writeFileSync(path.join(dictDir, 'privacy-dictionary.json'), content, 'utf-8');
+        };
+
+        it('falls back to an empty dictionary instead of throwing when entries is missing', () => {
+            writeDictionaryFile('{}');
+
+            expect(manager.getDictionaryEntries()).toEqual([]);
+            expect(() =>
+                manager.addDictionaryEntry({ pattern: 'ACME', isRegex: false, label: '[COMPANY]', enabled: true })
+            ).not.toThrow();
+        });
+
+        it('falls back to an empty dictionary instead of throwing when entries is null', () => {
+            writeDictionaryFile(JSON.stringify({ version: '1.0', entries: null }));
+
+            expect(manager.getDictionaryEntries()).toEqual([]);
+        });
+
+        it('falls back to an empty dictionary instead of throwing when the file is a bare array', () => {
+            writeDictionaryFile('[]');
+
+            expect(manager.getDictionaryEntries()).toEqual([]);
+        });
+    });
 });
