@@ -2,6 +2,27 @@
 
 All notable changes to the "Quick Prompt" extension will be documented in this file.
 
+## [0.9.0] - Security & Robustness Fixes (pre-release) - 2026-08-19
+
+- **fix(PromptHoverProvider, VersionItem):** disable command-link trust (`isTrusted`) on hover/tooltip `MarkdownString`s built from user-controlled prompt titles and milestone labels (#68)
+- **fix(mcpConfigPanel):** escape workspace name/id before interpolating into the MCP config webview's HTML, closing an XSS vector via a maliciously named workspace folder (#79)
+- **fix(PrivacyManager):** restore longer masked values before a shorter one that is their literal prefix when unmasking, regardless of dictionary-insertion order (#63)
+- **fix(PrivacyManager):** guard `privacy-dictionary.json` load against a malformed/non-object shape (#66)
+- **fix(PromptProvider):** avoid logging the full workspace path in `savePrompts()` catch blocks — log only the fs error code (#67)
+- **fix(SecretStorageManager):** guard `retrieve()` against a malformed/non-string token map shape (#69)
+- **fix(I18n):** avoid logging the raw error object when a locale file fails to load — log only the locale code (#70)
+- **fix(versionCommands):** dispose the previous version-diff `TextDocumentContentProvider` registration before creating the next one (#71)
+- **fix(mcp-server/stateStore):** guard the persisted MCP server state file against malformed/non-object JSON shapes (#73)
+- **fix(ClipboardManager):** avoid logging the full clipboard history file path on read/write errors (#74)
+- **fix(mcp-server/clipboardTools):** avoid leaking the full clipboard history file path via an MCP tool error response (#75)
+- **fix(MaskingEngine):** dispose the config-change listener via `context.subscriptions` (#76)
+- **fix(AIEngine):** fail fast on a worker summarize error instead of waiting for the 90s timeout (#77)
+- **fix(clipboardHistoryView):** dispose the tree data provider registration on deactivation (#78)
+- **fix(VersionHistoryService):** avoid logging the raw fs error object on a version history save failure (#80)
+- **chore(deps):** bump the `npm_and_yarn` dependency group across 1 directory with 2 updates (#72)
+- **chore(deps):** bump the `npm_and_yarn` dependency group across 1 directory with 5 updates (#81)
+- **test:** add unit + UI/E2E coverage across the fixes above, and a new `docs/TESTING.md`/`docs/TESTING.zh-TW.md` testing reference
+
 ## [0.8.0] - Stable Release: Maintenance - 2026-08-19
 
 Promotes the [0.7.0] pre-release content to stable unchanged — no new code in this release.
