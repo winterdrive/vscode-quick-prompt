@@ -131,6 +131,7 @@ describe('Quick Prompt - UI / E2E', function () {
 
     after(async function () {
         await closeQuickInput();
+        await revertAllOpenEditors();
         try {
             await new EditorView().closeAllEditors();
         } catch {
@@ -271,11 +272,11 @@ describe('Quick Prompt - UI / E2E', function () {
             prompt.titleSource === 'ai'
         );
 
-        // Discard the scratch untitled buffer so it doesn't linger as an
-        // unsaved tab into later tests/suites — closing it un-reverted would
-        // pop VS Code's native "Do you want to save?" dialog, which blocks
-        // all further WebDriver interaction for the rest of the run.
-        await new Workbench().executeCommand('workbench.action.revertAndCloseActiveEditor');
+        // Discard the scratch untitled buffer so it doesn't linger as a
+        // dirty tab into later tests/suites (see revertAllOpenEditors() for
+        // why this can't just assume the scratch buffer is still active —
+        // e.g. the newly-created prompt's own editor may have taken focus).
+        await revertAllOpenEditors();
     });
 
     it('Show MCP Config opens the MCP configuration webview editor', async function () {
@@ -338,12 +339,11 @@ describe('Quick Prompt - UI / E2E', function () {
         const rowText = await waitForWorkbenchText(uniqueContent.substring(0, 20));
         expect(rowText).to.include(uniqueContent.substring(0, 20));
 
-        // Discard the scratch untitled buffer — same reasoning as the
-        // "Quick Add Prompt (Selection)" test above, and this is the LAST
-        // test in the suite, so an un-reverted dirty buffer here survives
-        // straight into the outer after() hook's closeAllEditors() call and
-        // blocks the next test file's entire run behind a native dialog.
-        await new Workbench().executeCommand('workbench.action.revertAndCloseActiveEditor');
+        // Discard any scratch untitled buffers left dirty by this test (and
+        // any earlier one in this suite) — see revertAllOpenEditors(). This
+        // is the LAST test in the suite, so anything still dirty here
+        // survives straight into the outer after() hook.
+        await revertAllOpenEditors();
     });
 });
 
@@ -623,6 +623,37 @@ async function acceptQuickInput(): Promise<void> {
     await resetKeyboardState();
     await VSBrowser.instance.driver.actions().sendKeys(Key.ENTER).perform();
     await resetKeyboardState();
+}
+
+/**
+ * Discard unsaved changes in every currently open editor tab, regardless of
+ * which one happens to be "active" right now — a test that opens a scratch
+ * "File: New Text File" buffer can lose focus to it (e.g. a subsequently
+ * opened prompt/webview tab) before its own cleanup runs, leaving the
+ * original buffer dirty in the background. Any dirty tab left open when
+ * closeAllEditors() runs pops VS Code's native "Do you want to save?"
+ * dialog, which blocks all further WebDriver interaction for the rest of
+ * the run — so this is called as a safety net right before every
+ * closeAllEditors() in this suite's after() hook, on top of any per-test
+ * cleanup.
+ */
+async function revertAllOpenEditors(): Promise<void> {
+    const editorView = new EditorView();
+    let titles: string[] = [];
+    try {
+        titles = await editorView.getOpenEditorTitles();
+    } catch {
+        return;
+    }
+    for (const title of titles) {
+        try {
+            await editorView.openEditor(title);
+            await new Workbench().executeCommand('workbench.action.files.revert');
+        } catch {
+            // Tab may already be gone, non-file (e.g. a webview), or already
+            // clean — reverting is a no-op in all of those cases either way.
+        }
+    }
 }
 
 async function closeQuickInput(): Promise<void> {
