@@ -225,6 +225,24 @@ describe('PromptProvider multi-root routing', () => {
         expect(provider.getQuickCreateWorkspaceKey()).toBe(projectBKey);
     });
 
+    it('does not accumulate disposed file watchers in context.subscriptions on repeated workspace changes', async () => {
+        writePrompts(tmpDir1, []);
+        writePrompts(tmpDir2, []);
+
+        const context = makeContext();
+        const provider = new PromptProvider(context, new VersionHistoryService(context));
+        await provider.refresh();
+
+        const subscriptionCountAfterInit = context.subscriptions.length;
+
+        // Simulate several workspace-folder-change events (each rebuilds watchers).
+        (provider as unknown as { setupWorkspaces: () => void }).setupWorkspaces();
+        (provider as unknown as { setupWorkspaces: () => void }).setupWorkspaces();
+        (provider as unknown as { setupWorkspaces: () => void }).setupWorkspaces();
+
+        expect(context.subscriptions.length).toBe(subscriptionCountAfterInit);
+    });
+
     it('remembers the last create workspace when scope shows all workspaces', async () => {
         writePrompts(tmpDir1, []);
         writePrompts(tmpDir2, []);
