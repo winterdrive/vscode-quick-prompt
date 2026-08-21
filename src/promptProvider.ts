@@ -84,12 +84,21 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                 await this.refresh();
             })
         );
+
+        // 註冊一次性的 watcher 清理器：setupWorkspaces() 會在每次工作區變化時
+        // 重建 watchers，若逐個 push 進 context.subscriptions 會讓已 dispose
+        // 的舊 watcher 參照永久留在陣列中而不斷累積。
+        context.subscriptions.push({ dispose: () => this.disposeWatchers() });
+    }
+
+    private disposeWatchers(): void {
+        this.watchers.forEach(w => w.dispose());
+        this.watchers = [];
     }
 
     private setupWorkspaces() {
         // 清理舊的 watchers
-        this.watchers.forEach(w => w.dispose());
-        this.watchers = [];
+        this.disposeWatchers();
         this.workspaceConfigs = [];
 
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -125,7 +134,6 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                     }
                 });
                 this.watchers.push(watcher);
-                this.context.subscriptions.push(watcher);
             });
         } else {
             // Fallback: Global storage or extension directory
@@ -146,7 +154,6 @@ export class PromptProvider implements vscode.TreeDataProvider<PromptTreeItem> {
                 }
             });
             this.watchers.push(watcher);
-            this.context.subscriptions.push(watcher);
         }
 
         this.activeWorkspaceScopeKeys = this.normalizeWorkspaceScope(
