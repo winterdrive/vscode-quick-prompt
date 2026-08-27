@@ -34,7 +34,7 @@
 QuickPrompt Skill には、安全で安定した動作を保証する組み込みロジックが含まれています：
 
 1. **Layer 0: 接続ゲート** — `list_prompts` による自動接続確認。MCP が切断された場合、エージェントは即座に HALT と判定し、フォールバック処理をユーザーに提示します。
-2. **Layer 1: 標準 MCP ツール** — プロンプトの CRUD 操作、バージョン管理、プライバシーマスキングを扱う 21 個のツール。
+2. **Layer 1: 標準 MCP ツール** — プロンプトの CRUD 操作、バージョン管理、クリップボード履歴を扱う 17 個のツール。
 3. **Layer 2: 安全検証** — 敏感な操作の実行前に内部的なサニティチェックを実施し、データ整合性を確保。
 4. **Layer 3: CLI フォールバック** — MCP サーバーが利用不可の場合、エージェントは内蔵の `qp.bundle.js` スクリプトに切り替えてデータベースに直接アクセス。
 
@@ -52,7 +52,7 @@ QuickPrompt Skill には、安全で安定した動作を保証する組み込�
 
 ### 🔌 AI エージェント パワーアップ (新機能!)
 
-- **🔌 21 個の MCP ツール**：AI エージェント用の完全なプロンプト管理スイート。
+- **🔌 17 個の MCP ツール**：AI エージェント用の完全なプロンプト管理スイート。
 - **🛡️ アクション判定ツリー**：エージェントは接続状態が安全で実行可能な場合にのみ動作。
 - **📦 CLI フォールバック バンドル**：オフライン時に利用できる内蔵スクリプト。
 - **⚙️ インタラクティブ設定パネル**：Cursor、Copilot、Cline、Claude など主要ツールの簡単セットアップ。
@@ -272,6 +272,14 @@ Quick Prompt v0.5.1 は拡張コマンドを `quickPrompt.*` namespace に統一
 - **VirtualTabs**：ディレクトリ横断して、どのファイルがどのタスクに属するかを整理
 
 [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs) で取得
+
+### 🔁 Edo Tensei
+
+**移動が必要なのは思考だけでなく、セッションそのものであるとき。**
+
+Quick Prompt がバッファするのは、セッション *内* で考えていることです。[Edo Tensei](https://github.com/Pain-Labs/Edo-Tensei) は、クォータが切れたり途中でエージェントがクラッシュしたりしたとき、セッションを IDE を *またいで* 運びます。
+
+[**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=Pain-Labs.edo-tensei) | [**Open VSX Registry**](https://open-vsx.org/extension/Pain-Labs/edo-tensei) で Edo Tensei を取得
 
 ---
 
