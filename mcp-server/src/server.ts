@@ -3,7 +3,7 @@
  *
  * This file is responsible for:
  * - Initializing the low-level MCP Server (Logging / Prompts / Resources / Tools)
- * - Registering 14 tools covering prompt CRUD and version history
+ * - Registering 17 tools covering prompt CRUD, version history, and clipboard
  * - Handling tool call requests and routing them to Tool classes
  * - Supporting the MCP Roots protocol for dynamically obtaining the workspace path
  * - Structured MCP Logging

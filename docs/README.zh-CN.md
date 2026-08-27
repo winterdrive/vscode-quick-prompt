@@ -34,7 +34,7 @@
 QuickPrompt Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可靠：
 
 1. **Layer 0: 连接网关 (Connection Gate)** — 自动通过 `list_prompts` 测试连接。若 MCP 断开连接，Agent 会立即触发 HALT 刹车并询问用户是否降级处理。
-2. **Layer 1: 标准 MCP 工具** — 提供 21 个工具，涵盖 Prompt 的增删改查、版本历史与隐私遮罩。
+2. **Layer 1: 标准 MCP 工具** — 提供 17 个工具，涵盖 Prompt 的增删改查、版本历史与剪贴簿历史。
 3. **Layer 2: 安全验证** — 在执行敏感操作前进行二次逻辑检查，确保数据一致性。
 4. **Layer 3: CLI 后备 (Fallback CLI)** — 当 MCP server 无法使用时，Agent 可切换调用内置的 `qp.bundle.js` 脚本直接操作数据库。
 
@@ -52,7 +52,7 @@ QuickPrompt Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可�
 
 ### 🔌 AI Agent 强大武装 (新功能!)
 
-- **🔌 21 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
+- **🔌 17 个 MCP 工具**：为 AI Agent 提供完整的 Prompt 管理工具箱。
 - **🛡️ 行动决策树**：确保 Agent 只在连接安全且逻辑通顺时执行变更。
 - **📦 CLI 后备脚本**：断线时可改用内置脚本，放在 generated skill 文件夹内。
 - **⚙️ 交互式设置面板**：轻松完成各类 AI 工具的环境配置。
@@ -271,6 +271,14 @@ Quick Prompt v0.5.1 将扩展功能命令统一到 `quickPrompt.*` namespace。C
 - **VirtualTabs**：跨任何目录，整理哪些文件属于哪个任务
 
 在 [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs) 取得 VirtualTabs
+
+### 🔁 Edo Tensei
+
+**当需要搬动的不只是你的想法，而是整个 session 本身。**
+
+Quick Prompt 帮你缓冲的是 session *内部*正在想的事。[Edo Tensei](https://github.com/Pain-Labs/Edo-Tensei) 则是在额度用尽或 agent 中途崩溃时，把 session *跨* IDE 搬过去。
+
+在 [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=Pain-Labs.edo-tensei) | [**Open VSX Registry**](https://open-vsx.org/extension/Pain-Labs/edo-tensei) 取得 Edo Tensei
 
 ---
 

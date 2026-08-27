@@ -34,7 +34,7 @@
 QuickPrompt Skill에는 안정적인 운영을 보장하는 내장 안전 로직이 포함되어 있습니다:
 
 1. **Layer 0: 연결 게이트** — `list_prompts`를 통한 자동 연결 확인. MCP가 끊기면 에이전트는 즉시 HALT를 트리거하고 폴백 처리를 제시합니다.
-2. **Layer 1: 표준 MCP 도구** — 프롬프트의 CRUD 작업, 버전 관리, 개인정보 마스킹을 다루는 21개의 도구.
+2. **Layer 1: 표준 MCP 도구** — 프롬프트의 CRUD 작업, 버전 관리, 클립보드 기록을 다루는 17개의 도구.
 3. **Layer 2: 안전 검증** — 민감한 작업 실행 전 내부 논리 검사로 데이터 일관성 보장.
 4. **Layer 3: CLI 폴백** — MCP 서버를 사용할 수 없을 때 에이전트는 내장 `qp.bundle.js` 스크립트로 전환하여 데이터베이스에 직접 액세스.
 
@@ -52,7 +52,7 @@ QuickPrompt Skill에는 안정적인 운영을 보장하는 내장 안전 로직
 
 ### 🔌 AI 에이전트 파워 (신규!)
 
-- **🔌 21개의 MCP 도구**: AI 에이전트를 위한 완전한 프롬프트 관리 도구 모음.
+- **🔌 17개의 MCP 도구**: AI 에이전트를 위한 완전한 프롬프트 관리 도구 모음.
 - **🛡️ 액션 의사결정 트리**: 에이전트가 연결되고 안전한 경우에만 작동.
 - **📦 CLI 폴백 번들**: 오프라인 시나리오에서 사용할 수 있는 내장 스크립트.
 - **⚙️ 인터랙티브 설정 패널**: Cursor, Copilot, Cline, Claude 등 주요 도구의 쉬운 설정.
@@ -272,6 +272,14 @@ Quick Prompt v0.5.1은 확장 명령을 `quickPrompt.*` 네임스페이스로 �
 - **VirtualTabs**: 디렉토리 전체에서 어떤 파일이 어떤 작업에 속하는지 정리
 
 [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs) 에서 얻기
+
+### 🔁 Edo Tensei
+
+**옮겨야 할 것이 생각뿐 아니라 세션 자체일 때.**
+
+Quick Prompt는 세션 *안에서* 떠오르는 생각을 버퍼링합니다. [Edo Tensei](https://github.com/Pain-Labs/Edo-Tensei)는 할당량이 소진되거나 에이전트가 작업 도중 멈췄을 때 세션을 IDE *간에* 옮깁니다.
+
+[**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=Pain-Labs.edo-tensei) | [**Open VSX Registry**](https://open-vsx.org/extension/Pain-Labs/edo-tensei)에서 Edo Tensei 받기
 
 ---
 

@@ -34,7 +34,7 @@ It combines a **persistent snippet library** with **clipboard history tracking**
 The QuickPrompt skill includes built-in safety logic to ensure stable operation:
 
 1. **Layer 0: Connection Gate** — Automatic check via `list_prompts`. If disconnected, the agent HALTS and asks for fallback.
-2. **Layer 1: Standard MCP Tools** — Use 21 tools for CRUD, versioning, and privacy masking.
+2. **Layer 1: Standard MCP Tools** — Use 17 tools for CRUD, versioning, and clipboard history.
 3. **Layer 2: Safety Verification** — Internal sanity checks across different prompt contexts.
 4. **Layer 3: Fallback CLI** — A bundled `qp.bundle.js` script allows the agent to edit `prompts.json` directly if the server is offline.
 
@@ -52,7 +52,7 @@ One-click configuration for every major AI tool. Run: `Quick Prompt: Show MCP Co
 
 ### 🔌 AI Agent Power (New!)
 
-- **🔌 21 MCP Tools**: Complete prompt management suite for AI agents.
+- **🔌 17 MCP Tools**: Complete prompt management suite for AI agents.
 - **🛡️ Action Decision Tree**: Ensures agents only act when connected and safe.
 - **📦 CLI Fallback Bundle**: Built-in script fallback for offline scenarios.
 - **⚙️ Interactive Config Panel**: Easy setup for Cursor, Copilot, Cline, Claude, and more.
@@ -303,7 +303,7 @@ Open VSCode Settings and search for "Quick Prompt":
 
 ---
 
-## 🤝 Recommended Companion
+## 🤝 Recommended Companions
 
 ### 🗂️ VirtualTabs
 
@@ -315,6 +315,14 @@ Open VSCode Settings and search for "Quick Prompt":
 - **VirtualTabs**: organize which files belong to which task — across any directory
 
 Get VirtualTabs on [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=winterdrive.virtual-tabs) | [**Open VSX Registry**](https://open-vsx.org/extension/winterdrive/virtual-tabs)
+
+### 🔁 Edo Tensei
+
+**When the session itself needs to move, not just your thoughts.**
+
+Quick Prompt buffers what you're thinking *within* a session. [Edo Tensei](https://github.com/Pain-Labs/Edo-Tensei) carries the session *across* IDEs when quota runs out or an agent crashes mid-task.
+
+Get Edo Tensei on [**VS Code Marketplace**](https://marketplace.visualstudio.com/items?itemName=Pain-Labs.edo-tensei) | [**Open VSX Registry**](https://open-vsx.org/extension/Pain-Labs/edo-tensei)
 
 ---
 
