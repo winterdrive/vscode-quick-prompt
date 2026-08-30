@@ -4,12 +4,13 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+[![Presented at COSCUP 2026](https://img.shields.io/badge/Presented%20at-COSCUP%202026-orange?style=flat-square)](https://coscup.org/2026/session/9CYHJT/)
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-[繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
+[繁體中文](../zh-TW/README.md) | [日本語](../ja/README.md) | [한국어](./README.md) | [简体中文](../zh-CN/README.md) | [English](../../README.md)
 
-![Quick Prompt - AI 협업 시 IDE 내장 스크래치 패드 및 작업 큐잉](./assets/hero_banner.png)
+![Quick Prompt - AI 협업 시 IDE 내장 스크래치 패드 및 작업 큐잉](../assets/hero_banner.png)
 
 ---
 
@@ -19,9 +20,11 @@
 
 **영구 스니펫 라이브러리**와 **클립보드 히스토리 추적**을 결합하여, AI가 작동 중에 떠오르는 아이디어가 완료되는 그 순간 바로 활용될 수 있습니다.
 
+*Quick Prompt가 존재하는 이유는? [철학 읽어보기](PHILOSOPHY.md) → [COSCUP 2026](https://coscup.org/2026/session/9CYHJT/)에서 발표*
+
 ---
 
-![기능 하이라이트](./assets/feature_highlights.png)
+![기능 하이라이트](../assets/feature_highlights.png)
 
 ---
 
@@ -87,13 +90,13 @@ QuickPrompt Skill에는 안정적인 운영을 보장하는 내장 안전 로직
 
 ### 인터페이스 개요
 
-![인터페이스 개요](./assets/bottom_panel_overview.png)
+![인터페이스 개요](../assets/bottom_panel_overview.png)
 
 *실제 통합 보기: 클립보드 히스토리(좌측)와 선형 히스토리가 있는 프롬프트(우측)*
 
 ### 빠른 검색 데모
 
-![빠른 검색](./assets/quick_search_demo.png)
+![빠른 검색](../assets/quick_search_demo.png)
 
 *캡처 큐와 클립보드 히스토리의 통합 검색 인터페이스*
 

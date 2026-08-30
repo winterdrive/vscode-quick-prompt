@@ -4,12 +4,13 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+[![Presented at COSCUP 2026](https://img.shields.io/badge/Presented%20at-COSCUP%202026-orange?style=flat-square)](https://coscup.org/2026/session/9CYHJT/)
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-[繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
+[繁體中文](../zh-TW/README.md) | [日本語](./README.md) | [한국어](../ko/README.md) | [简体中文](../zh-CN/README.md) | [English](../../README.md)
 
-![Quick Prompt - AI 協作時の IDE 内蔵スクラッチパッド＆タスクキューイング](./assets/hero_banner.png)
+![Quick Prompt - AI 協作時の IDE 内蔵スクラッチパッド＆タスクキューイング](../assets/hero_banner.png)
 
 ---
 
@@ -19,9 +20,11 @@
 
 **永続化スニペットライブラリ**と**クリップボード履歴追跡**を組み合わせており、AI が動作中に生まれたアイデアが、タスク完了の瞬間にすぐ活用できます。
 
+*Quick Prompt はなぜ存在するのか？[理念を読む](PHILOSOPHY.md) → [COSCUP 2026](https://coscup.org/2026/session/9CYHJT/) にて発表*
+
 ---
 
-![機能ハイライト](./assets/feature_highlights.png)
+![機能ハイライト](../assets/feature_highlights.png)
 
 ---
 
@@ -87,13 +90,13 @@ QuickPrompt Skill には、安全で安定した動作を保証する組み込�
 
 ### インターフェース概要
 
-![インターフェース概要](./assets/bottom_panel_overview.png)
+![インターフェース概要](../assets/bottom_panel_overview.png)
 
 *実際の統合ビュー：クリップボード履歴（左）とプロンプト線形履歴（右）*
 
 ### クイック検索デモ
 
-![クイック検索](./assets/quick_search_demo.png)
+![クイック検索](../assets/quick_search_demo.png)
 
 *キャプチャキューとクリップボード履歴の統合検索インターフェース*
 

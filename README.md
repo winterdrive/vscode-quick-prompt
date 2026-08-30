@@ -4,10 +4,11 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+[![Presented at COSCUP 2026](https://img.shields.io/badge/Presented%20at-COSCUP%202026-orange?style=flat-square)](https://coscup.org/2026/session/9CYHJT/)
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-[繁體中文](./docs/README.zh-TW.md) | [日本語](./docs/README.ja.md) | [한국어](./docs/README.ko.md) | [简体中文](./docs/README.zh-CN.md) | English
+[繁體中文](./docs/zh-TW/README.md) | [日本語](./docs/ja/README.md) | [한국어](./docs/ko/README.md) | [简体中文](./docs/zh-CN/README.md) | English
 
 ![Quick Prompt - The in-IDE Scratch Pad for AI Agent Workflows](docs/assets/hero_banner.png)
 
@@ -18,6 +19,8 @@
 **When your AI agent is running, your mind doesn't stop.** Quick Prompt is your **in-IDE scratch pad** — capture next tasks, queue ideas, store reusable snippets — without switching to Notepad++ or breaking your flow.
 
 It combines a **persistent snippet library** with **clipboard history tracking**, so the thoughts you have *while AI is working* are ready to hand off the moment it finishes.
+
+*Why does Quick Prompt exist? [Read the philosophy](docs/PHILOSOPHY.md) → presented at [COSCUP 2026](https://coscup.org/2026/session/9CYHJT/)*
 
 ---
 
