@@ -4,12 +4,13 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+[![Presented at COSCUP 2026](https://img.shields.io/badge/Presented%20at-COSCUP%202026-orange?style=flat-square)](https://coscup.org/2026/session/9CYHJT/)
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-[繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
+[繁體中文](./README.md) | [日本語](../ja/README.md) | [한국어](../ko/README.md) | [简体中文](../zh-CN/README.md) | [English](../../README.md)
 
-![Quick Prompt - AI 協作時的 IDE 內建便條紙與任務排隊介面](./assets/hero_banner.png)
+![Quick Prompt - AI 協作時的 IDE 內建便條紙與任務排隊介面](../assets/hero_banner.png)
 
 ---
 
@@ -19,9 +20,11 @@
 
 它結合了**持久化片段庫**與**剪貼簿歷史追蹤**，讓你*在 AI 工作時*產生的想法，在它完成的那一刻就能立即派上用場。
 
+*為什麼會有 Quick Prompt？[閱讀完整理念](PHILOSOPHY.md) → 曾在 [COSCUP 2026](https://coscup.org/2026/session/9CYHJT/) 發表*
+
 ---
 
-![功能亮點](./assets/feature_highlights.png)
+![功能亮點](../assets/feature_highlights.png)
 
 ---
 
@@ -87,13 +90,13 @@ QuickPrompt Skill 內建防呆與安全邏輯，確保 AI 在執行時穩定可�
 
 ### 介面總覽
 
-![介面總覽](./assets/bottom_panel_overview.png)
+![介面總覽](../assets/bottom_panel_overview.png)
 
 *真實的底部控制面板視圖：剪貼簿歷史（左）與支援線性歷史紀錄的 Prompt 列表（右）*
 
 ### 快速搜尋功能
 
-![快速搜尋](./assets/quick_search_demo.png)
+![快速搜尋](../assets/quick_search_demo.png)
 
 *整合式的 Quick Pick 介面，一鍵搜尋你的暫存區與剪貼簿歷史*
 

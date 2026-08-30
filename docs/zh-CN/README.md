@@ -4,12 +4,13 @@
 [![Open VSX Version](https://img.shields.io/open-vsx/v/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/winterdrive/quick-prompt)](https://open-vsx.org/extension/winterdrive/quick-prompt)
 [![AI-Ready Context](https://img.shields.io/badge/AI--Ready-LLMS.txt-blue?style=flat-square)](https://winterdrive.github.io/vscode-quick-prompt/llms.txt)
+[![Presented at COSCUP 2026](https://img.shields.io/badge/Presented%20at-COSCUP%202026-orange?style=flat-square)](https://coscup.org/2026/session/9CYHJT/)
 <!-- [![VS Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 <!-- [![VS Marketplace Downloads](https://vsmarketplacebadges.dev/downloads-short/winterdrive.quick-prompt.svg)](https://marketplace.visualstudio.com/items?itemName=winterdrive.quick-prompt) -->
 
-[繁體中文](./README.zh-TW.md) | [日本語](./README.ja.md) | [한국어](./README.ko.md) | [简体中文](./README.zh-CN.md) | [English](../README.md)
+[繁體中文](../zh-TW/README.md) | [日本語](../ja/README.md) | [한국어](../ko/README.md) | [简体中文](./README.md) | [English](../../README.md)
 
-![Quick Prompt - AI 协作时的 IDE 内建便签纸与任务排队界面](./assets/hero_banner.png)
+![Quick Prompt - AI 协作时的 IDE 内建便签纸与任务排队界面](../assets/hero_banner.png)
 
 ---
 
@@ -19,9 +20,11 @@
 
 它结合了**持久化片段库**与**剪贴板历史追踪**，让你*在 AI 工作时*产生的想法，在它完成的那一刻就能立即派上用场。
 
+*为什么会有 Quick Prompt？[阅读完整理念](PHILOSOPHY.md) → 曾在 [COSCUP 2026](https://coscup.org/2026/session/9CYHJT/) 发表*
+
 ---
 
-![功能亮点](./assets/feature_highlights.png)
+![功能亮点](../assets/feature_highlights.png)
 
 ---
 
@@ -87,13 +90,13 @@ QuickPrompt Skill 内置防呆与安全逻辑，确保 AI 在执行时稳定可�
 
 ### 界面总览
 
-![界面总览](./assets/bottom_panel_overview.png)
+![界面总览](../assets/bottom_panel_overview.png)
 
 *真实的底部控制面板视图：剪贴板历史（左）与支持线性历史记录的 Prompt 列表（右）*
 
 ### 快速搜索功能
 
-![快速搜索](./assets/quick_search_demo.png)
+![快速搜索](../assets/quick_search_demo.png)
 
 *集成式的 Quick Pick 接口，一键搜索你的暂存区与剪贴板历史*
 
