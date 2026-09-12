@@ -66,7 +66,7 @@ export class ClipboardManager {
                 this.historyLoaded = true;
                 this._onHistoryChanged.fire();
             })
-            .catch(err => console.error('Failed to load clipboard history:', err));
+            .catch(err => console.error(`Failed to load clipboard history: ${formatFsErrorForLog(err)}`));
         this.setupListeners();
     }
 
