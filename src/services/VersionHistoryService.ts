@@ -95,7 +95,7 @@ export class VersionHistoryService {
             }
             if (error instanceof SyntaxError) {
                 // Corrupted JSON file — reset rather than crash the tree view/migration flow
-                console.error(`Failed to parse version history for ${promptId}, resetting to empty:`, error);
+                console.error(`Failed to parse version history for ${promptId}, resetting to empty: ${formatFsErrorForLog(error)}`);
                 const resetHistory: VersionHistory = {
                     promptId,
                     versions: [],
