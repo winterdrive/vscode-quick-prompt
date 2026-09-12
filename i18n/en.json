@@ -47,6 +47,7 @@
     "confirm.clearClipboardHistory": "Are you sure you want to clear all clipboard history?",
     "confirm.clearModelCache": "Are you sure you want to delete the AI model cache? It will be re-downloaded next time.",
     "message.modelCacheCleared": "AI model cache cleared successfully",
+    "message.modelCacheClearFailed": "Failed to clear cache: {0}",
     "message.versionNotFound": "Current version not found",
     "message.showDiffFailed": "Failed to show version diff",
     "message.diffTitle": "{0} ↔ Current Version",

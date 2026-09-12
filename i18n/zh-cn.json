@@ -48,6 +48,7 @@
     "confirm.clearClipboardHistory": "确定要清空所有剪贴板历史吗？",
     "confirm.clearModelCache": "确定要删除 AI 模型缓存吗？下次使用时将需要重新下载。",
     "message.modelCacheCleared": "✅ 已清除 AI 模型缓存",
+    "message.modelCacheClearFailed": "清除缓存失败: {0}",
     "message.versionNotFound": "无法找到当前版本",
     "message.showDiffFailed": "显示版本差异失败",
     "message.diffTitle": "{0} ↔ 当前版本",

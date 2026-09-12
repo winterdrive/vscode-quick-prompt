@@ -813,6 +813,19 @@ async function handleClearClipboardHistory(clipboardManager: ClipboardManager): 
 }
 
 /**
+ * Format an error for display in a VS Code notification, keeping only the
+ * error code (e.g. ENOENT/EACCES) rather than the raw error/message, which
+ * for fs errors typically embeds the full local file path.
+ */
+function formatErrorForDisplay(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code) return code;
+    }
+    return 'unknown error';
+}
+
+/**
  * Handle clear AI model cache command
  */
 async function handleClearModelCache(aiEngine: AIEngine): Promise<void> {
@@ -827,8 +840,8 @@ async function handleClearModelCache(aiEngine: AIEngine): Promise<void> {
             await aiEngine.clearModelCache();
             vscode.window.showInformationMessage(I18n.getMessage('message.modelCacheCleared'));
         } catch (error) {
-            console.error('[Commands] Failed to clear model cache:', error);
-            vscode.window.showErrorMessage(`Failed to clear cache: ${error}`);
+            console.error(`[Commands] Failed to clear model cache: ${formatErrorForDisplay(error)}`);
+            vscode.window.showErrorMessage(I18n.getMessage('message.modelCacheClearFailed', formatErrorForDisplay(error)));
         }
     }
 }
