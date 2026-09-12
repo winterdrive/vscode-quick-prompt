@@ -11,6 +11,19 @@ import { executeWithConfirmation } from '../utils';
 let activeVersionDiffRegistration: vscode.Disposable | undefined;
 
 /**
+ * Format an error for display in a VS Code notification, keeping only the
+ * error code (e.g. ENOENT/EACCES) rather than the raw error.message, which
+ * for fs errors typically embeds the full local file path.
+ */
+function formatErrorForDisplay(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code) return code;
+    }
+    return 'unknown error';
+}
+
+/**
  * Show diff between a historical version and the current version
  */
 export async function handleShowVersionDiff(
@@ -122,14 +135,22 @@ export async function handleApplyVersion(
 
         vscode.window.showInformationMessage(I18n.getMessage('message.versionApplied'));
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to apply version:', error);
 
+        const errorCode = typeof error === 'object' && error !== null
+            ? (error as NodeJS.ErrnoException).code
+            : undefined;
+        const errorMessage = typeof error === 'object' && error !== null
+            && typeof (error as { message?: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : '';
+
         // Provide more friendly error message
-        let userMessage = I18n.getMessage('message.applyVersionFailed', error.message);
-        if (error.code === 'FileNotFound') {
+        let userMessage = I18n.getMessage('message.applyVersionFailed', formatErrorForDisplay(error));
+        if (errorCode === 'FileNotFound') {
             userMessage = I18n.getMessage('message.applyVersionFailedFileNotFound');
-        } else if (error.message.includes('permission')) {
+        } else if (errorMessage.includes('permission')) {
             userMessage = I18n.getMessage('message.applyVersionFailedPermission');
         }
 
@@ -172,9 +193,9 @@ export async function handleTagMilestone(
         await promptProvider.refresh();
 
         vscode.window.showInformationMessage(I18n.getMessage('message.milestoneTagged', label));
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to tag milestone:', error);
-        vscode.window.showErrorMessage(I18n.getMessage('message.tagMilestoneFailed', error.message));
+        vscode.window.showErrorMessage(I18n.getMessage('message.tagMilestoneFailed', formatErrorForDisplay(error)));
     }
 }
 
@@ -218,9 +239,9 @@ export async function handleRenameMilestone(
         await promptProvider.refresh();
 
         vscode.window.showInformationMessage(I18n.getMessage('message.milestoneRenamed', label));
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to rename milestone:', error);
-        vscode.window.showErrorMessage(I18n.getMessage('message.renameMilestoneFailed', error.message));
+        vscode.window.showErrorMessage(I18n.getMessage('message.renameMilestoneFailed', formatErrorForDisplay(error)));
     }
 }
 
@@ -256,9 +277,9 @@ export async function handleRemoveMilestone(
         await promptProvider.refresh();
 
         vscode.window.showInformationMessage(I18n.getMessage('message.milestoneRemoved'));
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to remove milestone:', error);
-        vscode.window.showErrorMessage(I18n.getMessage('message.removeMilestoneFailed', error.message));
+        vscode.window.showErrorMessage(I18n.getMessage('message.removeMilestoneFailed', formatErrorForDisplay(error)));
     }
 }
 
@@ -286,9 +307,9 @@ export async function handleDeleteVersion(
                 await promptProvider.refresh();
 
                 vscode.window.showInformationMessage(I18n.getMessage('message.versionDeleted'));
-            } catch (error: any) {
+            } catch (error) {
                 console.error('Failed to delete version:', error);
-                vscode.window.showErrorMessage(I18n.getMessage('message.deleteVersionFailed', error.message));
+                vscode.window.showErrorMessage(I18n.getMessage('message.deleteVersionFailed', formatErrorForDisplay(error)));
             }
         }
     );
@@ -307,8 +328,8 @@ export async function handleCopyVersionContent(
         await vscode.env.clipboard.writeText(outputText);
         const label = item.version.milestone?.label || new Date(item.version.timestamp).toLocaleString();
         vscode.window.showInformationMessage(I18n.getMessage('message.versionContentCopied', label));
-    } catch (error: any) {
+    } catch (error) {
         console.error('Failed to copy version content:', error);
-        vscode.window.showErrorMessage(I18n.getMessage('message.copyFailed', error.message));
+        vscode.window.showErrorMessage(I18n.getMessage('message.copyFailed', formatErrorForDisplay(error)));
     }
 }
