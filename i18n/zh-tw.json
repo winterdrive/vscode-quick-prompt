@@ -47,6 +47,7 @@
     "confirm.clearClipboardHistory": "確定要清空所有剪貼簿歷史嗎？",
     "confirm.clearModelCache": "確定要刪除 AI 模型快取嗎？下次使用時將需要重新下載。",
     "message.modelCacheCleared": "✅ 已清除 AI 模型快取",
+    "message.modelCacheClearFailed": "清除快取失敗: {0}",
     "message.versionNotFound": "無法找到目前版本",
     "message.showDiffFailed": "顯示版本差異失敗",
     "message.diffTitle": "{0} ↔ 目前版本",
