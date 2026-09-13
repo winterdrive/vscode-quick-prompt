@@ -4,6 +4,20 @@ import * as path from 'path';
 import { OpenAICompatibleClient } from './openAIClient';
 
 /**
+ * Format an error for display in a VS Code notification, keeping only the
+ * error code (e.g. ENOENT/EACCES) rather than the raw error.message, which
+ * for fs/worker spawn errors typically embeds the full local file path
+ * (matching the formatErrorForDisplay() pattern used in versionCommands.ts).
+ */
+function formatErrorForDisplay(error: unknown): string {
+    if (typeof error === 'object' && error !== null && 'code' in error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code) return code;
+    }
+    return 'unknown error';
+}
+
+/**
  * AI 引擎狀態
  */
 type AIEngineStatus = 'uninitialized' | 'initializing' | 'ready' | 'error' | 'disabled';
@@ -186,7 +200,7 @@ export class AIEngine {
             this.status = 'error';
             console.error('[AIEngine] Qwen initialization failed:', error);
             vscode.window.showWarningMessage(
-                `Quick Prompt: Qwen model loading failed (${error instanceof Error ? error.message : String(error)}). Using fallback title generation.`
+                `Quick Prompt: Qwen model loading failed (${formatErrorForDisplay(error)}). Using fallback title generation.`
             );
         }
     }
