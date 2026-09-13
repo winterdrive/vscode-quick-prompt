@@ -40,6 +40,22 @@ import { ClipboardTools } from './tools/clipboardTools.js';
 const SERVER_NAME = 'quickprompt';
 const SERVER_VERSION = '0.1.0';
 
+/**
+ * Sanitize an error before it is sent back to the MCP client as a tool error message.
+ * Node fs errors (EACCES/ENOSPC/EISDIR/...) embed the full absolute file path in
+ * `error.message`; those are collapsed to just the error code. Other errors (e.g.
+ * business-logic messages like "Prompt not found: X") are passed through unchanged.
+ */
+export function sanitizeErrorForClient(error: unknown): string {
+  const fsErrorCode = error instanceof Error && 'code' in error
+    ? (error as NodeJS.ErrnoException).code
+    : undefined;
+  if (fsErrorCode) {
+    return `File system error (${fsErrorCode})`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 // ── Logging ────────────────────────────────────────────────────────────────────
 
 const LOG_LEVEL_ORDER: LoggingLevel[] = [
@@ -515,10 +531,7 @@ export class QuickPromptMCPServer {
       const result = await fn();
       return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
     } catch (error) {
-      return toMcpResult(createError(
-        ErrorType.INTERNAL_ERROR,
-        error instanceof Error ? error.message : String(error),
-      ));
+      return toMcpResult(createError(ErrorType.INTERNAL_ERROR, sanitizeErrorForClient(error)));
     }
   }
 
