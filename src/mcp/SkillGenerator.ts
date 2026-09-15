@@ -171,7 +171,7 @@ export class SkillGenerator {
     private static getQpBundleContent(context: vscode.ExtensionContext): string {
         const bundlePath = path.join(context.extensionPath, 'dist', 'qp.bundle.js');
         if (!fs.existsSync(bundlePath)) {
-            throw new Error(`qp.bundle.js not found at ${bundlePath}. Run 'npm run build:qp' first.`);
+            throw new Error(`${path.basename(bundlePath)} not found in extension install. Run 'npm run build:qp' first.`);
         }
         return fs.readFileSync(bundlePath, 'utf-8');
     }

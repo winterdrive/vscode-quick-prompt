@@ -122,8 +122,13 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('quickPrompt.showMcpConfig', () => {
             McpConfigPanel.show(context.extensionUri, stableMcpPath);
         }),
-        vscode.commands.registerCommand('quickPrompt.generateSkill', () => {
-            SkillGenerator.generateSkill(context);
+        vscode.commands.registerCommand('quickPrompt.generateSkill', async () => {
+            try {
+                await SkillGenerator.generateSkill(context);
+            } catch (error) {
+                console.error('[Extension] Failed to generate skill files:', error);
+                vscode.window.showErrorMessage('QuickPrompt: Failed to generate skill files. See the console for details.');
+            }
         }),
     );
 
