@@ -96,7 +96,7 @@ export class MaskingEngine {
             };
 
         } catch (error) {
-            console.error('[MaskingEngine] Error during masking:', error);
+            console.error(`[MaskingEngine] Error during masking: ${error instanceof Error ? error.message : String(error)}`);
             return {
                 maskedText: text,
                 originalText: text,
