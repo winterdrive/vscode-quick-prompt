@@ -87,7 +87,9 @@ export class TitleGenerationService {
             }
 
         } catch (error) {
-            console.error('[TitleGen] AI 生成失敗:', error);
+            // 僅記錄錯誤類型，避免將 AI 端點 URL、API 回應內容或提示片段寫入日誌
+            const errorName = error instanceof Error ? error.name : 'unknown error';
+            console.error(`[TitleGen] AI 生成失敗: ${errorName}`);
             // 靜默失敗，使用者已有 Fallback 標題
         }
     }
