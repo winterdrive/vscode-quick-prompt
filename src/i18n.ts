@@ -33,7 +33,9 @@ export class I18n {
 
             this.isInitialized = true;
         } catch (error) {
-            console.error('i18n initialization failed:', error);
+            // Log only the error type, avoiding absolute extension paths or stack traces in logs
+            const errorName = error instanceof Error ? error.name : 'unknown error';
+            console.error(`i18n initialization failed: ${errorName}`);
             // Use English as the final fallback
             await this.loadLanguageFile(context, 'en');
             this.isInitialized = true;

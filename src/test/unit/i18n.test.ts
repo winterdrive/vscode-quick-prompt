@@ -97,4 +97,32 @@ describe('I18n', () => {
             }
         }
     });
+
+    it('does not log the raw error object when initialization itself fails', async () => {
+        const secretPath = '/Users/someone/.vscode/extensions/quick-prompt/i18n/en.json';
+        const loadSpy = jest
+            .spyOn(I18n as unknown as { loadLanguageFile: () => Promise<boolean> }, 'loadLanguageFile')
+            .mockRejectedValueOnce(new Error(`ENOENT: no such file or directory, open '${secretPath}'`))
+            .mockResolvedValue(true);
+
+        try {
+            await I18n.initialize(context);
+
+            expect(I18n.isReady()).toBe(true);
+
+            const initFailureCalls = consoleErrorSpy.mock.calls.filter(call =>
+                typeof call[0] === 'string' && call[0].includes('i18n initialization failed')
+            );
+            expect(initFailureCalls).toEqual([['i18n initialization failed: Error']]);
+
+            for (const call of consoleErrorSpy.mock.calls) {
+                for (const arg of call) {
+                    expect(arg instanceof Error).toBe(false);
+                    expect(String(arg)).not.toContain(secretPath);
+                }
+            }
+        } finally {
+            loadSpy.mockRestore();
+        }
+    });
 });
