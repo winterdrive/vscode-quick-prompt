@@ -103,8 +103,9 @@ export class PatternRegistry {
                     priority: -1,  // 自訂規則最高優先
                     builtIn: false
                 });
-            } catch (e) {
-                console.warn(`[PatternRegistry] Invalid pattern "${entry.pattern}", skipping`);
+            } catch {
+                // Do not log entry.pattern: dictionary patterns hold the sensitive text the user wants masked.
+                console.warn(`[PatternRegistry] Invalid pattern for entry "${entry.id}", skipping`);
             }
         }
     }
