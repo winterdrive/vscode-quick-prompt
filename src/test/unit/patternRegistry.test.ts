@@ -31,3 +31,31 @@ describe('PatternRegistry.mask', () => {
         expect(tokens.map(t => t.originalValue)).toEqual(['a@x.com', 'b@x.com', 'c@x.com']);
     });
 });
+
+describe('PatternRegistry.loadCustom', () => {
+    it('skips an invalid regex entry without logging the sensitive pattern text', () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const registry = new PatternRegistry();
+        const secret = 'SecretClientName(';
+
+        try {
+            registry.loadCustom([{
+                id: 'entry-1',
+                pattern: secret,
+                isRegex: true,
+                label: 'CLIENT',
+                enabled: true,
+                createdAt: 0,
+                updatedAt: 0,
+            }]);
+
+            expect(registry.getAllPatterns().some(p => p.id === 'entry-1')).toBe(false);
+            expect(warnSpy).toHaveBeenCalledTimes(1);
+            const logged = warnSpy.mock.calls.flat().map(String).join(' ');
+            expect(logged).toContain('entry-1');
+            expect(logged).not.toContain('SecretClientName');
+        } finally {
+            warnSpy.mockRestore();
+        }
+    });
+});
