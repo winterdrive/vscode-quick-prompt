@@ -52,6 +52,15 @@ function parseArgs(): { workspaceRoot?: string } {
 /**
  * Validate that a workspace path exists and is a directory.
  */
+/**
+ * Describe an error for logs without exposing raw messages/stacks, which may contain absolute paths.
+ */
+function describeErrorForLog(error: unknown): string {
+  const code = error instanceof Error && 'code' in error ? (error as NodeJS.ErrnoException).code : undefined;
+  const name = error instanceof Error ? error.name : typeof error;
+  return code ? `${name} (${code})` : name;
+}
+
 function validateWorkspaceRoot(workspaceRoot: string): boolean {
   try {
     if (!fs.existsSync(workspaceRoot)) {
@@ -115,12 +124,12 @@ async function main() {
       console.error('[INFO] Waiting for client to supply workspace path via MCP Roots protocol...');
     }
   } catch (error) {
-    console.error('[ERROR] Server startup failed:', error);
+    console.error(`[ERROR] Server startup failed: ${describeErrorForLog(error)}`);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  console.error('[ERROR] Unexpected error:', error);
+  console.error(`[ERROR] Unexpected error: ${describeErrorForLog(error)}`);
   process.exit(1);
 });
