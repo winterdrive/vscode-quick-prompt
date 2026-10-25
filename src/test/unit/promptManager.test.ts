@@ -73,6 +73,29 @@ describe('PromptManager', () => {
             expect(backups.length).toBeGreaterThan(0);
         });
 
+        it('skips non-object entries, keeps valid ones, and creates backup', () => {
+            const promptsPath = path.join(tmpDir, '.vscode', 'prompts.json');
+            fs.writeFileSync(
+                promptsPath,
+                JSON.stringify([null, { id: '001', title: 'A', content: 'a' }, 'oops', 7, []]),
+                'utf-8',
+            );
+            const { prompts } = manager.loadPrompts();
+            expect(prompts).toHaveLength(1);
+            expect(prompts[0].id).toBe('001');
+            const backups = fs.readdirSync(path.join(tmpDir, '.vscode'))
+                .filter(f => f.includes('.backup.'));
+            expect(backups.length).toBeGreaterThan(0);
+        });
+
+        it('does not create backup when all entries are objects', () => {
+            writePrompts(tmpDir, [{ id: '001', title: 'A', content: 'a' } as Prompt]);
+            manager.loadPrompts();
+            const backups = fs.readdirSync(path.join(tmpDir, '.vscode'))
+                .filter(f => f.includes('.backup.'));
+            expect(backups).toHaveLength(0);
+        });
+
         it('normalizes missing fields with defaults', () => {
             const raw = [{ id: '001', title: 'X', content: 'Y' }];
             writePrompts(tmpDir, raw as Prompt[]);
@@ -123,6 +146,16 @@ describe('PromptManager', () => {
 
         it('returns empty array when nothing matches', () => {
             expect(manager.searchPrompts('zzznomatch')).toHaveLength(0);
+        });
+
+        it('does not throw on entries missing title or content', () => {
+            writePrompts(tmpDir, [
+                { id: '001', content: 'only content' } as unknown as Prompt,
+                { id: '002', title: 'only title' } as unknown as Prompt,
+            ]);
+            manager.clearCache();
+            expect(manager.searchPrompts('only')).toHaveLength(2);
+            expect(manager.searchPrompts('content')).toHaveLength(1);
         });
     });
 

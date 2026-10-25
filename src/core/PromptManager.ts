@@ -49,7 +49,14 @@ export class PromptManager {
                 this.createBackup();
                 return { prompts: [], version: 0 };
             }
-            const prompts: Prompt[] = parsed;
+            // Skip null/primitive/array entries instead of discarding the whole file;
+            // back up first so the dropped entries survive the next save.
+            const prompts: Prompt[] = parsed.filter(
+                (p): p is Prompt => typeof p === 'object' && p !== null && !Array.isArray(p)
+            );
+            if (prompts.length !== parsed.length) {
+                this.createBackup();
+            }
             const version = PathUtils.getMtime(this.promptsFilePath);
 
             // Normalize/migrate each prompt
@@ -102,7 +109,8 @@ export class PromptManager {
         const prompts = this.getPrompts();
         const lower = query.toLowerCase();
         return prompts.filter(
-            p => p.title.toLowerCase().includes(lower) || p.content.toLowerCase().includes(lower)
+            p => (typeof p.title === 'string' && p.title.toLowerCase().includes(lower))
+                || (typeof p.content === 'string' && p.content.toLowerCase().includes(lower))
         );
     }
 
