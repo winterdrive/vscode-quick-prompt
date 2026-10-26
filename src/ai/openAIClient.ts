@@ -89,8 +89,6 @@ export class OpenAICompatibleClient {
                 signal: controller.signal
             });
 
-            clearTimeout(timeoutId);
-
             if (!response.ok) {
                 const errText = await response.text().catch(() => '');
                 throw new Error(`HTTP ${response.status}: ${errText}`);
@@ -110,11 +108,14 @@ export class OpenAICompatibleClient {
             return content;
 
         } catch (err: any) {
-            clearTimeout(timeoutId);
             if (err.name === 'AbortError') {
                 throw new Error(`Request timed out after ${this.timeout}ms`);
             }
             throw err;
+        } finally {
+            // Keep the timer alive until the body has been read, so a stalled
+            // response body is still aborted instead of hanging indefinitely.
+            clearTimeout(timeoutId);
         }
     }
 
