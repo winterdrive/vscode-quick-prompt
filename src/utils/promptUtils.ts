@@ -109,8 +109,8 @@ export function generateAutoTitle(content: string): string {
         .replace(/[\r\n]+/g, ' ')     // 合併換行
         .trim();
 
-    // 2. 偵測並取第一句
-    const sentences = cleaned.match(/[^.!?。!?]+[.!?。!?]*/g) || [];
+    // 2. 偵測並取第一句 (支援半形 .!? 與全形 。！？)
+    const sentences = cleaned.match(/[^.!?。！？]+[.!?。！？]*/g) || [];
     const firstSentence = sentences[0]?.trim() || cleaned;
 
     // 3. 智慧截斷 (避免斷字)
