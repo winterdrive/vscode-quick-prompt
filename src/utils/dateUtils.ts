@@ -5,6 +5,9 @@ import { TIME_CONSTANTS } from './constants';
  * Date and time utility functions
  */
 
+/** Placeholder shown when a stored date/timestamp is missing or unparseable */
+const INVALID_TIME_PLACEHOLDER = '—';
+
 /**
  * Calculate the number of days between a date and today
  * @param dateString ISO date string or any valid date string
@@ -24,6 +27,8 @@ export function getDaysSince(dateString: string): number {
  */
 export function formatRelativeTime(dateString: string): string {
     const days = getDaysSince(dateString);
+    // Avoid rendering "NaN days ago" for missing/malformed dates
+    if (!Number.isFinite(days)) return INVALID_TIME_PLACEHOLDER;
     if (days === 0) return I18n.getMessage('time.today');
     if (days === 1) return I18n.getMessage('time.yesterday');
     return I18n.getMessage('time.daysAgo', days.toString());
@@ -35,6 +40,8 @@ export function formatRelativeTime(dateString: string): string {
  * @returns Localized relative time string
  */
 export function getRelativeTime(timestamp: number): string {
+    // Avoid rendering "NaN days ago" for missing/malformed timestamps
+    if (!Number.isFinite(timestamp)) return INVALID_TIME_PLACEHOLDER;
     const now = Date.now();
     const diff = now - timestamp;
 
