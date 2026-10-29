@@ -63,7 +63,12 @@ export class VersionManager {
             if (!VersionManager.isValidHistory(parsed)) {
                 throw new Error(`Malformed version history shape for ${promptId}`);
             }
-            const history: VersionHistory = parsed;
+            // Drop individual malformed entries (e.g. null or missing versionId)
+            // so one bad record doesn't crash later `versions.find(v => v.versionId ...)`.
+            const history: VersionHistory = {
+                ...parsed,
+                versions: parsed.versions.filter(VersionManager.isValidVersion),
+            };
             this.cache.set(promptId, { history, mtimeMs: currentMtime });
             return JSON.parse(JSON.stringify(history));
         } catch {
@@ -87,6 +92,15 @@ export class VersionManager {
             typeof value === 'object' &&
             Array.isArray((value as VersionHistory).versions) &&
             typeof (value as VersionHistory).currentVersionId === 'string'
+        );
+    }
+
+    private static isValidVersion(value: unknown): value is PromptVersion {
+        return (
+            !!value &&
+            typeof value === 'object' &&
+            typeof (value as PromptVersion).versionId === 'string' &&
+            typeof (value as PromptVersion).content === 'string'
         );
     }
 

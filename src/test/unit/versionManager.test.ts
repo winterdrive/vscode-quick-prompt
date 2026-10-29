@@ -58,6 +58,21 @@ describe('VersionManager', () => {
             const history = manager.loadHistory('001');
             expect(history).toEqual({ promptId: '001', versions: [], currentVersionId: '' });
         });
+
+        it('skips malformed version entries instead of crashing lookups', () => {
+            const historyDir = path.join(tmpDir, '.vscode', '.quickprompt', 'history');
+            fs.mkdirSync(historyDir, { recursive: true });
+            const good = { versionId: 'v1', content: 'Hello', timestamp: 1, changeType: 'create' };
+            fs.writeFileSync(
+                path.join(historyDir, '001.history.json'),
+                JSON.stringify({ promptId: '001', currentVersionId: 'v1', versions: [null, 42, { content: 'x' }, good] }),
+                'utf-8'
+            );
+
+            expect(manager.loadHistory('001').versions).toEqual([good]);
+            expect(manager.getVersionContent('001', 'v1')).toBe('Hello');
+            expect(manager.getCurrentVersion('001')?.versionId).toBe('v1');
+        });
     });
 
     // ── createVersion ─────────────────────────────────────────────────────────
