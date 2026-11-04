@@ -100,4 +100,36 @@ describe('PrivacyManager', () => {
             expect(manager.getDictionaryEntries()).toEqual([]);
         });
     });
+
+    // ── editDictionaryEntry regex validation ──────────────────────────────────
+
+    describe('editDictionaryEntry regex validation', () => {
+        it('rejects an invalid pattern when only the pattern of an existing regex entry is updated', () => {
+            const entry = manager.addDictionaryEntry({ pattern: 'ACME-\\d+', isRegex: true, label: '[ID]', enabled: true });
+
+            expect(() => manager.editDictionaryEntry(entry.id, { pattern: '(' })).toThrow('Invalid regex pattern');
+            expect(manager.getDictionaryEntries()[0].pattern).toBe('ACME-\\d+');
+        });
+
+        it('rejects enabling isRegex when the existing pattern is not a valid regex', () => {
+            const entry = manager.addDictionaryEntry({ pattern: '(', isRegex: false, label: '[PAREN]', enabled: true });
+
+            expect(() => manager.editDictionaryEntry(entry.id, { isRegex: true })).toThrow('Invalid regex pattern');
+            expect(manager.getDictionaryEntries()[0].isRegex).toBe(false);
+        });
+
+        it('allows switching an invalid-regex literal pattern to a valid regex in one edit', () => {
+            const entry = manager.addDictionaryEntry({ pattern: '(', isRegex: false, label: '[X]', enabled: true });
+
+            const updated = manager.editDictionaryEntry(entry.id, { isRegex: true, pattern: 'ACME-\\d+' });
+            expect(updated.isRegex).toBe(true);
+            expect(updated.pattern).toBe('ACME-\\d+');
+        });
+
+        it('does not validate literal patterns as regex', () => {
+            const entry = manager.addDictionaryEntry({ pattern: 'ACME', isRegex: false, label: '[COMPANY]', enabled: true });
+
+            expect(() => manager.editDictionaryEntry(entry.id, { pattern: '(' })).not.toThrow();
+        });
+    });
 });
