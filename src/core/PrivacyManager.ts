@@ -252,9 +252,13 @@ export class PrivacyManager {
             throw new Error(`Dictionary entry not found: ${entryId}`);
         }
 
-        if (updates.isRegex && updates.pattern) {
-            try { new RegExp(updates.pattern); } catch (e) {
-                throw new Error(`Invalid regex pattern: ${updates.pattern}`);
+        // Validate against the merged entry so a pattern-only edit on an existing
+        // regex entry (or toggling isRegex on an existing pattern) is still checked.
+        const nextIsRegex = updates.isRegex ?? data.entries[idx].isRegex;
+        const nextPattern = updates.pattern ?? data.entries[idx].pattern;
+        if (nextIsRegex) {
+            try { new RegExp(nextPattern); } catch (e) {
+                throw new Error(`Invalid regex pattern: ${nextPattern}`);
             }
         }
 
