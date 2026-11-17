@@ -8,8 +8,9 @@ This document provides a complete guide for setting up the development environme
 
 ### System Requirements
 
-* **Node.js** v18 or above (v20 recommended; required for `structuredClone` and modern ESM)
+* **Node.js** v24 LTS for development (the pinned npm version also supports Node >=22.22.2)
 * **VS Code** v1.75.0 or above
+* **npm** 12.2.2 for dependency installation (pinned in `packageManager` and CI)
 * **TypeScript** (included in devDependencies)
 
 ### Setup Steps
@@ -22,7 +23,7 @@ git clone https://github.com/winterdrive/vscode-quick-prompt.git
 cd vscode-quick-prompt
 
 # Install dependencies
-npm install
+npx --yes npm@12.2.2 ci
 ```
 
 #### 2. Compile TypeScript & Bundles
@@ -291,7 +292,7 @@ Quick Prompt supports multiple languages out of the box.
 
 ```bash
 # Make sure the correct @types/vscode version is installed
-npm install --save-dev @types/vscode@^1.75.0
+npx --yes npm@12.2.2 ci --save-dev @types/vscode@^1.75.0
 ```
 
 ### Q: Extension does not appear in Extension Development Host
@@ -315,7 +316,7 @@ The mock uses `jest.fn()` which requires jest types. The base tsconfig must excl
 
 ### Q: `test:ui` fails with "cannot find module 'chai'"
 
-Run `npm install --save-dev @types/chai` to add the chai type declarations needed by the UI test compiler.
+Run `npx --yes npm@12.2.2 ci --save-dev @types/chai` to add the chai type declarations needed by the UI test compiler.
 
 ### Q: Coverage report shows < threshold — CI fails
 
@@ -404,7 +405,7 @@ You never need to pass `--pre-release` manually.
 
 ```bash
 # Install vsce (Visual Studio Code Extension manager)
-npm install -g vsce
+npx --yes npm@12.2.2 ci -g vsce
 
 # Package as .vsix file
 vsce package

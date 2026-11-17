@@ -638,11 +638,15 @@
         "vscode-extension-tester": "^8.23.0"
     },
     "dependencies": {
-        "@huggingface/transformers": "^3.0.0",
-        "@modelcontextprotocol/sdk": "^1.30.0",
-        "zod": "^3.23.8"
+        "@huggingface/transformers": "^4.3.2",
+        "@modelcontextprotocol/sdk": "^1.32.0",
+        "zod": "^4.6.7"
     },
     "overrides": {
-        "serialize-javascript": "^7.0.5"
-    }
+        "serialize-javascript": "^7.0.5",
+        "glob@>=9 <14.0.2": "^14.0.2",
+        "minimatch@>=7 <11.0.1": "^11.0.1",
+        "js-yaml@<4": "^3.15.2"
+    },
+    "packageManager": "npm@12.2.2"
 }

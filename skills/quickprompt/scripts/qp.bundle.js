@@ -55,7 +55,7 @@ var PathUtils = class _PathUtils {
     const resolved = this.toAbsolutePath(filePath);
     const normalizedRoot = path.resolve(this.workspaceRoot);
     const normalizedPath = path.resolve(resolved);
-    return normalizedPath.startsWith(normalizedRoot);
+    return normalizedPath === normalizedRoot || normalizedPath.startsWith(normalizedRoot + path.sep);
   }
   /**
    * Convert a relative path to an absolute path within the workspace.
@@ -336,7 +336,7 @@ var PromptManager = class {
       if (fs2.existsSync(this.promptsFilePath)) {
         const backupPath = `${this.promptsFilePath}.backup.${Date.now()}`;
         fs2.copyFileSync(this.promptsFilePath, backupPath);
-        console.error(`[PromptManager] Created backup: ${backupPath}`);
+        console.error(`[PromptManager] Created backup: ${path2.basename(backupPath)}`);
       }
     } catch {
     }
@@ -346,7 +346,7 @@ var PromptManager = class {
 // src/core/VersionManager.ts
 var path3 = __toESM(require("path"));
 var fs3 = __toESM(require("fs"));
-var VersionManager = class {
+var VersionManager = class _VersionManager {
   constructor(workspaceRoot) {
     this.workspaceRoot = workspaceRoot;
     this.cache = /* @__PURE__ */ new Map();
@@ -381,7 +381,11 @@ var VersionManager = class {
     }
     try {
       const content = fs3.readFileSync(historyPath, "utf-8");
-      const history = JSON.parse(content);
+      const parsed = JSON.parse(content);
+      if (!_VersionManager.isValidHistory(parsed)) {
+        throw new Error(`Malformed version history shape for ${promptId}`);
+      }
+      const history = parsed;
       this.cache.set(promptId, { history, mtimeMs: currentMtime });
       return JSON.parse(JSON.stringify(history));
     } catch {
@@ -392,6 +396,14 @@ var VersionManager = class {
       };
       return emptyHistory;
     }
+  }
+  /**
+   * Type guard ensuring parsed JSON matches the expected VersionHistory shape,
+   * so a corrupted or unexpectedly-shaped history.json falls back to empty
+   * history instead of throwing later (e.g. `history.versions.find` on undefined).
+   */
+  static isValidHistory(value) {
+    return !!value && typeof value === "object" && Array.isArray(value.versions) && typeof value.currentVersionId === "string";
   }
   /**
    * Get version content by ID.
